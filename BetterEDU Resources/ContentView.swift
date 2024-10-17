@@ -13,7 +13,7 @@ struct ContentView: View {
             Image(systemName: "globe")
                 .imageScale(.large)
                 .foregroundStyle(.tint)
-            Text("BetterEDU Resources App Testing Push/Pull")
+            Text("BetterEDU Resources App Testing Push/Pull From XCode")
         }
         .padding()
     }
