@@ -42,6 +42,15 @@ struct HomePageView: View {
                             .cornerRadius(10)
                     }
 
+                    Button(action: {
+                        // Navigate to Emergency Hotlines
+                    }) {
+                        Text("Test Button")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding()
+                            .background(Color.red.opacity(0.2))
+                            .cornerRadius(10)
+                    }
                     // Add more buttons here
                 }
             }
