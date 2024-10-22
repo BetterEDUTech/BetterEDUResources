@@ -45,7 +45,7 @@ struct HomePageView: View {
                     Button(action: {
                         // Navigate to Emergency Hotlines
                     }) {
-                        Text("Test Button V2")
+                        Text("Test Button V3")
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding()
                             .background(Color.red.opacity(0.2))
