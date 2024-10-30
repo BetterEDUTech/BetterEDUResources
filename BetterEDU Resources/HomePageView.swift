@@ -11,51 +11,66 @@ struct HomePageView: View {
                     .resizable()
                     .frame(width: 40, height: 40)
                     .padding(.leading)
-                
+                    .foregroundColor(.white)
                 Spacer()
             }
             
             Text("BetterEDU Resources")
-                .font(.custom("Impact", size: 30))
-                .foregroundColor(Color(hex: "5a0ef6")) // Custom color from palette
+                .font(.custom("Impact", size: 40))
+                .foregroundColor(Color(hex: "98b6f8")) // Custom color from palette
+                .aspectRatio(contentMode: .fit)
                 .padding(.top)
             
-            Text("Student Mental Health Resources")
+            Text("Mental Health Resources for Students")
                 .font(.headline)
                 .foregroundColor(.white)
             
             // Search Bar
+            Spacer(minLength: 1)
             TextField("Search Resources", text: .constant(""))
                 .padding()
-                .background(Color.white.opacity(0.2))
+                .background(Color(hex: "98b6f8"))
                 .cornerRadius(10)
                 .foregroundColor(.white)
                 .padding(.horizontal)
-
-            // Home & Saved Tabs
+               // Spacer(minLength: 1)
+            //HStack for faq and saved tabs
             HStack {
+                // FAQ Tab
                 Button(action: {
                     selectedTab = 0 // Home tab
-                }) {
-                    Text("Home")
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(selectedTab == 0 ? Color.blue.opacity(0.5) : Color.white.opacity(0.2))
-                        .cornerRadius(10)
-                }
-
+                }) {    // creating the text for the FAQ button w/ proper color and padding
+                        Text("FAQ")
+                            //.font(.custom("Tan Tangkiwood-Regular", size: 16))
+                                // wasn't able to find a fre tangikwood font file
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            // setting the foreground and background color
+                            .background(selectedTab == 0 ?
+                                        Color(hex:"98b6f8"):
+                                        Color(hex: "98b6f8"))
+                            .foregroundColor(Color(hex: "251db4"))
+                            .cornerRadius(10)
+                    }
+                // saved tab
                 Button(action: {
                     selectedTab = 1 // Saved tab
                 }) {
+                    // creating the text for the saved button w/ proper color and padding
                     Text("Saved")
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(selectedTab == 1 ? Color.blue.opacity(0.5) : Color.white.opacity(0.2))
+                        // setting the foreground and background color
+                        .background(selectedTab == 1 ?
+                                    Color(hex: "98b6f8"):
+                                    Color(hex: "98b6f8"))
+                        .foregroundColor(Color(hex: "251db4"))
                         .cornerRadius(10)
+                        
                 }
             }
             .padding(.horizontal)
-
+            Spacer(minLength: 1)
             // Scrollable Resource List
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
@@ -63,16 +78,18 @@ struct HomePageView: View {
                         // Navigate to Financial Services
                     }) {
                         HStack {
-                            Image(systemName: "phone.fill")
+                            Image(systemName: "building.columns.fill")
                             Text("Financial Services")
                                 .bold()
                         }
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(Color.white)
+                        .foregroundColor(Color(hex: "251db4"))
                         .cornerRadius(10)
+                        
                     }
-
+                    
                     Button(action: {
                         // Navigate to Emergency Hotlines
                     }) {
@@ -84,6 +101,7 @@ struct HomePageView: View {
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(Color.white)
+                        .foregroundColor(Color(hex: "251db4"))
                         .cornerRadius(10)
                     }
 
@@ -93,11 +111,13 @@ struct HomePageView: View {
                         HStack {
                             Image(systemName: "heart.fill")
                             Text("Self-Care Resources")
+                            
                                 .bold()
                         }
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(Color.white)
+                        .foregroundColor(Color(hex: "251db4"))
                         .cornerRadius(10)
                     }
 
@@ -112,6 +132,7 @@ struct HomePageView: View {
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(Color.white)
+                        .foregroundColor(Color(hex: "251db4"))
                         .cornerRadius(10)
                     }
                 }
@@ -123,18 +144,34 @@ struct HomePageView: View {
             // Navigation Bar at the Bottom
             HStack {
                 Spacer()
+                Button(action: {
+                        // Navigate to Home Page
+                        selectedTab = 0 // Example action for Home
+                    }) {
+                        VStack {
+                            Image(systemName: "house.fill") // House icon
+                                .foregroundColor(Color.white) // Icon color
+                            Text("Home") // Label for the button
+                                .font(.footnote)
+                                .foregroundColor(Color.white) // Text color
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .foregroundColor(selectedTab == 0 ? .blue : .white)
                 
                 Button(action: {
                     // Navigate to Search Page
                 }) {
                     VStack {
                         Image(systemName: "magnifyingglass")
+                            .foregroundColor(Color.white)
                         Text("Search")
                             .font(.footnote)
+                            .foregroundColor(Color.white)
                     }
                 }
                 .frame(maxWidth: .infinity)
-                .foregroundColor(selectedTab == 0 ? .blue : .white)
+                .foregroundColor(selectedTab == 1 ? .blue : .white)
 
                 Spacer()
                 
@@ -148,7 +185,7 @@ struct HomePageView: View {
                     }
                 }
                 .frame(maxWidth: .infinity)
-                .foregroundColor(selectedTab == 1 ? .blue : .white)
+                .foregroundColor(selectedTab == 2 ? .blue : .white)
 
                 Spacer()
                 
@@ -162,7 +199,7 @@ struct HomePageView: View {
                     }
                 }
                 .frame(maxWidth: .infinity)
-                .foregroundColor(selectedTab == 2 ? .blue : .white)
+                .foregroundColor(selectedTab == 3 ? .blue : .white)
 
                 Spacer()
             }
