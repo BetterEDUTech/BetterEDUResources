@@ -35,6 +35,7 @@ struct ProfileView: View {
                     .foregroundColor(.white)
 
                 // Name Text
+                //TODO: Replace [Name] With actual name
                 Text("[Name]")
                     .font(.title)
                     .foregroundColor(.white)
