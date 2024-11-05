@@ -1,72 +1,79 @@
-//
-//  ProfileView.swift
-//  BetterEDU Resources
-//
-//  Created by Nick Arana on 10/29/24.
-//
-
 import SwiftUI
 
 struct ProfileView: View {
     var body: some View {
-        ZStack {
-            // Background color
-            Color(hex: "251db4")
-                .ignoresSafeArea()
+        NavigationView {
+            ZStack {
+                // Background color
+                Color(hex: "251db4")
+                    .ignoresSafeArea()
 
-            VStack(spacing: 20) {
-                // Header Section with Close Button
-                HStack {
-                    Spacer()
-                    Button(action: {
-                        // Action to close or navigate back
-                    }) {
-                        Image(systemName: "xmark")
-                            .foregroundColor(.white)
-                            .padding()
-                    }
-                }
-                .padding(.trailing)
-
-                // Profile Icon
-                Image(systemName: "person.circle.fill")
-                    .resizable()
-                    .frame(width: 100, height: 100)
-                    .foregroundColor(.white)
-
-                // Name Text
-                //TODO: Replace [Name] With actual name
-                Text("[Name]")
-                    .font(.title)
-                    .foregroundColor(.white)
-                    .padding()
-
-                // List of Profile Options
                 VStack(spacing: 20) {
-                    profileRow(icon: "person.fill", text: "Personal Information")
-                    profileRow(icon: "mappin.circle.fill", text: "Location")
-                    profileRow(icon: "graduationcap.fill", text: "Set School")
-                    profileRow(icon: "heart.fill", text: "Saved Resources")
-                }
-                .padding(.horizontal)
-
-                Spacer()
-
-                // Settings Button
-                Button(action: {
-                    // Navigate to Settings
-                }) {
+                    // Header Section with Close Button
                     HStack {
-                        Image(systemName: "gearshape.fill")
-                        Text("Settings")
-                            .fontWeight(.bold)
+                        Spacer()
+                        Button(action: {
+                            // Action to close or navigate back
+                        }) {
+                            Image(systemName: "xmark")
+                                .foregroundColor(.white)
+                                .padding()
+                        }
                     }
-                    .foregroundColor(.white)
-                    .padding()
-                }
+                    .padding(.trailing)
 
-                Spacer()
+                    // Profile Icon
+                    Image(systemName: "person.circle.fill")
+                        .resizable()
+                        .frame(width: 100, height: 100)
+                        .foregroundColor(.white)
+
+                    // Name Text
+                    //TODO: Replace [Name] With actual name
+                    Text("[Name]")
+                        .font(.title)
+                        .foregroundColor(.white)
+                        .padding()
+
+                    // List of Profile Options with Navigation Links
+                    VStack(spacing: 20) {
+                        NavigationLink(destination: PersonalInformationView()) {
+                            profileRow(icon: "person.fill", text: "Personal Information")
+                        }
+                        
+                        NavigationLink(destination: LocationView()) {
+                            profileRow(icon: "mappin.circle.fill", text: "Location")
+                        }
+                        
+                        NavigationLink(destination: SetSchoolView()) {
+                            profileRow(icon: "graduationcap.fill", text: "Set School")
+                        }
+                        
+                        NavigationLink(destination: SavedView()) {
+                            profileRow(icon: "heart.fill", text: "Saved Resources")
+                        }
+                    }
+                    .padding(.horizontal)
+
+                    Spacer()
+
+                    // Settings Button
+                    Button(action: {
+                        // Navigate to Settings or create a settings view
+                    }) {
+                        HStack {
+                            Image(systemName: "gearshape.fill")
+                            Text("Settings")
+                                .fontWeight(.bold)
+                        }
+                        .foregroundColor(.white)
+                        .padding()
+                    }
+
+                    Spacer()
+                }
             }
+            .navigationBarHidden(true) // Hide the default navigation bar if needed
         }
     }
 
@@ -89,5 +96,3 @@ struct ProfileView: View {
 #Preview {
     ProfileView()
 }
-
-
