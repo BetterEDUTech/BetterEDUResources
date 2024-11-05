@@ -6,51 +6,62 @@ struct FeedbackView: View {
 
     var body: some View {
         NavigationView {
-            VStack(spacing: 20) {
+            VStack {
                 // Header Section with Profile Icon
                 HStack {
                     NavigationLink(destination: ProfileView()) {
                         Image(systemName: "person.circle.fill")
                             .resizable()
-                            .frame(width: 40, height: 40)
+                            .frame(width: 35, height: 35)
                             .foregroundColor(.white)
                             .padding(.leading)
                     }
                     Spacer()
                 }
+                .padding(.top)
 
-                // Welcome Text
-                // TODO: Replace [Name] with actual user name
-                Text("Hi [Name],\nplease enter your feedback here!")
-                    .font(.title)
-                    .fontWeight(.bold)
+                // Welcome Text with Updated Font and Message
+                Text("Your thoughts matter to us, [Name]. Let us know how we can improve.")
+                    .font(.custom("Impact", size: 24)) // Using Impact font for bold appearance
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
-                    .padding()
-
-                // Text Field for Feedback Input
-                TextField("Type here..", text: $feedbackText)
-                    .padding()
-                    .background(Color.white)
-                    .cornerRadius(10)
                     .padding(.horizontal, 40)
+                    .padding(.top, 10)
 
-                // Submit Button
+                // Text Editor with Professional Styling
+                TextEditor(text: $feedbackText)
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(Color.white)
+                            .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
+                    )
+                    .frame(maxHeight: .infinity)
+                    .padding(.horizontal, 20)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                    )
+
+                // Submit Button with Enhanced Styling
                 Button(action: {
                     print("Feedback Submitted: \(feedbackText)")
                 }) {
-                    Text("Submit")
-                        .fontWeight(.bold)
+                    Text("Submit Feedback")
+                        .font(.custom("Impact", size: 18)) // Using Impact for bold button text
+                        .fontWeight(.semibold)
                         .foregroundColor(.white)
                         .padding()
                         .frame(maxWidth: .infinity)
-                        .background(Color.blue.opacity(0.8))
+                        .background(
+                            LinearGradient(gradient: Gradient(colors: [Color(hex: "#5a0ef6"), Color(hex: "#7849fd")]), startPoint: .leading, endPoint: .trailing)
+                        )
                         .cornerRadius(10)
-                        .padding(.horizontal, 40)
+                        .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 5)
                 }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 10)
 
-                Spacer()
-                
                 // Bottom Navigation Bar
                 HStack {
                     Spacer()
@@ -66,7 +77,7 @@ struct FeedbackView: View {
                 .padding()
                 .background(Color.black)
             }
-            .background(Color(hex: "251db4").ignoresSafeArea()) // Background color from HomePageView
+            .background(Color(hex: "251db4").ignoresSafeArea()) // Background color from palette
         }
     }
 }
@@ -85,3 +96,4 @@ private func navBarButton(icon: String, label: String, action: @escaping () -> V
 #Preview {
     FeedbackView()
 }
+
