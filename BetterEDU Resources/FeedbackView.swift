@@ -48,57 +48,33 @@ struct FeedbackView: View {
             }
 
             Spacer()
-
-            // Navigation Bar at the Bottom
             HStack {
                 Spacer()
-
-                Button(action: {
-                    selectedTab = 0 // Navigate to Search
-                }) {
-                    VStack {
-                        Image(systemName: "magnifyingglass")
-                        Text("Search")
-                            .font(.footnote)
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .foregroundColor(selectedTab == 0 ? .blue : .white)
-
+                navBarButton(icon: "house", label: "Home", action: {})
                 Spacer()
-
-                Button(action: {
-                    selectedTab = 1 // Navigate to Saved
-                }) {
-                    VStack {
-                        Image(systemName: "heart.fill")
-                        Text("Saved")
-                            .font(.footnote)
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .foregroundColor(selectedTab == 1 ? .blue : .white)
-
+                navBarButton(icon: "magnifyingglass", label: "Search", action: {})
                 Spacer()
-
-                Button(action: {
-                    selectedTab = 2 // Stay on Feedback
-                }) {
-                    VStack {
-                        Image(systemName: "message.fill")
-                        Text("Feedback")
-                            .font(.footnote)
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .foregroundColor(selectedTab == 2 ? .blue : .white)
-
+                navBarButton(icon: "heart.fill", label: "Saved", action: {})
+                Spacer()
+                navBarButton(icon: "line.3.horizontal.decrease.circle", label: "Filter", action: {})
                 Spacer()
             }
             .padding()
             .background(Color.black)
+
         }
         .background(Color(hex: "251db4").ignoresSafeArea()) // Background color from HomePageView
+
+    }
+ 
+} // Helper function for the bottom navigation buttons
+private func navBarButton(icon: String, label: String, action: @escaping () -> Void) -> some View {
+    Button(action: action) {
+        VStack {
+            Image(systemName: icon)
+            Text(label).font(.footnote)
+        }
+        .foregroundColor(.white)
     }
 }
 
