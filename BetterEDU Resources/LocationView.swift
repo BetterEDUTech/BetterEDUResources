@@ -1,10 +1,3 @@
-//
-//  LocationView.swift
-//  BetterEDU Resources
-//
-//  Created by Nick Arana on 10/31/24.
-//
-
 import SwiftUI
 
 struct LocationView: View {
@@ -17,11 +10,13 @@ struct LocationView: View {
 
     var body: some View {
         ZStack {
-            // Background color
-            Color(hex: "251db4")
+            // Background gradient
+            LinearGradient(gradient: Gradient(colors: [Color(hex: "3b3aaf"), Color(hex: "1d1ba9")]),
+                           startPoint: .topLeading, endPoint: .bottomTrailing)
                 .ignoresSafeArea()
 
             VStack(alignment: .leading, spacing: 20) {
+                
                 // Custom Back Arrow in the Top-Left Corner
                 HStack {
                     Button(action: {
@@ -36,54 +31,66 @@ struct LocationView: View {
                 .padding([.top, .leading])
 
                 Text("Set Location")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
+                    .font(.system(size: 32, weight: .bold))
                     .foregroundColor(.white)
                     .padding(.top, -10)
 
-                // Search Field
-                TextField("Search for your state", text: $searchText)
-                    .padding()
-                    .background(Color.white.opacity(0.2))
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
-                
+                // Search Field with Icon and custom placeholder color
+                HStack {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(.white.opacity(0.7))
+                    TextField("Search for your state", text: $searchText)
+                        .foregroundColor(.white)
+                        .placeholder(when: searchText.isEmpty) {
+                            Text("Search for your state")
+                                .foregroundColor(Color.white.opacity(0.9)) // More visible placeholder color
+                        }
+                }
+                .padding()
+                .background(Color.white.opacity(0.2))
+                .cornerRadius(10)
+
                 // Filtered List of States
-                List {
-                    ForEach(filteredStates, id: \.self) { state in
-                        Button(action: {
-                            selectedState = state
-                        }) {
-                            HStack {
-                                Text(state)
-                                    .foregroundColor(.white)
-                                Spacer()
-                                if selectedState == state {
-                                    Image(systemName: "checkmark")
+                ScrollView {
+                    VStack(spacing: 10) {
+                        ForEach(filteredStates, id: \.self) { state in
+                            Button(action: {
+                                selectedState = state
+                            }) {
+                                HStack {
+                                    Text(state)
                                         .foregroundColor(.white)
+                                    Spacer()
+                                    if selectedState == state {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundColor(.green)
+                                    }
                                 }
+                                .padding()
+                                .background(selectedState == state ? Color.white.opacity(0.2) : Color.white.opacity(0.1))
+                                .cornerRadius(8)
                             }
                         }
-                        .listRowBackground(Color.clear)
                     }
+                    .padding(.top, 10)
                 }
-                .listStyle(PlainListStyle())
                 .background(Color.clear)
                 .cornerRadius(10)
-                
+
                 Spacer()
 
-                // Save Button
+                // Save Button with a distinct style
                 Button(action: {
                     saveLocation()
                 }) {
                     Text("Save")
                         .fontWeight(.bold)
-                        .foregroundColor(.white)
+                        .foregroundColor(Color(hex: "251db4"))
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.white.opacity(0.2))
+                        .background(Color.white)
                         .cornerRadius(10)
+                        .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 5)
                 }
             }
             .padding()
@@ -104,6 +111,18 @@ struct LocationView: View {
     private func saveLocation() {
         // Code to save the selected location, e.g., storing in UserDefaults or database
         print("Saved Location: \(selectedState)")
+    }
+}
+
+// Custom modifier for TextField placeholder
+extension View {
+    func placeholder<Content: View>(when shouldShow: Bool, alignment: Alignment = .leading, @ViewBuilder content: () -> Content) -> some View {
+        ZStack(alignment: alignment) {
+            if shouldShow {
+                content()
+            }
+            self
+        }
     }
 }
 
