@@ -1,10 +1,3 @@
-//
-//  SavedView.swift
-//  BetterEDU Resources
-//
-//  Created by Nick Arana on 10/29/24.
-//
-
 import SwiftUI
 
 struct SavedView: View {
@@ -16,54 +9,57 @@ struct SavedView: View {
     ]
 
     var body: some View {
-        ZStack {
-            // Background color
-            Color(hex: "251db4").ignoresSafeArea()
+        NavigationView {
+            ZStack {
+                // Background color
+                Color(hex: "251db4").ignoresSafeArea()
 
-            VStack(spacing: 20) {
-                // Header with profile icon
-                HStack {
-                    Image(systemName: "person.circle.fill")
-                        .resizable()
-                        .frame(width: 40, height: 40)
-                        .foregroundColor(.white)
-                        .padding(.leading)
-
-                    Spacer()
-                }
-
-                // Title
-                Text("My saved resources")
-                    .font(.custom("Impact", size: 28))
-                    .foregroundColor(.white)
-                    .padding()
-
-                // Scrollable grid of saved resources
-                ScrollView {
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 20) {
-                        ForEach(savedResources) { resource in
-                            ResourceView(resource: resource)
+                VStack(spacing: 20) {
+                    // Header with profile icon
+                    HStack {
+                        NavigationLink(destination: ProfileView()) {
+                            Image(systemName: "person.circle.fill")
+                                .resizable()
+                                .frame(width: 40, height: 40)
+                                .foregroundColor(.white)
+                                .padding(.leading)
                         }
+                        Spacer()
                     }
-                    .padding(.horizontal)
-                }
 
-                Spacer()
+                    // Title
+                    Text("My saved resources")
+                        .font(.custom("Impact", size: 28))
+                        .foregroundColor(.white)
+                        .padding()
 
-                // Navigation Bar
-                HStack {
+                    // Scrollable grid of saved resources
+                    ScrollView {
+                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 20) {
+                            ForEach(savedResources) { resource in
+                                ResourceView(resource: resource)
+                            }
+                        }
+                        .padding(.horizontal)
+                    }
+
                     Spacer()
-                    navBarButton(icon: "house", label: "Home", action: {})
-                    Spacer()
-                    navBarButton(icon: "magnifyingglass", label: "Search", action: {})
-                    Spacer()
-                    navBarButton(icon: "heart.fill", label: "Saved", action: {})
-                    Spacer()
-                    navBarButton(icon: "line.3.horizontal.decrease.circle", label: "Filter", action: {})
-                    Spacer()
+
+                    // Navigation Bar
+                    HStack {
+                        Spacer()
+                        navBarButton(icon: "house", label: "Home", action: {})
+                        Spacer()
+                        navBarButton(icon: "magnifyingglass", label: "Search", action: {})
+                        Spacer()
+                        navBarButton(icon: "heart.fill", label: "Saved", action: {})
+                        Spacer()
+                        navBarButton(icon: "line.3.horizontal.decrease.circle", label: "Filter", action: {})
+                        Spacer()
+                    }
+                    .padding()
+                    .background(Color.black)
                 }
-                .padding()
-                .background(Color.black)
             }
         }
     }
