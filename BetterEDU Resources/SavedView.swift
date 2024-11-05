@@ -53,6 +53,8 @@ struct SavedView: View {
                 // Navigation Bar
                 HStack {
                     Spacer()
+                    navBarButton(icon: "house", label: "Home", action: {})
+                    Spacer()
                     navBarButton(icon: "magnifyingglass", label: "Search", action: {})
                     Spacer()
                     navBarButton(icon: "heart.fill", label: "Saved", action: {})

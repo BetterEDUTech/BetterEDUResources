@@ -140,73 +140,32 @@ struct HomePageView: View {
             }
 
             Spacer()
-
-            // Navigation Bar at the Bottom
             HStack {
                 Spacer()
-                Button(action: {
-                        // Navigate to Home Page
-                        selectedTab = 0 // Example action for Home
-                    }) {
-                        VStack {
-                            Image(systemName: "house.fill") // House icon
-                                .foregroundColor(Color.white) // Icon color
-                            Text("Home") // Label for the button
-                                .font(.footnote)
-                                .foregroundColor(Color.white) // Text color
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
-                    .foregroundColor(selectedTab == 0 ? .blue : .white)
-                
-                Button(action: {
-                    // Navigate to Search Page
-                }) {
-                    VStack {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundColor(Color.white)
-                        Text("Search")
-                            .font(.footnote)
-                            .foregroundColor(Color.white)
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .foregroundColor(selectedTab == 1 ? .blue : .white)
-
+                navBarButton(icon: "house", label: "Home", action: {})
                 Spacer()
-                
-                Button(action: {
-                    // Navigate to Saved Page
-                }) {
-                    VStack {
-                        Image(systemName: "heart.fill")
-                        Text("Saved")
-                            .font(.footnote)
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .foregroundColor(selectedTab == 2 ? .blue : .white)
-
+                navBarButton(icon: "magnifyingglass", label: "Search", action: {})
                 Spacer()
-                
-                Button(action: {
-                    // Navigate to Feedback Page
-                }) {
-                    VStack {
-                        Image(systemName: "message.fill")
-                        Text("Feedback")
-                            .font(.footnote)
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .foregroundColor(selectedTab == 3 ? .blue : .white)
-
+                navBarButton(icon: "heart.fill", label: "Saved", action: {})
+                Spacer()
+                navBarButton(icon: "line.3.horizontal.decrease.circle", label: "Filter", action: {})
                 Spacer()
             }
             .padding()
             .background(Color.black)
         }
         .background(Color(hex: "251db4").ignoresSafeArea()) // Background color from the mockup
+    }
+}
+
+// Helper function for the bottom navigation buttons
+private func navBarButton(icon: String, label: String, action: @escaping () -> Void) -> some View {
+    Button(action: action) {
+        VStack {
+            Image(systemName: icon)
+            Text(label).font(.footnote)
+        }
+        .foregroundColor(.white)
     }
 }
 
