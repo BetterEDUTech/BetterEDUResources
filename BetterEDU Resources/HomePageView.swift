@@ -71,9 +71,8 @@ struct HomePageView: View {
                 // Scrollable Resource List
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
-                        Button(action: {
-                            // Navigate to Financial Services
-                        }) {
+                        // Navigation to Financial Services
+                        NavigationLink(destination: FinancialServicesView()) {
                             HStack {
                                 Image(systemName: "building.columns.fill")
                                 Text("Financial Services")
@@ -86,9 +85,8 @@ struct HomePageView: View {
                             .cornerRadius(10)
                         }
                         
-                        Button(action: {
-                            // Navigate to Emergency Hotlines
-                        }) {
+                        // Navigation to Emergency Hotlines
+                        NavigationLink(destination: EmergencyHotlinesView()) {
                             HStack {
                                 Image(systemName: "phone.arrow.up.right.fill")
                                 Text("Emergency Hotlines")
@@ -101,9 +99,8 @@ struct HomePageView: View {
                             .cornerRadius(10)
                         }
                         
-                        Button(action: {
-                            // Navigate to Self-Care Resources
-                        }) {
+                        // Navigation to Self-Care Resources
+                        NavigationLink(destination: SelfCareResourcesView()) {
                             HStack {
                                 Image(systemName: "heart.fill")
                                 Text("Self-Care Resources")
@@ -116,9 +113,8 @@ struct HomePageView: View {
                             .cornerRadius(10)
                         }
                         
-                        Button(action: {
-                            // Navigate to Academic Stress Support
-                        }) {
+                        // Navigation to Academic Stress Support
+                        NavigationLink(destination: AcademicStressView()) {
                             HStack {
                                 Image(systemName: "book.fill")
                                 Text("Academic Stress Support")
