@@ -1,5 +1,29 @@
 import SwiftUI
 
+struct LavaLampBubble: View {
+    @State private var offset = CGSize.zero
+    let bubbleColor: Color
+    
+    var body: some View {
+        Circle()
+            .fill(bubbleColor.opacity(0.3)) // Reduced opacity for a softer background effect
+            .frame(width: CGFloat.random(in: 150...300), height: CGFloat.random(in: 150...300)) // Large bubble size
+            .offset(offset)
+            .onAppear {
+                let randomX = CGFloat.random(in: -250...250)
+                let randomY = CGFloat.random(in: -800...800)
+                offset = CGSize(width: randomX, height: randomY)
+                
+                withAnimation(
+                    Animation.easeInOut(duration: Double.random(in: 10...20)) // Slower movement
+                        .repeatForever(autoreverses: true)
+                ) {
+                    offset = CGSize(width: -randomX, height: -randomY)
+                }
+            }
+    }
+}
+
 struct LoginView: View {
     @State private var email = ""
     @State private var password = ""
@@ -8,17 +32,23 @@ struct LoginView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                // Set the background color to match your mockup
+                // Background color from brand kit
                 Color(hex: "251db4")
                     .ignoresSafeArea()
+                
+                // Larger, slower, and more randomized lava lamp bubbles
+                ForEach(0..<5, id: \.self) { _ in
+                    LavaLampBubble(bubbleColor: Color(hex: ["5a0ef6", "98b6f8", "7849fd"].randomElement()!))
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
                 
                 VStack(spacing: 20) {
                     Spacer()
                     
-                    Image("BetterLogo") // Use the name of your image set
+                    Image("BetterLogo 1") // Use the name of your image set
                         .resizable()
                         .aspectRatio(contentMode: .fit)
-                        .frame(height: 100) // Adjust the frame size as needed
+                        .frame(height: 200) // Adjust the frame size as needed
                     
                     Text("Sign In to get started")
                         .font(.custom("Impact", size: 24))
@@ -79,7 +109,7 @@ struct LoginView: View {
                             .font(.custom("Impact", size: 30))
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(Color.orange)
+                            .background(Color(hex: "5a0ef6"))
                             .foregroundColor(.white)
                             .cornerRadius(10)
                     }
@@ -112,7 +142,6 @@ struct LoginView: View {
         }
     }
 }
-
 
 struct LoginView_Previews: PreviewProvider {
     static var previews: some View {
