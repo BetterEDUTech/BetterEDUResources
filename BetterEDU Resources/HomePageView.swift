@@ -1,5 +1,6 @@
 import SwiftUI
-
+import Firebase
+import FirebaseFirestore
 struct HomePageView: View {
     @State private var selectedTab = 0
     
