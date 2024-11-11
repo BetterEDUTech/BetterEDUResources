@@ -1,4 +1,5 @@
 import SwiftUI
+import FirebaseAuth
 
 struct LavaLampBubble: View {
     @State private var offset = CGSize.zero
@@ -6,8 +7,8 @@ struct LavaLampBubble: View {
     
     var body: some View {
         Circle()
-            .fill(bubbleColor.opacity(0.3)) // Reduced opacity for a softer background effect
-            .frame(width: CGFloat.random(in: 150...300), height: CGFloat.random(in: 150...300)) // Large bubble size
+            .fill(bubbleColor.opacity(0.3))
+            .frame(width: CGFloat.random(in: 150...300), height: CGFloat.random(in: 150...300))
             .offset(offset)
             .onAppear {
                 let randomX = CGFloat.random(in: -250...250)
@@ -15,7 +16,7 @@ struct LavaLampBubble: View {
                 offset = CGSize(width: randomX, height: randomY)
                 
                 withAnimation(
-                    Animation.easeInOut(duration: Double.random(in: 10...20)) // Slower movement
+                    Animation.easeInOut(duration: Double.random(in: 10...20))
                         .repeatForever(autoreverses: true)
                 ) {
                     offset = CGSize(width: -randomX, height: -randomY)
@@ -28,15 +29,15 @@ struct LoginView: View {
     @State private var email = ""
     @State private var password = ""
     @State private var isPasswordVisible = false
+    @State private var errorMessage: String?
+    @State private var isLoggedIn = false
 
     var body: some View {
         NavigationView {
             ZStack {
-                // Background color from brand kit
                 Color(hex: "251db4")
                     .ignoresSafeArea()
                 
-                // Larger, slower, and more randomized lava lamp bubbles
                 ForEach(0..<5, id: \.self) { _ in
                     LavaLampBubble(bubbleColor: Color(hex: ["5a0ef6", "98b6f8", "7849fd"].randomElement()!))
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -45,10 +46,10 @@ struct LoginView: View {
                 VStack(spacing: 20) {
                     Spacer()
                     
-                    Image("BetterLogo 1") // Use the name of your image set
+                    Image("BetterLogo 1")
                         .resizable()
                         .aspectRatio(contentMode: .fit)
-                        .frame(height: 200) // Adjust the frame size as needed
+                        .frame(height: 200)
                     
                     Text("Sign In to get started")
                         .font(.custom("Impact", size: 24))
@@ -56,7 +57,6 @@ struct LoginView: View {
                         .foregroundColor(.white)
                         .padding(.top, 10)
 
-                    // Email TextField
                     VStack(alignment: .leading, spacing: 10) {
                         Text("Email")
                             .font(.custom("Impact", size: 18))
@@ -70,7 +70,6 @@ struct LoginView: View {
                             .autocapitalization(.none)
                     }
 
-                    // Password SecureField with show/hide toggle
                     VStack(alignment: .leading, spacing: 10) {
                         Text("Password")
                             .font(.custom("Impact", size: 18))
@@ -101,10 +100,7 @@ struct LoginView: View {
                         }
                     }
 
-                    // Sign In button
-                    Button(action: {
-                        // Action for login
-                    }) {
+                    Button(action: { signInUser() }) {
                         Text("Sign In")
                             .font(.custom("Impact", size: 30))
                             .frame(maxWidth: .infinity)
@@ -115,9 +111,15 @@ struct LoginView: View {
                     }
                     .padding(.top, 20)
 
-                    // Forgot Password and Sign Up Navigation Links
+                    if let errorMessage = errorMessage {
+                        Text(errorMessage)
+                            .foregroundColor(.red)
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding()
+                    }
+
                     HStack {
-                        // Forgot Password Navigation Link
                         NavigationLink(destination: ForgotPasswordView()) {
                             Text("Forgot Password?")
                                 .font(.custom("Impact", size: 16))
@@ -126,7 +128,6 @@ struct LoginView: View {
                         
                         Spacer()
                         
-                        // Sign Up Navigation Link
                         NavigationLink(destination: SignUpView()) {
                             Text("Sign Up")
                                 .font(.custom("Impact", size: 16))
@@ -138,6 +139,24 @@ struct LoginView: View {
                     Spacer()
                 }
                 .padding()
+                .fullScreenCover(isPresented: $isLoggedIn) {
+                    HomePageView()
+                }
+            }
+        }
+    }
+    
+    private func signInUser() {
+        guard !email.isEmpty, !password.isEmpty else {
+            errorMessage = "Please enter your email and password."
+            return
+        }
+
+        Auth.auth().signIn(withEmail: email, password: password) { authResult, error in
+            if let error = error {
+                self.errorMessage = error.localizedDescription
+            } else {
+                self.isLoggedIn = true
             }
         }
     }

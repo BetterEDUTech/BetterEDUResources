@@ -173,13 +173,13 @@ struct SignUpView: View {
 
                     Spacer()
 
-                    NavigationLink(destination: HomePageView(), isActive: $isSignedUp) {
-                        EmptyView()
-                    }
                 }
                 .padding()
                 .sheet(isPresented: $showingImagePicker) {
                     ImagePicker(image: $profileImage)
+                }
+                .fullScreenCover(isPresented: $isSignedUp) {
+                    HomePageView()
                 }
             }
         }
