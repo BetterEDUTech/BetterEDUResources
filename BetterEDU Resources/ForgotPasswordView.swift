@@ -9,21 +9,26 @@ import SwiftUI
 
 struct ForgotPasswordView: View {
     @State private var email = ""
-    @State private var isRequestSent = false // State to show confirmation message after submitting
+    @State private var isRequestSent = false
 
     var body: some View {
         ZStack {
-            // Background color
+            // Background color and bubbles from LoginView
             Color(hex: "251db4").ignoresSafeArea()
+            
+            ForEach(0..<5, id: \.self) { _ in
+                LavaLampBubble(bubbleColor: Color(hex: ["5a0ef6", "98b6f8", "7849fd"].randomElement()!))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
 
             VStack(spacing: 20) {
                 Spacer()
 
                 // Title
                 Text("Forgot Password")
-                    .font(.custom("Impact", size: 28))
+                    .font(.custom("Impact", size: 24))
                     .foregroundColor(.white)
-                    .padding()
+                    .padding(.bottom, 10)
 
                 // Instruction Text
                 Text("Enter your email to receive reset instructions.")
@@ -32,7 +37,7 @@ struct ForgotPasswordView: View {
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 40)
 
-                // Email TextField
+                // Email TextField styled like Login and Signup
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Email")
                         .font(.custom("Impact", size: 18))
@@ -48,22 +53,21 @@ struct ForgotPasswordView: View {
                 }
                 .padding(.horizontal)
 
-                // Submit Button
+                // Submit Button styled to match other views
                 Button(action: {
-                    // Action for sending password reset
                     isRequestSent = true
                 }) {
                     Text("Submit")
                         .font(.custom("Impact", size: 24))
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.orange)
+                        .background(Color(hex: "5a0ef6"))
                         .foregroundColor(.white)
                         .cornerRadius(10)
                 }
                 .padding(.horizontal)
 
-                // Confirmation Message
+                // Confirmation Message styled consistently
                 if isRequestSent {
                     Text("Password reset instructions have been sent to your email.")
                         .font(.custom("Impact", size: 14))
@@ -79,7 +83,6 @@ struct ForgotPasswordView: View {
         }
     }
 }
-
 
 struct ForgotPasswordView_Previews: PreviewProvider {
     static var previews: some View {
