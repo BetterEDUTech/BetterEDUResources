@@ -6,10 +6,12 @@
 //
 
 import SwiftUI
+import FirebaseAuth
 
 struct ForgotPasswordView: View {
     @State private var email = ""
     @State private var isRequestSent = false
+    @State private var errorMessage: String?
 
     var body: some View {
         ZStack {
@@ -55,7 +57,7 @@ struct ForgotPasswordView: View {
 
                 // Submit Button styled to match other views
                 Button(action: {
-                    isRequestSent = true
+                    sendPasswordReset()
                 }) {
                     Text("Submit")
                         .font(.custom("Impact", size: 24))
@@ -67,11 +69,18 @@ struct ForgotPasswordView: View {
                 }
                 .padding(.horizontal)
 
-                // Confirmation Message styled consistently
+                // Confirmation or Error Message
                 if isRequestSent {
                     Text("Password reset instructions have been sent to your email.")
                         .font(.custom("Impact", size: 14))
                         .foregroundColor(.green)
+                        .padding(.top, 10)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 40)
+                } else if let errorMessage = errorMessage {
+                    Text(errorMessage)
+                        .font(.custom("Impact", size: 14))
+                        .foregroundColor(.red)
                         .padding(.top, 10)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 40)
@@ -80,6 +89,25 @@ struct ForgotPasswordView: View {
                 Spacer()
             }
             .padding()
+        }
+    }
+
+    private func sendPasswordReset() {
+        guard !email.isEmpty else {
+            errorMessage = "Please enter your email address."
+            return
+        }
+
+        Auth.auth().sendPasswordReset(withEmail: email) { error in
+            if let error = error {
+                // Display error message
+                self.errorMessage = error.localizedDescription
+                self.isRequestSent = false
+            } else {
+                // Display confirmation message
+                self.isRequestSent = true
+                self.errorMessage = nil
+            }
         }
     }
 }
