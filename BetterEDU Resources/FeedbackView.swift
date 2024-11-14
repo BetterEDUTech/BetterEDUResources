@@ -2,7 +2,10 @@ import SwiftUI
 
 struct FeedbackView: View {
     @State private var feedbackText: String = "" // State variable to bind text input
-    @State private var selectedTab = 2 // Set the default tab to Feedback
+    @State private var isShowingHomePage = false
+    @State private var isShowingResources = false
+    @State private var isShowingSaved = false
+    @State private var isShowingFeedback = false
 
     var body: some View {
         NavigationView {
@@ -65,13 +68,36 @@ struct FeedbackView: View {
                 // Bottom Navigation Bar
                 HStack {
                     Spacer()
-                    navBarButton(icon: "house", label: "Home", action: {})
+                    navBarButton(icon: "house", label: "Home") {
+                        if !isShowingHomePage {
+                            isShowingHomePage = true
+                        }
+                    }
+                    .fullScreenCover(isPresented: $isShowingHomePage) {
+                        HomePageView()
+                    }
                     Spacer()
-                    navBarButton(icon: "magnifyingglass", label: "Search", action: {})
+                    navBarButton(icon: "magnifyingglass", label: "Search") {
+                        if !isShowingResources {
+                            isShowingResources = true
+                        }
+                    }
+                    .fullScreenCover(isPresented: $isShowingResources) {
+                        ResourcesAppView()
+                    }
                     Spacer()
-                    navBarButton(icon: "heart.fill", label: "Saved", action: {})
+                    navBarButton(icon: "heart.fill", label: "Saved") {
+                        if !isShowingSaved {
+                            isShowingSaved = true
+                        }
+                    }
+                    .fullScreenCover(isPresented: $isShowingSaved) {
+                        SavedView()
+                    }
                     Spacer()
-                    navBarButton(icon: "line.3.horizontal.decrease.circle", label: "Filter", action: {})
+                    navBarButton(icon: "bubble.left.and.bubble.right", label: "Feedback") {
+                        // Do nothing if already on the Feedback tab
+                    }
                     Spacer()
                 }
                 .padding()

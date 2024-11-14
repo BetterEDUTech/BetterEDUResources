@@ -7,6 +7,12 @@ struct SavedView: View {
         Resource(imageName: "educational_resources", title: "Educational Resources", subtitle: "Saved"),
         Resource(imageName: "mental_health_resources", title: "Mental Health Resources", subtitle: "Saved")
     ]
+    
+    // Navigation states for bottom nav bar
+    @State private var isShowingHomePage = false
+    @State private var isShowingResources = false
+    @State private var isShowingSaved = false
+    @State private var isShowingFeedback = false
 
     var body: some View {
         NavigationView {
@@ -45,16 +51,39 @@ struct SavedView: View {
 
                     Spacer()
 
-                    // Navigation Bar
+                    // Bottom Navigation Bar
                     HStack {
                         Spacer()
-                        navBarButton(icon: "house", label: "Home", action: {})
+                        navBarButton(icon: "house", label: "Home") {
+                            if !isShowingHomePage {
+                                isShowingHomePage = true
+                            }
+                        }
+                        .fullScreenCover(isPresented: $isShowingHomePage) {
+                            HomePageView()
+                        }
                         Spacer()
-                        navBarButton(icon: "magnifyingglass", label: "Search", action: {})
+                        navBarButton(icon: "magnifyingglass", label: "Search") {
+                            if !isShowingResources {
+                                isShowingResources = true
+                            }
+                        }
+                        .fullScreenCover(isPresented: $isShowingResources) {
+                            ResourcesAppView()
+                        }
                         Spacer()
-                        navBarButton(icon: "heart.fill", label: "Saved", action: {})
+                        navBarButton(icon: "heart.fill", label: "Saved") {
+                            // Do nothing if already on the Saved tab
+                        }
                         Spacer()
-                        navBarButton(icon: "line.3.horizontal.decrease.circle", label: "Filter", action: {})
+                        navBarButton(icon: "bubble.left.and.bubble.right", label: "Feedback") {
+                            if !isShowingFeedback {
+                                isShowingFeedback = true
+                            }
+                        }
+                        .fullScreenCover(isPresented: $isShowingFeedback) {
+                            FeedbackView()
+                        }
                         Spacer()
                     }
                     .padding()
@@ -114,3 +143,4 @@ struct ResourceView: View {
 #Preview {
     SavedView()
 }
+

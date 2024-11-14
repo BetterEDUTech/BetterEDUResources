@@ -1,8 +1,12 @@
 import SwiftUI
 import Firebase
 import FirebaseFirestore
+
 struct HomePageView: View {
     @State private var selectedTab = 0
+    @State private var isShowingResources = false
+    @State private var isShowingSaved = false
+    @State private var isShowingFeedback = false
     
     var body: some View {
         NavigationView {
@@ -136,13 +140,36 @@ struct HomePageView: View {
                 // Bottom Navigation Bar
                 HStack {
                     Spacer()
-                    navBarButton(icon: "house", label: "Home", action: {})
+                    navBarButton(icon: "house", label: "Home") {
+                        // Do nothing if already on Home
+                    }
                     Spacer()
-                    navBarButton(icon: "magnifyingglass", label: "Search", action: {})
+                    navBarButton(icon: "magnifyingglass", label: "Search") {
+                        if !isShowingResources {
+                            isShowingResources = true
+                        }
+                    }
+                    .fullScreenCover(isPresented: $isShowingResources) {
+                        ResourcesAppView()
+                    }
                     Spacer()
-                    navBarButton(icon: "heart.fill", label: "Saved", action: {})
+                    navBarButton(icon: "heart.fill", label: "Saved") {
+                        if !isShowingSaved {
+                            isShowingSaved = true
+                        }
+                    }
+                    .fullScreenCover(isPresented: $isShowingSaved) {
+                        SavedView()
+                    }
                     Spacer()
-                    navBarButton(icon: "line.3.horizontal.decrease.circle", label: "Filter", action: {})
+                    navBarButton(icon: "bubble.left.and.bubble.right", label: "Feedback") {
+                        if !isShowingFeedback {
+                            isShowingFeedback = true
+                        }
+                    }
+                    .fullScreenCover(isPresented: $isShowingFeedback) {
+                        FeedbackView()
+                    }
                     Spacer()
                 }
                 .padding()

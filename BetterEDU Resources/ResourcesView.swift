@@ -1,9 +1,3 @@
-//
-//  ResourcesView.swift
-//  BetterEDU Resources
-//
-//  Created by Connor Ott on 11/6/24.
-//
 import SwiftUI
 import Firebase
 import FirebaseFirestore
@@ -20,24 +14,30 @@ struct ResourcesAppView: View {
     @State private var resources: [ResourceItem] = []   // State array for resources
     @State private var searchText: String = ""          // State for the search text
     private var db = Firestore.firestore()
+    
+    @State private var isShowingHomePage = false
+    @State private var isShowingResources = false
+    @State private var isShowingSaved = false
+    @State private var isShowingFeedback = false
 
     var body: some View {
         NavigationView {
             VStack(alignment: .leading) {
                 // Title
                 Text("Resources")
-                .font(.custom("Impact", size: 48))
-                .foregroundColor(.white)
-                .padding(.top, 20)  // Space from the top of the screen
-                .frame(maxWidth: .infinity, alignment: .center) // Center align the title
+                    .font(.custom("Impact", size: 48))
+                    .foregroundColor(.white)
+                    .padding(.top, 20)  // Space from the top of the screen
+                    .frame(maxWidth: .infinity, alignment: .center) // Center align the title
 
                 // Search Bar below the title
                 TextField("Search Resources...", text: $searchText)
-                .padding(10)
-                .background(Color.white.opacity(0.8))
-                .cornerRadius(8)
-                .padding(.horizontal)
-                .padding(.top, 10) // Space between title and search bar
+                    .padding(10)
+                    .background(Color.white.opacity(0.8))
+                    .cornerRadius(8)
+                    .padding(.horizontal)
+                    .padding(.top, 10) // Space between title and search bar
+
                 Spacer()
                 
                 Text("Resources Coming Soon!")
@@ -45,17 +45,42 @@ struct ResourcesAppView: View {
                     .fontWeight(.bold)
                     .foregroundColor(.white) // color for the text
                     .frame(maxWidth: .infinity, alignment: .center)
-                    Spacer()
                 
+                Spacer()
+                
+                // Bottom Navigation Bar
                 HStack {
                     Spacer()
-                    navBarButton(icon: "house", label: "Home", action: {})
+                    navBarButton(icon: "house", label: "Home") {
+                        if !isShowingHomePage {
+                            isShowingHomePage = true
+                        }
+                    }
+                    .fullScreenCover(isPresented: $isShowingHomePage) {
+                        HomePageView()
+                    }
                     Spacer()
-                    navBarButton(icon: "bubble.left.fill", label: "Feedback", action: {})
+                    navBarButton(icon: "magnifyingglass", label: "Search") {
+                        // Do nothing if already on Resources page
+                    }
                     Spacer()
-                    navBarButton(icon: "heart.fill", label: "Saved", action: {})
+                    navBarButton(icon: "heart.fill", label: "Saved") {
+                        if !isShowingSaved {
+                            isShowingSaved = true
+                        }
+                    }
+                    .fullScreenCover(isPresented: $isShowingSaved) {
+                        SavedView()
+                    }
                     Spacer()
-                    navBarButton(icon: "line.3.horizontal.decrease.circle", label: "Filter", action: {})
+                    navBarButton(icon: "bubble.left.and.bubble.right", label: "Feedback") {
+                        if !isShowingFeedback {
+                            isShowingFeedback = true
+                        }
+                    }
+                    .fullScreenCover(isPresented: $isShowingFeedback) {
+                        FeedbackView()
+                    }
                     Spacer()
                 }
                 .padding()
@@ -63,25 +88,6 @@ struct ResourcesAppView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity) // Expand to fill the screen
             .background(Color(hex: "251db4"))  // Set the background color using the hex extension
-            .navigationBarTitleDisplayMode(.inline)
-                // List of filtered resources
-                List(filteredResources) { resource in
-                    VStack(alignment: .leading) {
-                        Text(resource.title)
-                            .font(.headline)
-                            .padding(.bottom, 4) // Adds space between title and other info
-                        
-                        Text("Phone: \(resource.phone_number)")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-
-                        Text("Website: \(resource.website)")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    .padding(.vertical, 8) // Add padding to each list item
-                }
-            .listStyle(PlainListStyle()) // Make sure the list has the correct style
             .navigationBarTitleDisplayMode(.inline)
             .onAppear(perform: fetchResources)
         }
@@ -127,4 +133,3 @@ struct ResourcesAppView_Previews: PreviewProvider {
         ResourcesAppView()
     }
 }
-
