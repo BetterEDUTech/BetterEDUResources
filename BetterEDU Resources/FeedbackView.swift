@@ -1,4 +1,7 @@
 import SwiftUI
+import Firebase
+import FirebaseAuth
+import FirebaseFirestore
 
 struct FeedbackView: View {
     @State private var feedbackText: String = "" // State variable to bind text input
@@ -6,6 +9,9 @@ struct FeedbackView: View {
     @State private var isShowingResources = false
     @State private var isShowingSaved = false
     @State private var isShowingFeedback = false
+    @State private var profileImage: UIImage? = nil // State to store the profile image
+
+    private let db = Firestore.firestore()
 
     var body: some View {
         NavigationView {
@@ -13,15 +19,26 @@ struct FeedbackView: View {
                 // Header Section with Profile Icon
                 HStack {
                     NavigationLink(destination: ProfileView()) {
-                        Image(systemName: "person.circle.fill")
-                            .resizable()
-                            .frame(width: 35, height: 35)
-                            .foregroundColor(.white)
-                            .padding(.leading)
+                        if let image = profileImage {
+                            Image(uiImage: image)
+                                .resizable()
+                                .frame(width: 35, height: 35)
+                                .clipShape(Circle())
+                                .overlay(Circle().stroke(Color.white, lineWidth: 2))
+                                .shadow(radius: 4)
+                                .padding(.leading)
+                        } else {
+                            Image(systemName: "person.circle.fill")
+                                .resizable()
+                                .frame(width: 35, height: 35)
+                                .foregroundColor(.white)
+                                .padding(.leading)
+                        }
                     }
                     Spacer()
                 }
                 .padding(.top)
+                .onAppear(perform: loadProfileImage) // Load profile image on appear
 
                 // Welcome Text with Updated Font and Message
                 Text("Your thoughts matter to us, [Name]. Let us know how we can improve.")
@@ -106,16 +123,51 @@ struct FeedbackView: View {
             .background(Color(hex: "251db4").ignoresSafeArea()) // Background color from palette
         }
     }
-}
 
-// Helper function for the bottom navigation buttons
-private func navBarButton(icon: String, label: String, action: @escaping () -> Void) -> some View {
-    Button(action: action) {
-        VStack {
-            Image(systemName: icon)
-            Text(label).font(.footnote)
+    // Helper function for the bottom navigation buttons
+    private func navBarButton(icon: String, label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack {
+                Image(systemName: icon)
+                Text(label).font(.footnote)
+            }
+            .foregroundColor(.white)
         }
-        .foregroundColor(.white)
+    }
+    
+    // Function to load the user's profile image from Firestore
+    private func loadProfileImage() {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+
+        db.collection("users").document(uid).getDocument { document, error in
+            if let error = error {
+                print("Error loading profile image URL: \(error.localizedDescription)")
+                return
+            }
+            
+            if let document = document, document.exists,
+               let profileImageURLString = document.data()?["profileImageURL"] as? String,
+               let url = URL(string: profileImageURLString) {
+                
+                fetchImage(from: url)
+            }
+        }
+    }
+    
+    // Helper function to fetch an image from a URL
+    private func fetchImage(from url: URL) {
+        URLSession.shared.dataTask(with: url) { data, _, error in
+            if let error = error {
+                print("Error fetching profile image: \(error.localizedDescription)")
+                return
+            }
+            
+            if let data = data, let uiImage = UIImage(data: data) {
+                DispatchQueue.main.async {
+                    self.profileImage = uiImage
+                }
+            }
+        }.resume()
     }
 }
 
