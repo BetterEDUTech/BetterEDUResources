@@ -9,7 +9,7 @@ import SwiftUI
 
 struct RootView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
-    
+    @EnvironmentObject var firestoreManager: FirestoreManager // firestoreManager environ object for resources
     var body: some View {
         if authViewModel.isUserLoggedIn {
             // Show the main content if the user is logged in

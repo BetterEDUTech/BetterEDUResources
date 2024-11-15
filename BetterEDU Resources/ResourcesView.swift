@@ -3,19 +3,11 @@ import Firebase
 import FirebaseAuth
 import FirebaseFirestore
 
-// Define your ResourceItem model with phone_number, title, and website
-struct ResourceItem: Identifiable, Codable {
-    @DocumentID var id: String?         // Firebase Document ID
-    var title: String                   // Resource Title
-    var phone_number: String            // Resource Phone Number
-    var website: String                 // Resource Website URL
-}
-
 struct ResourcesAppView: View {
-    @State private var resources: [ResourceItem] = []   // State array for resources
-    @State private var searchText: String = ""          // State for the search text
+    @State private var documents: [String] = []   // State array for resources
+    @State private var searchText: String = ""    // State for the search text
     private var db = Firestore.firestore()
-    
+    @EnvironmentObject var firestoreManager: FirestoreManager
     @State private var isShowingHomePage = false
     @State private var isShowingResources = false
     @State private var isShowingSaved = false
@@ -66,11 +58,18 @@ struct ResourcesAppView: View {
 
                 Spacer()
                 
-                Text("Resources Coming Soon!")
-                    .font(.custom("Impact", size: 64))
-                    .fontWeight(.bold)
-                    .foregroundColor(.white) // color for the text
-                    .frame(maxWidth: .infinity, alignment: .center)
+                // Show fetched Firestore documents or a loading message
+                if documents.isEmpty {
+                    Text("Resources: \(firestoreManager.resources)")
+                        .font(.custom("Impact", size: 32))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                } else {
+                    List(documents, id: \.self) { document in
+                        Text(document)
+                            .foregroundColor(.white)
+                    }
+                }
                 
                 Spacer()
                 
@@ -115,33 +114,24 @@ struct ResourcesAppView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity) // Expand to fill the screen
             .background(Color(hex: "251db4"))  // Set the background color using the hex extension
             .navigationBarTitleDisplayMode(.inline)
-            .onAppear(perform: fetchResources)
-        }
-    }
-
-    // Function to fetch resources from Firebase
-    private func fetchResources() {
-        db.collection("resourcesApp")
-            .getDocuments { (querySnapshot, error) in
-                if let error = error {
-                    print("Error fetching documents: \(error)")
-                } else {
-                    self.resources = querySnapshot?.documents.compactMap { document in
-                        try? document.data(as: ResourceItem.self)
-                    } ?? []
-                }
+            .task {
+                await fetchResources()
             }
-    }
-
-    // Filtered resources based on search text
-    private var filteredResources: [ResourceItem] {
-        if searchText.isEmpty {
-            return resources
-        } else {
-            return resources.filter { $0.title.lowercased().contains(searchText.lowercased()) }
         }
     }
-
+    
+    // Function to fetch resources from Firebase
+    private func fetchResources() async {
+        let db = Firestore.firestore()
+        do {
+            let querySnapshot = try await db.collection("resourcesApp").getDocuments()
+            // Map documents to a list of strings representing each document’s ID and data
+            documents = querySnapshot.documents.map { "\($0.documentID) => \($0.data())" }
+        } catch {
+            print("Error getting documents: \(error)")
+        }
+    }
+    
     // Function to load the user's profile image from Firestore
     private func loadProfileImage() {
         guard let uid = Auth.auth().currentUser?.uid else { return }
@@ -192,5 +182,6 @@ private func navBarButton(icon: String, label: String, action: @escaping () -> V
 struct ResourcesAppView_Previews: PreviewProvider {
     static var previews: some View {
         ResourcesAppView()
+            .environmentObject(FirestoreManager())
     }
 }
