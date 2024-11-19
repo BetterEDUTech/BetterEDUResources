@@ -114,8 +114,10 @@ struct ResourcesAppView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity) // Expand to fill the screen
             .background(Color(hex: "251db4"))  // Set the background color using the hex extension
             .navigationBarTitleDisplayMode(.inline)
-            .task {
-                await fetchResources()
+            .onAppear {
+                Task {
+                    await fetchResources()
+                }
             }
         }
     }
