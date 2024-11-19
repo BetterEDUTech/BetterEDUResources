@@ -3,17 +3,28 @@ import Firebase
 import FirebaseAuth
 import FirebaseFirestore
 
-// Define your ResourceItem model with phone_number, title, and website
+// Define your ResourceItem model with mappings for Firestore field names
 struct ResourceItem: Identifiable, Codable {
     @DocumentID var id: String?         // Firebase Document ID
     var title: String                   // Resource Title
     var phone_number: String            // Resource Phone Number
-    var website: String                 // Resource Website URL
+    var website: String?                // Resource Website URL (optional)
+    var resourceType: String            // Resource Type (e.g., "self care", "financial")
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case title
+        case phone_number = "phone number" // Map to "phone number" in Firestore
+        case website
+        case resourceType = "Resource Type" // Map to "Resource Type" in Firestore
+    }
 }
 
 struct ResourcesAppView: View {
     @State private var resources: [ResourceItem] = []   // State array for resources
     @State private var searchText: String = ""          // State for the search text
+    @State private var selectedFilter: String = "All"   // Default filter for resources
+    @State private var availableFilters: [String] = ["All"] // Filters from Firebase
     private var db = Firestore.firestore()
     
     @State private var isShowingHomePage = false
@@ -47,7 +58,10 @@ struct ResourcesAppView: View {
                     Spacer()
                 }
                 .padding(.top)
-                .onAppear(perform: loadProfileImage) // Load profile image on appear
+                .onAppear(perform: {
+                    loadProfileImage()
+                    fetchResources()
+                }) // Load profile image and fetch resources on appear
                 
                 // Title
                 Text("Resources")
@@ -56,22 +70,67 @@ struct ResourcesAppView: View {
                     .padding(.top, 20)  // Space from the top of the screen
                     .frame(maxWidth: .infinity, alignment: .center) // Center align the title
 
-                // Search Bar below the title
-                TextField("Search Resources...", text: $searchText)
-                    .padding(10)
-                    .background(Color.white.opacity(0.8))
-                    .cornerRadius(8)
-                    .padding(.horizontal)
-                    .padding(.top, 10) // Space between title and search bar
+                // Search Bar and Filter Dropdown
+                HStack(spacing: 10) {
+                    // Search Bar
+                    HStack {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundColor(.gray)
+                        TextField("Search Resources...", text: $searchText)
+                            .padding(.vertical, 8)
+                            .autocapitalization(.none)
+                            .disableAutocorrection(true)
+                    }
+                    .padding(.horizontal, 12)
+                    .background(Color.white)
+                    .cornerRadius(12)
+                    .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
 
-                Spacer()
-                
-                Text("Resources Coming Soon!")
-                    .font(.custom("Impact", size: 64))
-                    .fontWeight(.bold)
-                    .foregroundColor(.white) // color for the text
-                    .frame(maxWidth: .infinity, alignment: .center)
-                
+                    // Filter Button
+                    Menu {
+                        Picker("Filter", selection: $selectedFilter) {
+                            ForEach(availableFilters, id: \.self) { filter in
+                                Text(filter).tag(filter)
+                            }
+                        }
+                    } label: {
+                        HStack {
+                            Text(selectedFilter)
+                                .font(.callout)
+                                .foregroundColor(.white)
+                            Image(systemName: "arrowtriangle.down.fill")
+                                .font(.system(size: 10))
+                                .foregroundColor(.white)
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 10)
+                        .background(Color.white.opacity(0.2))
+                        .cornerRadius(12)
+                        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                    }
+                }
+                .padding(.horizontal)
+                .padding(.top, 10) // Add space between title and search bar
+
+                // Display filtered resources
+                ScrollView {
+                    LazyVStack(spacing: 16) { // Use LazyVStack for better performance
+                        if filteredResources.isEmpty {
+                            Text("No resources found.")
+                                .font(.headline)
+                                .foregroundColor(.gray)
+                                .padding(.top)
+                                .frame(maxWidth: .infinity, alignment: .center)
+                        } else {
+                            ForEach(filteredResources) { resource in
+                                ResourceCard(resource: resource) // Updated card with like functionality
+                                    .padding(.horizontal)
+                            }
+                        }
+                    }
+                    .padding(.top, 12)
+                }
+
                 Spacer()
                 
                 // Bottom Navigation Bar
@@ -115,7 +174,6 @@ struct ResourcesAppView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity) // Expand to fill the screen
             .background(Color(hex: "251db4"))  // Set the background color using the hex extension
             .navigationBarTitleDisplayMode(.inline)
-            .onAppear(perform: fetchResources)
         }
     }
 
@@ -126,19 +184,36 @@ struct ResourcesAppView: View {
                 if let error = error {
                     print("Error fetching documents: \(error)")
                 } else {
-                    self.resources = querySnapshot?.documents.compactMap { document in
-                        try? document.data(as: ResourceItem.self)
-                    } ?? []
+                    guard let documents = querySnapshot?.documents else {
+                        print("No documents found in resourcesApp.")
+                        return
+                    }
+                    self.resources = documents.compactMap { document in
+                        do {
+                            let resource = try document.data(as: ResourceItem.self)
+                            return resource
+                        } catch {
+                            print("Error decoding document \(document.documentID): \(error.localizedDescription)")
+                            return nil
+                        }
+                    }
+                    updateAvailableFilters()
                 }
             }
     }
 
-    // Filtered resources based on search text
+    // Update available filters based on resources
+    private func updateAvailableFilters() {
+        let types = Set(resources.map { $0.resourceType })
+        availableFilters = ["All"] + Array(types).sorted()
+    }
+
+    // Filtered resources based on search text and selected filter
     private var filteredResources: [ResourceItem] {
-        if searchText.isEmpty {
-            return resources
-        } else {
-            return resources.filter { $0.title.lowercased().contains(searchText.lowercased()) }
+        resources.filter { resource in
+            let matchesFilter = (selectedFilter == "All" || resource.resourceType == selectedFilter)
+            let matchesSearch = searchText.isEmpty || resource.title.lowercased().contains(searchText.lowercased())
+            return matchesFilter && matchesSearch
         }
     }
 
@@ -175,6 +250,50 @@ struct ResourcesAppView: View {
                 }
             }
         }.resume()
+    }
+}
+
+// ResourceCard View with Heart Button
+struct ResourceCard: View {
+    let resource: ResourceItem
+    @State private var isLiked: Bool = false // Track liked state for each resource
+
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 8) {
+                Text(resource.title)
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.leading)
+                    .lineLimit(2)
+
+                Text("Phone: \(resource.phone_number)")
+                    .font(.subheadline)
+                    .foregroundColor(.white.opacity(0.7))
+                    .lineLimit(1)
+
+                if let website = resource.website, !website.isEmpty {
+                    Link("Visit Website", destination: URL(string: website)!)
+                        .font(.subheadline)
+                        .foregroundColor(.blue)
+                }
+            }
+            Spacer()
+
+            // Heart Button
+            Button(action: {
+                isLiked.toggle() // Toggle the liked state
+            }) {
+                Image(systemName: isLiked ? "heart.fill" : "heart")
+                    .foregroundColor(isLiked ? .red : .gray) // Red when liked, gray otherwise
+                    .font(.title3)
+            }
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, minHeight: 100)
+        .background(Color.white.opacity(0.2))
+        .cornerRadius(12)
+        .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
     }
 }
 
