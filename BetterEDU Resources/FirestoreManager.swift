@@ -14,11 +14,12 @@ class FirestoreManager: ObservableObject {
     func fetchResource() {
         let db = Firestore.firestore()
         db.enableNetwork { (error) in
-            let docRef = db.collection("resourcesApp").document("AA")
+            let docRef = db.collection("/resourcesApp").document("AA")
             
             docRef.getDocument { (document, error) in
                 guard error == nil else {
-                    print("error", error ?? "")
+                    print(docRef.path)
+                    print("error getting document", error ?? "")
                     return
                 }
                 
