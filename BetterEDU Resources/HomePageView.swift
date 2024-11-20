@@ -9,6 +9,8 @@ struct HomePageView: View {
     @State private var isShowingSaved = false
     @State private var isShowingFeedback = false
     @State private var profileImage: UIImage? = nil // State to store the profile image
+    @State private var searchText: String = ""      // Search bar text
+    @State private var resources: [ResourceItem] = [] // Array to store resources
     private let db = Firestore.firestore()
 
     var body: some View {
@@ -48,104 +50,48 @@ struct HomePageView: View {
                     .foregroundColor(.white)
                 
                 // Search Bar
-                Spacer(minLength: 1)
-                TextField("Search Resources", text: .constant(""))
+                TextField("Search Resources", text: $searchText)
                     .padding()
                     .background(Color(hex: "98b6f8"))
                     .cornerRadius(10)
                     .foregroundColor(.white)
                     .padding(.horizontal)
                 
-                // HStack for FAQ and Saved tabs
-                HStack {
-                    // FAQ Tab
-                    Button(action: {
-                        selectedTab = 0 // Home tab
-                    }) {
-                        Text("FAQ")
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color(hex: "98b6f8"))
-                            .foregroundColor(Color(hex: "251db4"))
-                            .cornerRadius(10)
-                    }
-                    
-                    // Saved Tab
-                    Button(action: {
-                        selectedTab = 1 // Saved tab
-                    }) {
-                        Text("Saved")
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color(hex: "98b6f8"))
-                            .foregroundColor(Color(hex: "251db4"))
-                            .cornerRadius(10)
-                    }
-                }
-                .padding(.horizontal)
-                
-                Spacer(minLength: 1)
-                
-                // Scrollable Resource List
+                // Conditional Display
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 20) {
-                        // Navigation to Financial Services
-                        NavigationLink(destination: FinancialServicesView()) {
-                            HStack {
-                                Image(systemName: "building.columns.fill")
-                                Text("Financial Services")
-                                    .bold()
+                    if searchText.isEmpty {
+                        // Show category buttons when search bar is empty
+                        VStack(alignment: .leading, spacing: 20) {
+                            NavigationLink(destination: FinancialServicesView()) {
+                                categoryButton(icon: "building.columns.fill", title: "Financial Services")
                             }
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.white)
-                            .foregroundColor(Color(hex: "251db4"))
-                            .cornerRadius(10)
-                        }
-                        
-                        // Navigation to Emergency Hotlines
-                        NavigationLink(destination: EmergencyHotlinesView()) {
-                            HStack {
-                                Image(systemName: "phone.arrow.up.right.fill")
-                                Text("Emergency Hotlines")
-                                    .bold()
+                            NavigationLink(destination: EmergencyHotlinesView()) {
+                                categoryButton(icon: "phone.arrow.up.right.fill", title: "Emergency Hotlines")
                             }
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.white)
-                            .foregroundColor(Color(hex: "251db4"))
-                            .cornerRadius(10)
-                        }
-                        
-                        // Navigation to Self-Care Resources
-                        NavigationLink(destination: SelfCareResourcesView()) {
-                            HStack {
-                                Image(systemName: "heart.fill")
-                                Text("Self-Care Resources")
-                                    .bold()
+                            NavigationLink(destination: SelfCareResourcesView()) {
+                                categoryButton(icon: "heart.fill", title: "Self-Care Resources")
                             }
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.white)
-                            .foregroundColor(Color(hex: "251db4"))
-                            .cornerRadius(10)
-                        }
-                        
-                        // Navigation to Academic Stress Support
-                        NavigationLink(destination: AcademicStressView()) {
-                            HStack {
-                                Image(systemName: "book.fill")
-                                Text("Academic Stress Support")
-                                    .bold()
+                            NavigationLink(destination: AcademicStressView()) {
+                                categoryButton(icon: "book.fill", title: "Academic Stress Support")
                             }
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.white)
-                            .foregroundColor(Color(hex: "251db4"))
-                            .cornerRadius(10)
                         }
+                        .padding(.horizontal)
+                    } else {
+                        // Show filtered resources when search bar has text
+                        VStack(alignment: .leading, spacing: 16) { // Uniform spacing between cards
+                            if filteredResources.isEmpty {
+                                Text("No resources found.")
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                                    .padding(.top)
+                            } else {
+                                ForEach(filteredResources) { resource in
+                                    resourceCard(resource: resource)
+                                }
+                            }
+                        }
+                        .padding(.horizontal)
                     }
-                    .padding(.horizontal)
                 }
                 
                 Spacer()
@@ -189,54 +135,106 @@ struct HomePageView: View {
                 .background(Color.black)
             }
             .background(Color(hex: "251db4").ignoresSafeArea()) // Background color from the mockup
-            .onAppear(perform: loadProfileImage) // Load profile image on appear
-        }
-    }
-    
-    // Helper function for the bottom navigation buttons
-    private func navBarButton(icon: String, label: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            VStack {
-                Image(systemName: icon)
-                Text(label).font(.footnote)
+            .onAppear {
+                loadProfileImage()
+                fetchResources()
             }
-            .foregroundColor(.white)
         }
     }
     
-    // Function to load the user's profile image from Firestore
+    // Fetch resources from Firestore
+    private func fetchResources() {
+        db.collection("resourcesApp")
+            .getDocuments { querySnapshot, error in
+                if let error = error {
+                    print("Error fetching resources: \(error.localizedDescription)")
+                } else {
+                    guard let documents = querySnapshot?.documents else { return }
+                    self.resources = documents.compactMap { document in
+                        try? document.data(as: ResourceItem.self)
+                    }
+                }
+            }
+    }
+    
+    // Filtered resources based on search query
+    private var filteredResources: [ResourceItem] {
+        resources.filter { resource in
+            searchText.isEmpty || resource.title.lowercased().contains(searchText.lowercased())
+        }
+    }
+    
+    // Helper for category buttons
+    private func categoryButton(icon: String, title: String) -> some View {
+        HStack {
+            Image(systemName: icon)
+            Text(title).bold()
+        }
+        .frame(maxWidth: .infinity)
+        .padding()
+        .background(Color.white)
+        .foregroundColor(Color(hex: "251db4"))
+        .cornerRadius(10)
+    }
+
+    // Resource Card View
+    private func resourceCard(resource: ResourceItem) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(resource.title)
+                .font(.headline)
+                .foregroundColor(.white)
+                .lineLimit(2) // Prevent excessive height due to long titles
+            
+            Text("Phone: \(resource.phone_number)")
+                .font(.subheadline)
+                .foregroundColor(.white.opacity(0.8))
+            
+            if let website = resource.website {
+                Link("Website", destination: URL(string: website)!)
+                    .font(.subheadline)
+                    .foregroundColor(.blue)
+            }
+        }
+        .padding()
+        .frame(maxWidth: .infinity, minHeight: 120) // Ensures uniform height
+        .background(Color.white.opacity(0.2))
+        .cornerRadius(10)
+        .shadow(radius: 4) // Adds subtle shadow for better design
+    }
+    
+    // Load Profile Image
     private func loadProfileImage() {
         guard let uid = Auth.auth().currentUser?.uid else { return }
-
         db.collection("users").document(uid).getDocument { document, error in
-            if let error = error {
-                print("Error loading profile image URL: \(error.localizedDescription)")
-                return
-            }
-            
             if let document = document, document.exists,
                let profileImageURLString = document.data()?["profileImageURL"] as? String,
                let url = URL(string: profileImageURLString) {
-                
                 fetchImage(from: url)
             }
         }
     }
-    
-    // Helper function to fetch an image from a URL
+
     private func fetchImage(from url: URL) {
         URLSession.shared.dataTask(with: url) { data, _, error in
-            if let error = error {
-                print("Error fetching profile image: \(error.localizedDescription)")
-                return
-            }
-            
             if let data = data, let uiImage = UIImage(data: data) {
                 DispatchQueue.main.async {
                     self.profileImage = uiImage
                 }
             }
         }.resume()
+    }
+    
+    // Helper function for bottom navigation bar buttons
+    private func navBarButton(icon: String, label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack {
+                Image(systemName: icon)
+                    .font(.title2)
+                Text(label)
+                    .font(.footnote)
+            }
+            .foregroundColor(.white)
+        }
     }
 }
 

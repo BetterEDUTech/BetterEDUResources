@@ -1,22 +1,12 @@
-//
-//  EmergencyHotlinesView.swift
-//  BetterEDU Resources
-//
-//  Created by Nick Arana on 11/5/24.
-//
-
 import SwiftUI
+import Firebase
+import FirebaseFirestore
 
 struct EmergencyHotlinesView: View {
     @State private var searchText = ""
-    
-    // Temporary placeholder data for emergency hotlines
-    private let hotlines = [
-        EmergencyHotline(name: "National Suicide Prevention Lifeline", description: "Call 1-800-273-TALK (8255)"),
-        EmergencyHotline(name: "Crisis Text Line", description: "Text HOME to 741741"),
-        EmergencyHotline(name: "SAMHSA’s National Helpline", description: "Call 1-800-662-HELP (4357) for substance abuse help.")
-    ]
-    
+    @State private var emergencyHotlines: [ResourceItem] = [] // Dynamic resources fetched from Firestore
+    private let db = Firestore.firestore()
+
     var body: some View {
         VStack(alignment: .leading) {
             // Title
@@ -34,49 +24,55 @@ struct EmergencyHotlinesView: View {
 
             // Hotline List
             ScrollView {
-                VStack(spacing: 16) {
-                    ForEach(filteredHotlines, id: \.name) { hotline in
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(hotline.name)
-                                .font(.headline)
-                                .foregroundColor(Color(hex: "251db4"))
-                            
-                            Text(hotline.description)
-                                .font(.subheadline)
-                                .foregroundColor(.gray)
+                LazyVStack(spacing: 16) {
+                    if filteredHotlines.isEmpty {
+                        Text("No hotlines found.")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .padding(.top)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                    } else {
+                        ForEach(filteredHotlines) { hotline in
+                            ResourceCard(resource: hotline)
+                                .padding(.horizontal)
                         }
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(Color.white)
-                        .cornerRadius(10)
-                        .shadow(radius: 2)
                     }
                 }
-                .padding(.horizontal)
+                .padding(.top, 12)
             }
-            .padding(.top)
         }
         .padding()
         .background(Color(hex: "251db4").ignoresSafeArea())
         .navigationTitle("Emergency Hotlines")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear(perform: fetchEmergencyHotlines)
+    }
+
+    // Fetch emergency hotlines from Firestore
+    private func fetchEmergencyHotlines() {
+        db.collection("resourcesApp")
+            .whereField("Resource Type", isEqualTo: "emergency")
+            .getDocuments { querySnapshot, error in
+                if let error = error {
+                    print("Error fetching emergency hotlines: \(error)")
+                } else {
+                    guard let documents = querySnapshot?.documents else { return }
+                    self.emergencyHotlines = documents.compactMap { document in
+                        try? document.data(as: ResourceItem.self)
+                    }
+                }
+            }
     }
 
     // Filter hotlines based on search text
-    private var filteredHotlines: [EmergencyHotline] {
-        if searchText.isEmpty {
-            return hotlines
-        } else {
-            return hotlines.filter { $0.name.lowercased().contains(searchText.lowercased()) }
+    private var filteredHotlines: [ResourceItem] {
+        emergencyHotlines.filter { hotline in
+            searchText.isEmpty || hotline.title.lowercased().contains(searchText.lowercased())
         }
     }
 }
 
-// Sample EmergencyHotline model for static data
-struct EmergencyHotline {
-    let name: String
-    let description: String
-}
+
 
 struct EmergencyHotlinesView_Previews: PreviewProvider {
     static var previews: some View {

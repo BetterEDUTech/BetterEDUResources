@@ -1,21 +1,12 @@
-//
-//  FinancialServicesView.swift
-//  BetterEDU Resources
-//
-//  Created by Nick Arana on 11/5/24.
-//
-
 import SwiftUI
+import Firebase
+import FirebaseFirestore
 
 struct FinancialServicesView: View {
-    // Temporary placeholder data for resources
     @State private var searchText = ""
-    private let resources = [
-        FinancialResource(name: "Scholarship Finder", description: "Find scholarships and grants available for students."),
-        FinancialResource(name: "Financial Aid Office", description: "Contact your school's financial aid office for assistance."),
-        FinancialResource(name: "Student Loan Help", description: "Resources to help you manage and understand student loans.")
-    ]
-    
+    @State private var financialResources: [ResourceItem] = [] // Dynamic resources fetched from Firestore
+    private let db = Firestore.firestore()
+
     var body: some View {
         VStack(alignment: .leading) {
             // Title
@@ -33,48 +24,52 @@ struct FinancialServicesView: View {
 
             // Resource List
             ScrollView {
-                VStack(spacing: 16) {
-                    ForEach(filteredResources, id: \.name) { resource in
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(resource.name)
-                                .font(.headline)
-                                .foregroundColor(Color(hex: "251db4"))
-                            
-                            Text(resource.description)
-                                .font(.subheadline)
-                                .foregroundColor(.gray)
+                LazyVStack(spacing: 16) {
+                    if filteredResources.isEmpty {
+                        Text("No resources found.")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .padding(.top)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                    } else {
+                        ForEach(filteredResources) { resource in
+                            ResourceCard(resource: resource)
+                                .padding(.horizontal)
                         }
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(Color.white)
-                        .cornerRadius(10)
-                        .shadow(radius: 2)
                     }
                 }
-                .padding(.horizontal)
+                .padding(.top, 12)
             }
-            .padding(.top)
         }
         .padding()
         .background(Color(hex: "251db4").ignoresSafeArea())
         .navigationTitle("Financial Services")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear(perform: fetchFinancialResources)
+    }
+
+    // Fetch financial resources from Firestore
+    private func fetchFinancialResources() {
+        db.collection("resourcesApp")
+            .whereField("Resource Type", isEqualTo: "financial")
+            .getDocuments { querySnapshot, error in
+                if let error = error {
+                    print("Error fetching financial resources: \(error)")
+                } else {
+                    guard let documents = querySnapshot?.documents else { return }
+                    self.financialResources = documents.compactMap { document in
+                        try? document.data(as: ResourceItem.self)
+                    }
+                }
+            }
     }
 
     // Filter resources based on search text
-    private var filteredResources: [FinancialResource] {
-        if searchText.isEmpty {
-            return resources
-        } else {
-            return resources.filter { $0.name.lowercased().contains(searchText.lowercased()) }
+    private var filteredResources: [ResourceItem] {
+        financialResources.filter { resource in
+            searchText.isEmpty || resource.title.lowercased().contains(searchText.lowercased())
         }
     }
-}
-
-// Sample FinancialResource model for static data
-struct FinancialResource {
-    let name: String
-    let description: String
 }
 
 struct FinancialServicesView_Previews: PreviewProvider {
@@ -82,4 +77,3 @@ struct FinancialServicesView_Previews: PreviewProvider {
         FinancialServicesView()
     }
 }
-
