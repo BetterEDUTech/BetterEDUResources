@@ -3,20 +3,20 @@ import Firebase
 import FirebaseAuth
 import FirebaseFirestore
 
-// Define your ResourceItem model with mappings for Firestore field names
+// Define ResourceItem model with accurate Firestore field mappings
 struct ResourceItem: Identifiable, Codable {
     @DocumentID var id: String?         // Firebase Document ID
     var title: String                   // Resource Title
-    var phone_number: String            // Resource Phone Number
-    var website: String?                // Resource Website URL (optional)
-    var resourceType: String            // Resource Type (e.g., "self care", "financial")
+    var phone_number: String?           // Optional: Resource Phone Number
+    var website: String?                // Optional: Resource Website URL
+    var resourceType: String?           // Optional: Resource Type (e.g., "self care", "financial")
 
     enum CodingKeys: String, CodingKey {
-        case id
-        case title
-        case phone_number = "phone number" // Map to "phone number" in Firestore
-        case website
-        case resourceType = "Resource Type" // Map to "Resource Type" in Firestore
+        case id                         // Maps to Firestore document ID
+        case title                      // Matches "title" in Firestore
+        case phone_number = "phone number" // Matches "phone number" in Firestore
+        case website                    // Matches "website" in Firestore
+        case resourceType = "Resource Type" // Matches "Resource Type" in Firestore
     }
 }
 
@@ -61,18 +61,17 @@ struct ResourcesAppView: View {
                 .onAppear(perform: {
                     loadProfileImage()
                     fetchResources()
-                }) // Load profile image and fetch resources on appear
+                })
                 
                 // Title
                 Text("Resources")
                     .font(.custom("Impact", size: 48))
                     .foregroundColor(.white)
-                    .padding(.top, 20)  // Space from the top of the screen
-                    .frame(maxWidth: .infinity, alignment: .center) // Center align the title
+                    .padding(.top, 20)
+                    .frame(maxWidth: .infinity, alignment: .center)
 
                 // Search Bar and Filter Dropdown
                 HStack(spacing: 10) {
-                    // Search Bar
                     HStack {
                         Image(systemName: "magnifyingglass")
                             .foregroundColor(.gray)
@@ -86,7 +85,7 @@ struct ResourcesAppView: View {
                     .cornerRadius(12)
                     .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
 
-                    // Filter Button
+                    // Filter Menu
                     Menu {
                         Picker("Filter", selection: $selectedFilter) {
                             ForEach(availableFilters, id: \.self) { filter in
@@ -110,11 +109,11 @@ struct ResourcesAppView: View {
                     }
                 }
                 .padding(.horizontal)
-                .padding(.top, 10) // Add space between title and search bar
+                .padding(.top, 10)
 
                 // Display filtered resources
                 ScrollView {
-                    LazyVStack(spacing: 16) { // Use LazyVStack for better performance
+                    LazyVStack(spacing: 16) {
                         if filteredResources.isEmpty {
                             Text("No resources found.")
                                 .font(.headline)
@@ -123,7 +122,7 @@ struct ResourcesAppView: View {
                                 .frame(maxWidth: .infinity, alignment: .center)
                         } else {
                             ForEach(filteredResources) { resource in
-                                ResourceCard(resource: resource) // Updated card with like functionality
+                                ResourceCard(resource: resource)
                                     .padding(.horizontal)
                             }
                         }
@@ -171,13 +170,13 @@ struct ResourcesAppView: View {
                 .padding()
                 .background(Color.black)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity) // Expand to fill the screen
-            .background(Color(hex: "251db4"))  // Set the background color using the hex extension
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color(hex: "251db4"))
             .navigationBarTitleDisplayMode(.inline)
         }
     }
 
-    // Function to fetch resources from Firebase
+    // Fetch resources from Firestore
     private func fetchResources() {
         db.collection("resourcesApp")
             .getDocuments { (querySnapshot, error) in
@@ -188,27 +187,35 @@ struct ResourcesAppView: View {
                         print("No documents found in resourcesApp.")
                         return
                     }
-                    self.resources = documents.compactMap { document in
+                    
+                    // Debugging: Log raw Firestore data
+                    for document in documents {
+                        print("Document data: \(document.data())")
+                    }
+
+                    let fetchedResources = documents.compactMap { document in
                         do {
-                            let resource = try document.data(as: ResourceItem.self)
-                            return resource
+                            return try document.data(as: ResourceItem.self)
                         } catch {
                             print("Error decoding document \(document.documentID): \(error.localizedDescription)")
                             return nil
                         }
                     }
-                    updateAvailableFilters()
+                    DispatchQueue.main.async {
+                        self.resources = fetchedResources
+                        updateAvailableFilters()
+                    }
                 }
             }
     }
 
     // Update available filters based on resources
     private func updateAvailableFilters() {
-        let types = Set(resources.map { $0.resourceType })
+        let types = Set(resources.compactMap { $0.resourceType })
         availableFilters = ["All"] + Array(types).sorted()
     }
 
-    // Filtered resources based on search text and selected filter
+    // Filter resources based on search and filters
     private var filteredResources: [ResourceItem] {
         resources.filter { resource in
             let matchesFilter = (selectedFilter == "All" || resource.resourceType == selectedFilter)
@@ -217,7 +224,7 @@ struct ResourcesAppView: View {
         }
     }
 
-    // Function to load the user's profile image from Firestore
+    // Load user's profile image from Firestore
     private func loadProfileImage() {
         guard let uid = Auth.auth().currentUser?.uid else { return }
 
@@ -235,8 +242,8 @@ struct ResourcesAppView: View {
             }
         }
     }
-    
-    // Helper function to fetch an image from a URL
+
+    // Helper function to fetch an image from URL
     private func fetchImage(from url: URL) {
         URLSession.shared.dataTask(with: url) { data, _, error in
             if let error = error {
@@ -256,7 +263,8 @@ struct ResourcesAppView: View {
 // ResourceCard View with Heart Button
 struct ResourceCard: View {
     let resource: ResourceItem
-    @State private var isLiked: Bool = false // Track liked state for each resource
+    @State private var isLiked: Bool = false
+    private let db = Firestore.firestore()
 
     var body: some View {
         HStack {
@@ -267,10 +275,12 @@ struct ResourceCard: View {
                     .multilineTextAlignment(.leading)
                     .lineLimit(2)
 
-                Text("Phone: \(resource.phone_number)")
-                    .font(.subheadline)
-                    .foregroundColor(.white.opacity(0.7))
-                    .lineLimit(1)
+                if let phoneNumber = resource.phone_number {
+                    Text("Phone: \(phoneNumber)")
+                        .font(.subheadline)
+                        .foregroundColor(.white.opacity(0.7))
+                        .lineLimit(1)
+                }
 
                 if let website = resource.website, !website.isEmpty {
                     Link("Visit Website", destination: URL(string: website)!)
@@ -281,23 +291,67 @@ struct ResourceCard: View {
             Spacer()
 
             // Heart Button
-            Button(action: {
-                isLiked.toggle() // Toggle the liked state
-            }) {
+            Button(action: toggleSaveResource) {
                 Image(systemName: isLiked ? "heart.fill" : "heart")
-                    .foregroundColor(isLiked ? .red : .gray) // Red when liked, gray otherwise
+                    .foregroundColor(isLiked ? .red : .gray)
                     .font(.title3)
             }
         }
         .padding(12)
-        .frame(maxWidth: .infinity, minHeight: 100)
         .background(Color.white.opacity(0.2))
         .cornerRadius(12)
         .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+        .onAppear(perform: checkIfResourceIsSaved)
+    }
+
+    // Check if the resource is saved
+    private func checkIfResourceIsSaved() {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        let userRef = db.collection("users").document(uid).collection("savedResources").document(resource.id ?? "")
+
+        userRef.getDocument { document, error in
+            if let document = document, document.exists {
+                DispatchQueue.main.async {
+                    isLiked = true
+                }
+            }
+        }
+    }
+
+    // Toggle resource save
+    private func toggleSaveResource() {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+
+        let userRef = db.collection("users").document(uid)
+        let resourceRef = userRef.collection("savedResources").document(resource.id ?? "")
+
+        if isLiked {
+            resourceRef.delete { error in
+                if error == nil {
+                    DispatchQueue.main.async {
+                        isLiked = false
+                    }
+                }
+            }
+        } else {
+            let resourceData: [String: Any] = [
+                "id": resource.id ?? "",
+                "title": resource.title,
+                "phone_number": resource.phone_number ?? "",
+                "website": resource.website ?? "",
+                "resourceType": resource.resourceType ?? ""
+            ]
+            resourceRef.setData(resourceData) { error in
+                if error == nil {
+                    DispatchQueue.main.async {
+                        isLiked = true
+                    }
+                }
+            }
+        }
     }
 }
 
-// Helper function for the bottom navigation buttons
 private func navBarButton(icon: String, label: String, action: @escaping () -> Void) -> some View {
     Button(action: action) {
         VStack {

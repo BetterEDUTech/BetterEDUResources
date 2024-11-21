@@ -4,20 +4,12 @@ import FirebaseAuth
 import FirebaseFirestore
 
 struct SavedView: View {
-    // State to manage the list of saved resources (could be populated dynamically)
-    @State private var savedResources: [Resource] = [
-        Resource(imageName: "financial_resources", title: "Financial Resources", subtitle: "Saved"),
-        Resource(imageName: "educational_resources", title: "Educational Resources", subtitle: "Saved"),
-        Resource(imageName: "mental_health_resources", title: "Mental Health Resources", subtitle: "Saved")
-    ]
-    
-    // Navigation states for bottom nav bar
+    @State private var savedResources: [SavedResourceItem] = [] // Dynamically fetched saved resources
     @State private var isShowingHomePage = false
     @State private var isShowingResources = false
-    @State private var isShowingSaved = false
     @State private var isShowingFeedback = false
     @State private var profileImage: UIImage? = nil // State to store the profile image
-    
+
     private let db = Firestore.firestore()
 
     var body: some View {
@@ -50,19 +42,26 @@ struct SavedView: View {
                     }
 
                     // Title
-                    Text("My saved resources")
+                    Text("My Saved Resources")
                         .font(.custom("Impact", size: 28))
                         .foregroundColor(.white)
                         .padding()
 
                     // Scrollable grid of saved resources
-                    ScrollView {
-                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 20) {
-                            ForEach(savedResources) { resource in
-                                ResourceView(resource: resource)
+                    if savedResources.isEmpty {
+                        Text("No saved resources yet.")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .padding()
+                    } else {
+                        ScrollView {
+                            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 20) {
+                                ForEach(savedResources) { resource in
+                                    SavedResourceCard(resource: resource)
+                                }
                             }
+                            .padding(.horizontal)
                         }
-                        .padding(.horizontal)
                     }
 
                     Spacer()
@@ -106,7 +105,44 @@ struct SavedView: View {
                     .background(Color.black)
                 }
             }
-            .onAppear(perform: loadProfileImage) // Load profile image on appear
+            .onAppear(perform: {
+                loadProfileImage()
+                fetchSavedResources()
+            })
+        }
+    }
+
+    // Fetch saved resources from Firestore
+    private func fetchSavedResources() {
+        guard let uid = Auth.auth().currentUser?.uid else {
+            print("User is not logged in.")
+            return
+        }
+
+        db.collection("users").document(uid).collection("savedResources").getDocuments { querySnapshot, error in
+            if let error = error {
+                print("Error fetching saved resources: \(error.localizedDescription)")
+                return
+            }
+
+            guard let documents = querySnapshot?.documents else {
+                print("No saved resources found.")
+                return
+            }
+
+            // Decode documents into SavedResourceItem objects
+            self.savedResources = documents.compactMap { document in
+                do {
+                    return try document.data(as: SavedResourceItem.self)
+                } catch {
+                    print("Error decoding document \(document.documentID): \(error.localizedDescription)")
+                    return nil
+                }
+            }
+
+            DispatchQueue.main.async {
+                print("Fetched saved resources: \(self.savedResources)")
+            }
         }
     }
 
@@ -157,42 +193,46 @@ struct SavedView: View {
     }
 }
 
-// Resource model conforming to Identifiable for dynamic lists
-struct Resource: Identifiable {
-    let id = UUID() // Unique ID for each resource
-    let imageName: String
-    let title: String
-    let subtitle: String
+// New SavedResourceItem Model
+struct SavedResourceItem: Identifiable, Codable {
+    @DocumentID var id: String?          // Firebase Document ID
+    var title: String                    // Resource Title
+    var phone_number: String             // Resource Phone Number
+    var website: String?                 // Resource Website URL (optional)
+    var resourceType: String             // Resource Type (e.g., "self care", "financial")
 }
 
-// View for individual saved resources
-struct ResourceView: View {
-    let resource: Resource
+// View for displaying saved resources
+struct SavedResourceCard: View {
+    let resource: SavedResourceItem
 
     var body: some View {
         VStack {
-            Image(resource.imageName)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(height: 120)
-                .cornerRadius(10)
-
             Text(resource.title)
                 .font(.headline)
                 .foregroundColor(.white)
-                .padding(.top, 5)
+                .multilineTextAlignment(.leading)
 
-            Text(resource.subtitle)
+            Text("Phone: \(resource.phone_number)")
                 .font(.subheadline)
                 .foregroundColor(.white.opacity(0.7))
+
+            if let website = resource.website, !website.isEmpty {
+                Link("Visit Website", destination: URL(string: website)!)
+                    .font(.subheadline)
+                    .foregroundColor(.blue)
+            }
         }
-        .frame(maxWidth: .infinity)
+        .padding()
         .background(Color.white.opacity(0.2))
-        .cornerRadius(10)
+        .cornerRadius(12)
+        .shadow(radius: 4)
     }
 }
 
-#Preview {
-    SavedView()
+// Preview for SavedView
+struct SavedView_Previews: PreviewProvider {
+    static var previews: some View {
+        SavedView()
+    }
 }
-
