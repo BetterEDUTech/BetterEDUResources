@@ -5,9 +5,6 @@ import FirebaseFirestore
 
 struct SavedView: View {
     @State private var savedResources: [SavedResourceItem] = [] // Dynamically fetched saved resources
-    @State private var isShowingHomePage = false
-    @State private var isShowingResources = false
-    @State private var isShowingFeedback = false
     @State private var profileImage: UIImage? = nil // State to store the profile image
 
     private let db = Firestore.firestore()
@@ -65,44 +62,6 @@ struct SavedView: View {
                     }
 
                     Spacer()
-
-                    // Bottom Navigation Bar
-                    HStack {
-                        Spacer()
-                        navBarButton(icon: "house", label: "Home") {
-                            if !isShowingHomePage {
-                                isShowingHomePage = true
-                            }
-                        }
-                        .fullScreenCover(isPresented: $isShowingHomePage) {
-                            HomePageView()
-                        }
-                        Spacer()
-                        navBarButton(icon: "magnifyingglass", label: "Search") {
-                            if !isShowingResources {
-                                isShowingResources = true
-                            }
-                        }
-                        .fullScreenCover(isPresented: $isShowingResources) {
-                            ResourcesAppView()
-                        }
-                        Spacer()
-                        navBarButton(icon: "heart.fill", label: "Saved") {
-                            // Do nothing if already on the Saved tab
-                        }
-                        Spacer()
-                        navBarButton(icon: "bubble.left.and.bubble.right", label: "Feedback") {
-                            if !isShowingFeedback {
-                                isShowingFeedback = true
-                            }
-                        }
-                        .fullScreenCover(isPresented: $isShowingFeedback) {
-                            FeedbackView()
-                        }
-                        Spacer()
-                    }
-                    .padding()
-                    .background(Color.black)
                 }
             }
             .onAppear(perform: {
@@ -143,17 +102,6 @@ struct SavedView: View {
             DispatchQueue.main.async {
                 print("Fetched saved resources: \(self.savedResources)")
             }
-        }
-    }
-
-    // Helper function for the bottom navigation buttons
-    private func navBarButton(icon: String, label: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            VStack {
-                Image(systemName: icon)
-                Text(label).font(.footnote)
-            }
-            .foregroundColor(.white)
         }
     }
 

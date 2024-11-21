@@ -11,16 +11,13 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 
 @main
 struct BetterEDU_ResourcesApp: App {
-    // Initialize AppDelegate for Firebase setup
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
-    
-    // Add AuthViewModel to manage authentication state
     @StateObject private var authViewModel = AuthViewModel()
-    
+
     var body: some Scene {
         WindowGroup {
-            RootView() // Use RootView as the main entry point
-                .environmentObject(authViewModel) // Pass authViewModel to the entire app
+            RootView()
+                .environmentObject(authViewModel) // Ensure authViewModel is available globally
         }
     }
 }

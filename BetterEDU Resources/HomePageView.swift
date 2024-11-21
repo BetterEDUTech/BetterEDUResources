@@ -4,13 +4,9 @@ import FirebaseAuth
 import FirebaseFirestore
 
 struct HomePageView: View {
-    @State private var selectedTab = 0
-    @State private var isShowingResources = false
-    @State private var isShowingSaved = false
-    @State private var isShowingFeedback = false
-    @State private var profileImage: UIImage? = nil // State to store the profile image
-    @State private var searchText: String = ""      // Search bar text
-    @State private var resources: [ResourceItem] = [] // Array to store resources
+    @State private var profileImage: UIImage? = nil
+    @State private var searchText: String = ""
+    @State private var resources: [ResourceItem] = []
     private let db = Firestore.firestore()
 
     var body: some View {
@@ -18,7 +14,6 @@ struct HomePageView: View {
             VStack(spacing: 20) {
                 // Header Section with profile picture on the top left
                 HStack {
-                    // Navigation link for the profile icon with image
                     NavigationLink(destination: ProfileView()) {
                         if let image = profileImage {
                             Image(uiImage: image)
@@ -78,7 +73,7 @@ struct HomePageView: View {
                         .padding(.horizontal)
                     } else {
                         // Show filtered resources when search bar has text
-                        VStack(alignment: .leading, spacing: 16) { // Uniform spacing between cards
+                        VStack(alignment: .leading, spacing: 16) {
                             if filteredResources.isEmpty {
                                 Text("No resources found.")
                                     .font(.headline)
@@ -95,44 +90,6 @@ struct HomePageView: View {
                 }
                 
                 Spacer()
-                
-                // Bottom Navigation Bar
-                HStack {
-                    Spacer()
-                    navBarButton(icon: "house", label: "Home") {
-                        // Do nothing if already on Home
-                    }
-                    Spacer()
-                    navBarButton(icon: "magnifyingglass", label: "Search") {
-                        if !isShowingResources {
-                            isShowingResources = true
-                        }
-                    }
-                    .fullScreenCover(isPresented: $isShowingResources) {
-                        ResourcesAppView()
-                    }
-                    Spacer()
-                    navBarButton(icon: "heart.fill", label: "Saved") {
-                        if !isShowingSaved {
-                            isShowingSaved = true
-                        }
-                    }
-                    .fullScreenCover(isPresented: $isShowingSaved) {
-                        SavedView()
-                    }
-                    Spacer()
-                    navBarButton(icon: "bubble.left.and.bubble.right", label: "Feedback") {
-                        if !isShowingFeedback {
-                            isShowingFeedback = true
-                        }
-                    }
-                    .fullScreenCover(isPresented: $isShowingFeedback) {
-                        FeedbackView()
-                    }
-                    Spacer()
-                }
-                .padding()
-                .background(Color.black)
             }
             .background(Color(hex: "251db4").ignoresSafeArea()) // Background color from the mockup
             .onAppear {
@@ -142,7 +99,6 @@ struct HomePageView: View {
         }
     }
     
-    // Fetch resources from Firestore
     private func fetchResources() {
         db.collection("resourcesApp")
             .getDocuments { querySnapshot, error in
@@ -157,14 +113,12 @@ struct HomePageView: View {
             }
     }
     
-    // Filtered resources based on search query
     private var filteredResources: [ResourceItem] {
         resources.filter { resource in
             searchText.isEmpty || resource.title.lowercased().contains(searchText.lowercased())
         }
     }
     
-    // Helper for category buttons
     private func categoryButton(icon: String, title: String) -> some View {
         HStack {
             Image(systemName: icon)
@@ -177,13 +131,12 @@ struct HomePageView: View {
         .cornerRadius(10)
     }
 
-    // Resource Card View
     private func resourceCard(resource: ResourceItem) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(resource.title)
                 .font(.headline)
                 .foregroundColor(.white)
-                .lineLimit(2) // Prevent excessive height due to long titles
+                .lineLimit(2)
             
             Text("Phone: \(resource.phone_number)")
                 .font(.subheadline)
@@ -196,13 +149,12 @@ struct HomePageView: View {
             }
         }
         .padding()
-        .frame(maxWidth: .infinity, minHeight: 120) // Ensures uniform height
+        .frame(maxWidth: .infinity, minHeight: 120)
         .background(Color.white.opacity(0.2))
         .cornerRadius(10)
-        .shadow(radius: 4) // Adds subtle shadow for better design
+        .shadow(radius: 4)
     }
-    
-    // Load Profile Image
+
     private func loadProfileImage() {
         guard let uid = Auth.auth().currentUser?.uid else { return }
         db.collection("users").document(uid).getDocument { document, error in
@@ -223,20 +175,8 @@ struct HomePageView: View {
             }
         }.resume()
     }
-    
-    // Helper function for bottom navigation bar buttons
-    private func navBarButton(icon: String, label: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            VStack {
-                Image(systemName: icon)
-                    .font(.title2)
-                Text(label)
-                    .font(.footnote)
-            }
-            .foregroundColor(.white)
-        }
-    }
 }
+
 
 struct HomePageView_Previews: PreviewProvider {
     static var previews: some View {

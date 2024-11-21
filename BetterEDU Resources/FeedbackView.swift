@@ -5,10 +5,6 @@ import FirebaseFirestore
 
 struct FeedbackView: View {
     @State private var feedbackText: String = "" // State variable to bind text input
-    @State private var isShowingHomePage = false
-    @State private var isShowingResources = false
-    @State private var isShowingSaved = false
-    @State private var isShowingFeedback = false
     @State private var profileImage: UIImage? = nil // State to store the profile image
     @State private var userName: String = "[Name]" // State to store the user's name
     @State private var showSubmissionAlert = false // State to show submission alert
@@ -90,56 +86,9 @@ struct FeedbackView: View {
                     Alert(title: Text("Thank you!"), message: Text("Your feedback has been submitted."), dismissButton: .default(Text("OK")))
                 }
 
-                // Bottom Navigation Bar
-                HStack {
-                    Spacer()
-                    navBarButton(icon: "house", label: "Home") {
-                        if !isShowingHomePage {
-                            isShowingHomePage = true
-                        }
-                    }
-                    .fullScreenCover(isPresented: $isShowingHomePage) {
-                        HomePageView()
-                    }
-                    Spacer()
-                    navBarButton(icon: "magnifyingglass", label: "Search") {
-                        if !isShowingResources {
-                            isShowingResources = true
-                        }
-                    }
-                    .fullScreenCover(isPresented: $isShowingResources) {
-                        ResourcesAppView()
-                    }
-                    Spacer()
-                    navBarButton(icon: "heart.fill", label: "Saved") {
-                        if !isShowingSaved {
-                            isShowingSaved = true
-                        }
-                    }
-                    .fullScreenCover(isPresented: $isShowingSaved) {
-                        SavedView()
-                    }
-                    Spacer()
-                    navBarButton(icon: "bubble.left.and.bubble.right", label: "Feedback") {
-                        // Do nothing if already on the Feedback tab
-                    }
-                    Spacer()
-                }
-                .padding()
-                .background(Color.black)
+                Spacer()
             }
             .background(Color(hex: "251db4").ignoresSafeArea()) // Background color from palette
-        }
-    }
-
-    // Helper function for the bottom navigation buttons
-    private func navBarButton(icon: String, label: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            VStack {
-                Image(systemName: icon)
-                Text(label).font(.footnote)
-            }
-            .foregroundColor(.white)
         }
     }
     

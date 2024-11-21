@@ -27,10 +27,6 @@ struct ResourcesAppView: View {
     @State private var availableFilters: [String] = ["All"] // Filters from Firebase
     private var db = Firestore.firestore()
     
-    @State private var isShowingHomePage = false
-    @State private var isShowingResources = false
-    @State private var isShowingSaved = false
-    @State private var isShowingFeedback = false
     @State private var profileImage: UIImage? = nil // State to store the profile image
 
     var body: some View {
@@ -131,44 +127,6 @@ struct ResourcesAppView: View {
                 }
 
                 Spacer()
-                
-                // Bottom Navigation Bar
-                HStack {
-                    Spacer()
-                    navBarButton(icon: "house", label: "Home") {
-                        if !isShowingHomePage {
-                            isShowingHomePage = true
-                        }
-                    }
-                    .fullScreenCover(isPresented: $isShowingHomePage) {
-                        HomePageView()
-                    }
-                    Spacer()
-                    navBarButton(icon: "magnifyingglass", label: "Search") {
-                        // Do nothing if already on Resources page
-                    }
-                    Spacer()
-                    navBarButton(icon: "heart.fill", label: "Saved") {
-                        if !isShowingSaved {
-                            isShowingSaved = true
-                        }
-                    }
-                    .fullScreenCover(isPresented: $isShowingSaved) {
-                        SavedView()
-                    }
-                    Spacer()
-                    navBarButton(icon: "bubble.left.and.bubble.right", label: "Feedback") {
-                        if !isShowingFeedback {
-                            isShowingFeedback = true
-                        }
-                    }
-                    .fullScreenCover(isPresented: $isShowingFeedback) {
-                        FeedbackView()
-                    }
-                    Spacer()
-                }
-                .padding()
-                .background(Color.black)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color(hex: "251db4"))
@@ -349,16 +307,6 @@ struct ResourceCard: View {
                 }
             }
         }
-    }
-}
-
-private func navBarButton(icon: String, label: String, action: @escaping () -> Void) -> some View {
-    Button(action: action) {
-        VStack {
-            Image(systemName: icon)
-            Text(label).font(.footnote)
-        }
-        .foregroundColor(.white)
     }
 }
 

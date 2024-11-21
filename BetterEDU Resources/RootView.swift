@@ -9,14 +9,12 @@ import SwiftUI
 
 struct RootView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
-    
+
     var body: some View {
         if authViewModel.isUserLoggedIn {
-            // Show the main content if the user is logged in
-            HomePageView() // Or another main content view
+            NavView() // Use NavView for navigation
         } else {
-            // Show the LoginView if the user is not logged in
-            LoginView()
+            LoginView() // Show the login screen
         }
     }
 }
