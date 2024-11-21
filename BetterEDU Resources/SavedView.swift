@@ -52,9 +52,17 @@ struct SavedView: View {
                             .padding()
                     } else {
                         ScrollView {
-                            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 20) {
+                            LazyVGrid(
+                                columns: [GridItem(.adaptive(minimum: 150), spacing: 16)],
+                                spacing: 16
+                            ) {
                                 ForEach(savedResources) { resource in
-                                    SavedResourceCard(resource: resource)
+                                    SavedResourceCard(resource: resource, onRemove: { removedResource in
+                                        // Remove the resource from the savedResources array
+                                        if let index = savedResources.firstIndex(where: { $0.id == removedResource.id }) {
+                                            savedResources.remove(at: index)
+                                        }
+                                    })
                                 }
                             }
                             .padding(.horizontal)
@@ -153,28 +161,97 @@ struct SavedResourceItem: Identifiable, Codable {
 // View for displaying saved resources
 struct SavedResourceCard: View {
     let resource: SavedResourceItem
+    @State private var isLiked: Bool = false
+    private let db = Firestore.firestore()
+    let onRemove: (SavedResourceItem) -> Void // Callback for removing resource
 
     var body: some View {
-        VStack {
+        VStack(alignment: .leading, spacing: 8) {
             Text(resource.title)
                 .font(.headline)
                 .foregroundColor(.white)
                 .multilineTextAlignment(.leading)
+                .lineLimit(2)
 
             Text("Phone: \(resource.phone_number)")
                 .font(.subheadline)
                 .foregroundColor(.white.opacity(0.7))
+                .lineLimit(1)
 
             if let website = resource.website, !website.isEmpty {
                 Link("Visit Website", destination: URL(string: website)!)
                     .font(.subheadline)
                     .foregroundColor(.blue)
             }
+
+            Spacer()
+
+            // Heart Button
+            HStack {
+                Spacer()
+                Button(action: toggleSaveResource) {
+                    Image(systemName: isLiked ? "heart.fill" : "heart")
+                        .foregroundColor(isLiked ? .red : .gray)
+                        .font(.title3)
+                }
+            }
         }
         .padding()
+        .frame(width: 150, height: 120) // Maintain uniform size
         .background(Color.white.opacity(0.2))
         .cornerRadius(12)
         .shadow(radius: 4)
+        .onAppear(perform: checkIfResourceIsSaved)
+    }
+
+    // Check if the resource is saved
+    private func checkIfResourceIsSaved() {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        let userRef = db.collection("users").document(uid).collection("savedResources").document(resource.id ?? "")
+
+        userRef.getDocument { document, error in
+            if let document = document, document.exists {
+                DispatchQueue.main.async {
+                    isLiked = true
+                }
+            }
+        }
+    }
+
+    // Toggle resource save
+    private func toggleSaveResource() {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+
+        let userRef = db.collection("users").document(uid)
+        let resourceRef = userRef.collection("savedResources").document(resource.id ?? "")
+
+        if isLiked {
+            // If liked, remove from saved resources
+            resourceRef.delete { error in
+                if error == nil {
+                    DispatchQueue.main.async {
+                        isLiked = false
+                        onRemove(resource) // Notify parent view about the removal
+                    }
+                }
+            }
+        } else {
+            // If not liked, add to saved resources
+            let resourceData: [String: Any] = [
+                "id": resource.id ?? "",
+                "title": resource.title,
+                "phone_number": resource.phone_number,
+                "website": resource.website ?? "",
+                "resourceType": resource.resourceType
+            ]
+            resourceRef.setData(resourceData) { error in
+                if error == nil {
+                    DispatchQueue.main.async {
+                        isLiked = true
+                    }
+                }
+            }
+        }
     }
 }
 

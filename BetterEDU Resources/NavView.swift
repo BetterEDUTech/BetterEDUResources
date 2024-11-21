@@ -32,9 +32,20 @@ struct NavView: View {
                         }
                 }
                 .accentColor(.white) // Selected icon and text
+                .background(
+                    GeometryReader { geometry in
+                        VStack {
+                            Spacer()
+                            Rectangle()
+                                .fill(Color.black)
+                                .frame(height: geometry.safeAreaInsets.bottom + 70) // Adjusted height
+                                .ignoresSafeArea(edges: .bottom)
+                        }
+                    }
+                )
                 .onAppear {
                     let tabBarAppearance = UITabBar.appearance()
-                    tabBarAppearance.backgroundColor = UIColor.black // Black background
+                    tabBarAppearance.backgroundColor = UIColor.black // Transparent background
                     tabBarAppearance.unselectedItemTintColor = UIColor.lightGray // Inactive tabs
                     tabBarAppearance.tintColor = UIColor.white // Active tab color
                 }

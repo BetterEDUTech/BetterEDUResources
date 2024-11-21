@@ -11,7 +11,7 @@ struct HomePageView: View {
 
     var body: some View {
         NavigationView {
-            VStack(spacing: 20) {
+            VStack(spacing: 16) {
                 // Header Section with profile picture on the top left
                 HStack {
                     NavigationLink(destination: ProfileView()) {
@@ -22,41 +22,41 @@ struct HomePageView: View {
                                 .clipShape(Circle())
                                 .overlay(Circle().stroke(Color.white, lineWidth: 2))
                                 .shadow(radius: 4)
-                                .padding(.leading)
                         } else {
                             Image(systemName: "person.circle.fill")
                                 .resizable()
                                 .frame(width: 40, height: 40)
-                                .padding(.leading)
                                 .foregroundColor(.white)
                         }
                     }
                     Spacer()
                 }
-                
+                .padding([.horizontal, .top], 16)
+
+                // Title
                 Text("BetterEDU Resources")
-                    .font(.custom("Impact", size: 40))
-                    .foregroundColor(Color(hex: "98b6f8")) // Custom color from palette
-                    .aspectRatio(contentMode: .fit)
-                    .padding(.top)
-                
+                    .font(.custom("Impact", size: 36))
+                    .foregroundColor(Color(hex: "ffffff"))
+                    .padding(.top, 4)
+
+                // Subtitle
                 Text("Mental Health Resources for Students")
                     .font(.headline)
                     .foregroundColor(.white)
-                
+
                 // Search Bar
                 TextField("Search Resources", text: $searchText)
                     .padding()
-                    .background(Color(hex: "98b6f8"))
+                    .background(Color(hex: "ffffff"))
                     .cornerRadius(10)
                     .foregroundColor(.white)
-                    .padding(.horizontal)
-                
+                    .padding(.horizontal, 16)
+
                 // Conditional Display
                 ScrollView {
                     if searchText.isEmpty {
                         // Show category buttons when search bar is empty
-                        VStack(alignment: .leading, spacing: 20) {
+                        VStack(spacing: 20) { // Increased spacing for better alignment with bigger buttons
                             NavigationLink(destination: FinancialServicesView()) {
                                 categoryButton(icon: "building.columns.fill", title: "Financial Services")
                             }
@@ -70,7 +70,7 @@ struct HomePageView: View {
                                 categoryButton(icon: "book.fill", title: "Academic Stress Support")
                             }
                         }
-                        .padding(.horizontal)
+                        .padding(.horizontal, 16)
                     } else {
                         // Show filtered resources when search bar has text
                         VStack(alignment: .leading, spacing: 16) {
@@ -78,27 +78,28 @@ struct HomePageView: View {
                                 Text("No resources found.")
                                     .font(.headline)
                                     .foregroundColor(.white)
-                                    .padding(.top)
+                                    .padding(.top, 16)
                             } else {
                                 ForEach(filteredResources) { resource in
                                     resourceCard(resource: resource)
                                 }
                             }
                         }
-                        .padding(.horizontal)
+                        .padding(.horizontal, 16)
                     }
                 }
-                
+                .padding(.top, 8)
+
                 Spacer()
             }
-            .background(Color(hex: "251db4").ignoresSafeArea()) // Background color from the mockup
+            .background(Color(hex: "251db4").ignoresSafeArea())
             .onAppear {
                 loadProfileImage()
                 fetchResources()
             }
         }
     }
-    
+
     private func fetchResources() {
         db.collection("resourcesApp")
             .getDocuments { querySnapshot, error in
@@ -112,23 +113,27 @@ struct HomePageView: View {
                 }
             }
     }
-    
+
     private var filteredResources: [ResourceItem] {
         resources.filter { resource in
             searchText.isEmpty || resource.title.lowercased().contains(searchText.lowercased())
         }
     }
-    
+
     private func categoryButton(icon: String, title: String) -> some View {
         HStack {
             Image(systemName: icon)
-            Text(title).bold()
+                .font(.system(size: 24)) // Bigger icon size
+            Text(title)
+                .font(.system(size: 20, weight: .bold)) // Bigger text size
         }
         .frame(maxWidth: .infinity)
         .padding()
+        .frame(height: 80) // Increased height for larger buttons
         .background(Color.white)
         .foregroundColor(Color(hex: "251db4"))
-        .cornerRadius(10)
+        .cornerRadius(12) // Slightly rounded corners
+        .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
     }
 
     private func resourceCard(resource: ResourceItem) -> some View {
@@ -137,11 +142,11 @@ struct HomePageView: View {
                 .font(.headline)
                 .foregroundColor(.white)
                 .lineLimit(2)
-            
+
             Text("Phone: \(resource.phone_number)")
                 .font(.subheadline)
                 .foregroundColor(.white.opacity(0.8))
-            
+
             if let website = resource.website {
                 Link("Website", destination: URL(string: website)!)
                     .font(.subheadline)
@@ -152,7 +157,7 @@ struct HomePageView: View {
         .frame(maxWidth: .infinity, minHeight: 120)
         .background(Color.white.opacity(0.2))
         .cornerRadius(10)
-        .shadow(radius: 4)
+        .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
     }
 
     private func loadProfileImage() {
@@ -176,7 +181,6 @@ struct HomePageView: View {
         }.resume()
     }
 }
-
 
 struct HomePageView_Previews: PreviewProvider {
     static var previews: some View {
