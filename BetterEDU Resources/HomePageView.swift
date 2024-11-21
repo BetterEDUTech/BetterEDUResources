@@ -7,6 +7,7 @@ struct HomePageView: View {
     @State private var profileImage: UIImage? = nil
     @State private var searchText: String = ""
     @State private var resources: [ResourceItem] = []
+    @State private var likedResources: Set<String> = [] // Tracks liked resource IDs locally
     private let db = Firestore.firestore()
 
     var body: some View {
@@ -49,14 +50,14 @@ struct HomePageView: View {
                     .padding()
                     .background(Color(hex: "ffffff"))
                     .cornerRadius(10)
-                    .foregroundColor(.white)
+                    .foregroundColor(.black)
                     .padding(.horizontal, 16)
 
                 // Conditional Display
                 ScrollView {
                     if searchText.isEmpty {
                         // Show category buttons when search bar is empty
-                        VStack(spacing: 20) { // Increased spacing for better alignment with bigger buttons
+                        VStack(spacing: 20) {
                             NavigationLink(destination: FinancialServicesView()) {
                                 categoryButton(icon: "building.columns.fill", title: "Financial Services")
                             }
@@ -96,6 +97,7 @@ struct HomePageView: View {
             .onAppear {
                 loadProfileImage()
                 fetchResources()
+                fetchLikedResources()
             }
         }
     }
@@ -114,6 +116,22 @@ struct HomePageView: View {
             }
     }
 
+    // Fetch liked resources from Firebase
+    private func fetchLikedResources() {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        db.collection("users").document(uid).collection("savedResources")
+            .getDocuments { querySnapshot, error in
+                if let error = error {
+                    print("Error fetching liked resources: \(error.localizedDescription)")
+                } else {
+                    let likedResourceIDs = querySnapshot?.documents.compactMap { $0.documentID } ?? []
+                    DispatchQueue.main.async {
+                        self.likedResources = Set(likedResourceIDs)
+                    }
+                }
+            }
+    }
+
     private var filteredResources: [ResourceItem] {
         resources.filter { resource in
             searchText.isEmpty || resource.title.lowercased().contains(searchText.lowercased())
@@ -123,34 +141,48 @@ struct HomePageView: View {
     private func categoryButton(icon: String, title: String) -> some View {
         HStack {
             Image(systemName: icon)
-                .font(.system(size: 24)) // Bigger icon size
+                .font(.system(size: 24))
             Text(title)
-                .font(.system(size: 20, weight: .bold)) // Bigger text size
+                .font(.system(size: 20, weight: .bold))
         }
         .frame(maxWidth: .infinity)
         .padding()
-        .frame(height: 80) // Increased height for larger buttons
+        .frame(height: 80)
         .background(Color.white)
         .foregroundColor(Color(hex: "251db4"))
-        .cornerRadius(12) // Slightly rounded corners
+        .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
     }
 
     private func resourceCard(resource: ResourceItem) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(resource.title)
-                .font(.headline)
-                .foregroundColor(.white)
-                .lineLimit(2)
+        HStack {
+            VStack(alignment: .leading, spacing: 8) {
+                Text(resource.title)
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .lineLimit(2)
 
-            Text("Phone: \(resource.phone_number)")
-                .font(.subheadline)
-                .foregroundColor(.white.opacity(0.8))
+                if let phoneNumber = resource.phone_number {
+                    Text("Phone: \(phoneNumber)")
+                        .font(.subheadline)
+                        .foregroundColor(.white.opacity(0.8))
+                }
 
-            if let website = resource.website {
-                Link("Website", destination: URL(string: website)!)
-                    .font(.subheadline)
-                    .foregroundColor(.blue)
+                if let website = resource.website {
+                    Link("Website", destination: URL(string: website)!)
+                        .font(.subheadline)
+                        .foregroundColor(.blue)
+                }
+            }
+            Spacer()
+
+            // Heart Button
+            Button(action: {
+                toggleSaveResource(resource: resource)
+            }) {
+                Image(systemName: likedResources.contains(resource.id ?? "") ? "heart.fill" : "heart")
+                    .foregroundColor(likedResources.contains(resource.id ?? "") ? .red : .gray)
+                    .font(.title2)
             }
         }
         .padding()
@@ -158,6 +190,44 @@ struct HomePageView: View {
         .background(Color.white.opacity(0.2))
         .cornerRadius(10)
         .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
+    }
+
+    private func toggleSaveResource(resource: ResourceItem) {
+        guard let uid = Auth.auth().currentUser?.uid, let resourceID = resource.id else { return }
+
+        let userRef = db.collection("users").document(uid)
+        let resourceRef = userRef.collection("savedResources").document(resourceID)
+
+        if likedResources.contains(resourceID) {
+            // If the resource is already saved, remove it
+            resourceRef.delete { error in
+                if let error = error {
+                    print("Error removing resource: \(error)")
+                } else {
+                    DispatchQueue.main.async {
+                        likedResources.remove(resourceID)
+                    }
+                }
+            }
+        } else {
+            // If the resource is not saved, add it
+            let resourceData: [String: Any] = [
+                "id": resourceID,
+                "title": resource.title,
+                "phone_number": resource.phone_number ?? "",
+                "website": resource.website ?? "",
+                "resourceType": resource.resourceType ?? ""
+            ]
+            resourceRef.setData(resourceData) { error in
+                if let error = error {
+                    print("Error saving resource: \(error)")
+                } else {
+                    DispatchQueue.main.async {
+                        likedResources.insert(resourceID)
+                    }
+                }
+            }
+        }
     }
 
     private func loadProfileImage() {
@@ -187,6 +257,7 @@ struct HomePageView_Previews: PreviewProvider {
         HomePageView()
     }
 }
+
 
 // Custom extension for hex colors
 extension Color {
