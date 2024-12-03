@@ -43,7 +43,7 @@ struct SavedView: View {
 
                     // Title
                     Text("My Saved Resources")
-                        .font(.custom("Impact", size: 28))
+                        .font(.custom("Lobster1.4", size: 40))
                         .foregroundColor(.white)
                         .padding()
 

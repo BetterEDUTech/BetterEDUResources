@@ -43,7 +43,7 @@ struct FeedbackView: View {
 
                 // Welcome Text
                 Text("Your thoughts matter to us, \(userName). Let us know how we can improve.")
-                    .font(.custom("Impact", size: 24))
+                    .font(.custom("Lobster1.4", size: 40))
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 40)

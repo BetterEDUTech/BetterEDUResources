@@ -61,9 +61,10 @@ struct ResourcesAppView: View {
                 
                 // Title
                 Text("Resources")
-                    .font(.custom("Impact", size: 48))
+                    .font(.custom("Lobster1.4", size: 60))
                     .foregroundColor(.white)
-                    .padding(.top, 20)
+                    .padding(.top, -1)
+                    .padding(.bottom, -10)
                     .frame(maxWidth: .infinity, alignment: .center)
 
                 // Search Bar and Filter Dropdown

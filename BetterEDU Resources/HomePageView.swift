@@ -35,10 +35,11 @@ struct HomePageView: View {
                 .padding([.horizontal, .top], 16)
 
                 // Title
-                Text("BetterEDU Resources")
-                    .font(.custom("Impact", size: 36))
+                Text("Better Resources")
+                    .font(.custom("Lobster1.4", size: 70))
+                    .multilineTextAlignment(.center) // Ensures alignment
                     .foregroundColor(Color(hex: "ffffff"))
-                    .padding(.top, 4)
+                    .padding(.top, -50)
 
                 // Subtitle
                 Text("Mental Health Resources for Students")
