@@ -70,8 +70,13 @@ struct ProfileView: View {
                                     .onTapGesture {
                                         isShowingImagePicker = true
                                     }
+                                
+                                Text(userName)
+                                                                    .font(.title)
+                                                                    .foregroundColor(.white)
+                                                                    .multilineTextAlignment(.center)
                             }
-
+                            
                             VStack(spacing: 20) {
                                 section(title: "Email", content: {
                                     TextField("Email", text: .constant(email))
