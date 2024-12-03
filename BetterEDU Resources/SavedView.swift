@@ -13,7 +13,10 @@ struct SavedView: View {
         NavigationView {
             ZStack {
                 // Background color
-                Color(hex: "251db4").ignoresSafeArea()
+                Image("background")
+                    .resizable()
+                    .scaledToFill()
+                    .ignoresSafeArea()
 
                 VStack(spacing: 20) {
                     // Header with profile picture on the left

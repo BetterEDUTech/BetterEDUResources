@@ -1,10 +1,3 @@
-//
-//  ForgotPasswordView.swift
-//  BetterEDU Resources
-//
-//  Created by Nick Arana on 11/4/24.
-//
-
 import SwiftUI
 import FirebaseAuth
 
@@ -15,16 +8,21 @@ struct ForgotPasswordView: View {
 
     var body: some View {
         ZStack {
-            // Background color and bubbles from LoginView
-            Color(hex: "251db4").ignoresSafeArea()
-            
-            ForEach(0..<5, id: \.self) { _ in
-                LavaLampBubble(bubbleColor: Color(hex: ["5a0ef6", "98b6f8", "7849fd"].randomElement()!))
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            }
+            // Background image
+            Image("background")
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
 
             VStack(spacing: 20) {
                 Spacer()
+
+                // BetterLogo2 at the top
+                Image("BetterLogo2")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(height: 200)
+                    .padding(.top, -50)
 
                 // Title
                 Text("Forgot Password")

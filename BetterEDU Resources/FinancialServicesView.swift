@@ -42,7 +42,12 @@ struct FinancialServicesView: View {
             }
         }
         .padding()
-        .background(Color(hex: "251db4").ignoresSafeArea())
+        .background(
+            Image("background")
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
+        )
         .navigationTitle("Financial Services")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear(perform: fetchFinancialResources)

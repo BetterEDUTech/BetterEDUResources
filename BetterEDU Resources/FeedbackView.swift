@@ -88,7 +88,12 @@ struct FeedbackView: View {
 
                 Spacer()
             }
-            .background(Color(hex: "251db4").ignoresSafeArea()) // Background color from palette
+            .background(
+                Image("background")
+                    .resizable()
+                    .scaledToFill()
+                    .ignoresSafeArea()
+            )
         }
     }
     

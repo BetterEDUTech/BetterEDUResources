@@ -42,7 +42,12 @@ struct EmergencyHotlinesView: View {
             }
         }
         .padding()
-        .background(Color(hex: "251db4").ignoresSafeArea())
+        .background(
+            Image("background")
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
+        )
         .navigationTitle("Emergency Hotlines")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear(perform: fetchEmergencyHotlines)

@@ -93,8 +93,12 @@ struct HomePageView: View {
 
                 Spacer()
             }
-            .background(Color(hex: "251db4").ignoresSafeArea())
-            .onAppear {
+            .background(
+                Image("background")
+                    .resizable()
+                    .scaledToFill()
+                    .ignoresSafeArea()
+            )            .onAppear {
                 loadProfileImage()
                 fetchResources()
                 fetchLikedResources()
@@ -168,10 +172,14 @@ struct HomePageView: View {
                         .foregroundColor(.white.opacity(0.8))
                 }
 
-                if let website = resource.website {
-                    Link("Website", destination: URL(string: website)!)
+                if let website = resource.website, let url = URL(string: website) {
+                    Link("Website", destination: url)
                         .font(.subheadline)
                         .foregroundColor(.blue)
+                } else {
+                    Text("No website available")
+                        .font(.subheadline)
+                        .foregroundColor(.white.opacity(0.5))
                 }
             }
             Spacer()

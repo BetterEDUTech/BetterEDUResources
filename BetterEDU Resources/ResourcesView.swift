@@ -129,7 +129,13 @@ struct ResourcesAppView: View {
                 Spacer()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color(hex: "251db4"))
+            .background(
+                Image("background")
+                    .resizable()
+                    .scaledToFill()
+                    .ignoresSafeArea()
+            )
+
             .navigationBarTitleDisplayMode(.inline)
         }
     }

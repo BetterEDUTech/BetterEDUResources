@@ -57,7 +57,12 @@ struct AcademicStressView: View {
             .padding(.top)
         }
         .padding()
-        .background(Color(hex: "251db4").ignoresSafeArea())
+        .background(
+            Image("background")
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
+        )
         .navigationTitle("Academic Stress Support")
         .navigationBarTitleDisplayMode(.inline)
     }
