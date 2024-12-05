@@ -225,7 +225,7 @@ struct ResourcesAppView: View {
     }
 }
 
-// ResourceCard View with Heart Button
+// ResourceCard View with Safe Optional Unwrapping
 struct ResourceCard: View {
     let resource: ResourceItem
     @State private var isLiked: Bool = false
@@ -247,10 +247,14 @@ struct ResourceCard: View {
                         .lineLimit(1)
                 }
 
-                if let website = resource.website, !website.isEmpty {
-                    Link("Visit Website", destination: URL(string: website)!)
+                if let website = resource.website, !website.isEmpty, let url = URL(string: website) {
+                    Link("Visit Website", destination: url)
                         .font(.subheadline)
                         .foregroundColor(.blue)
+                } else {
+                    Text("Website unavailable")
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
                 }
             }
             Spacer()
