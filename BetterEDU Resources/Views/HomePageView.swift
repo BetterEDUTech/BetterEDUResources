@@ -10,56 +10,75 @@ struct HomePageView: View {
     @State private var likedResources: Set<String> = [] // Tracks liked resource IDs locally
     private let db = Firestore.firestore()
 
+    // Grid layout columns based on device
+    private var gridColumns: [GridItem] {
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            return [
+                GridItem(.flexible(), spacing: 20),
+                GridItem(.flexible(), spacing: 20)
+            ]
+        } else {
+            return [GridItem(.flexible())]
+        }
+    }
+
     var body: some View {
         GeometryReader { geometry in
             NavigationView {
                 VStack(spacing: 16) {
-                    // Header Section with profile picture on the top left
+                    // Header Section with profile picture
                     HStack {
                         NavigationLink(destination: ProfileView()) {
                             if let image = profileImage {
                                 Image(uiImage: image)
                                     .resizable()
-                                    .frame(width: 40, height: 40)
+                                    .frame(width: UIDevice.current.userInterfaceIdiom == .pad ? 50 : 40, 
+                                           height: UIDevice.current.userInterfaceIdiom == .pad ? 50 : 40)
                                     .clipShape(Circle())
                                     .overlay(Circle().stroke(Color.white, lineWidth: 2))
                                     .shadow(radius: 4)
                             } else {
                                 Image(systemName: "person.circle.fill")
                                     .resizable()
-                                    .frame(width: 40, height: 40)
+                                    .frame(width: UIDevice.current.userInterfaceIdiom == .pad ? 50 : 40, 
+                                           height: UIDevice.current.userInterfaceIdiom == .pad ? 50 : 40)
                                     .foregroundColor(.white)
                             }
                         }
                         Spacer()
                     }
-                    .padding([.horizontal, .top], 16)
+                    .padding([.horizontal, .top], UIDevice.current.userInterfaceIdiom == .pad ? 24 : 16)
 
                     // Title
                     Text("BetterResources")
-                        .font(.custom("Impact", size: 55))
-                        .multilineTextAlignment(.center) // Ensures alignment
+                        .font(.custom("Impact", size: UIDevice.current.userInterfaceIdiom == .pad ? 65 : 55))
+                        .multilineTextAlignment(.center)
                         .foregroundColor(.white)
                         .padding(.top, -10)
 
                     // Subtitle
                     Text("Mental Health Resources for Students")
-                        .font(.system(size: 24))
+                        .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 28 : 24))
                         .foregroundColor(.white)
+                        .padding(.bottom, 10)
 
                     // Search Bar
-                    TextField("Search Resources", text: $searchText)
-                        .padding()
-                        .background(.white)
-                        .cornerRadius(10)
-                        .foregroundColor(.black)
-                        .padding(.horizontal, 16)
+                    HStack {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundColor(.gray)
+                        TextField("Search resources...", text: $searchText)
+                            .textFieldStyle(PlainTextFieldStyle())
+                    }
+                    .padding()
+                    .background(Color.white)
+                    .cornerRadius(10)
+                    .padding(.horizontal, UIDevice.current.userInterfaceIdiom == .pad ? 24 : 16)
 
-                    // Conditional Display
+                    // Content Area
                     ScrollView {
                         if searchText.isEmpty {
-                            // Show category buttons when search bar is empty
-                            VStack(spacing: 20) {
+                            // Category Grid
+                            LazyVGrid(columns: gridColumns, spacing: 20) {
                                 NavigationLink(destination: FinancialServicesView()) {
                                     categoryButton(icon: "building.columns.fill", title: "Financial Services")
                                 }
@@ -73,34 +92,33 @@ struct HomePageView: View {
                                     categoryButton(icon: "book.fill", title: "Academic Stress Support")
                                 }
                             }
-                            .padding(.horizontal, 16)
+                            .padding(.horizontal, UIDevice.current.userInterfaceIdiom == .pad ? 24 : 16)
                         } else {
-                            // Show filtered resources when search bar has text
-                            VStack(alignment: .leading, spacing: 16) {
+                            // Search Results
+                            LazyVGrid(columns: gridColumns, spacing: 20) {
                                 if filteredResources.isEmpty {
                                     Text("No resources found.")
                                         .font(.headline)
                                         .foregroundColor(.white)
                                         .padding(.top, 16)
+                                        .gridCellColumns(gridColumns.count)
                                 } else {
                                     ForEach(filteredResources) { resource in
                                         resourceCard(resource: resource)
                                     }
                                 }
                             }
-                            .padding(.horizontal, 16)
+                            .padding(.horizontal, UIDevice.current.userInterfaceIdiom == .pad ? 24 : 16)
                         }
                     }
                     .padding(.top, 8)
-
-                    Spacer()
                 }
-                .frame(width: geometry.size.width, height: geometry.size.height)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(
                     Image("background")
                         .resizable()
                         .scaledToFill()
-                        .ignoresSafeArea() // Makes background fill the entire screen
+                        .ignoresSafeArea()
                 )
                 .onAppear {
                     loadProfileImage()
@@ -108,6 +126,7 @@ struct HomePageView: View {
                     fetchLikedResources()
                 }
             }
+            .navigationViewStyle(StackNavigationViewStyle())
         }
     }
 
@@ -149,13 +168,13 @@ struct HomePageView: View {
     private func categoryButton(icon: String, title: String) -> some View {
         HStack {
             Image(systemName: icon)
-                .font(.system(size: 24))
+                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 32 : 24))
             Text(title)
-                .font(.system(size: 20, weight: .bold))
+                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 24 : 20, weight: .bold))
         }
         .frame(maxWidth: .infinity)
         .padding()
-        .frame(height: 80)
+        .frame(height: UIDevice.current.userInterfaceIdiom == .pad ? 100 : 80)
         .background(Color.white)
         .foregroundColor(.blue)
         .cornerRadius(12)
@@ -166,39 +185,38 @@ struct HomePageView: View {
         HStack {
             VStack(alignment: .leading, spacing: 8) {
                 Text(resource.title)
-                    .font(.headline)
+                    .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 20 : 17, weight: .bold))
                     .foregroundColor(.white)
                     .lineLimit(2)
 
                 if let phoneNumber = resource.phone_number {
                     Text("Phone: \(phoneNumber)")
-                        .font(.subheadline)
+                        .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 15))
                         .foregroundColor(.white.opacity(0.8))
                 }
 
                 if let website = resource.website, let url = URL(string: website) {
                     Link("Website", destination: url)
-                        .font(.subheadline)
+                        .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 15))
                         .foregroundColor(.blue)
                 } else {
                     Text("No website available")
-                        .font(.subheadline)
+                        .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 15))
                         .foregroundColor(.white.opacity(0.5))
                 }
             }
             Spacer()
 
-            // Heart Button
             Button(action: {
                 toggleSaveResource(resource: resource)
             }) {
                 Image(systemName: likedResources.contains(resource.id ?? "") ? "heart.fill" : "heart")
                     .foregroundColor(likedResources.contains(resource.id ?? "") ? .red : .gray)
-                    .font(.title2)
+                    .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 24 : 20))
             }
         }
         .padding()
-        .frame(maxWidth: .infinity, minHeight: 120)
+        .frame(maxWidth: .infinity, minHeight: UIDevice.current.userInterfaceIdiom == .pad ? 150 : 120)
         .background(Color.white.opacity(0.2))
         .cornerRadius(10)
         .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
