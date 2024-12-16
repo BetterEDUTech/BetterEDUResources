@@ -29,6 +29,18 @@ struct ResourcesAppView: View {
     
     @State private var profileImage: UIImage? = nil // State to store the profile image
 
+    // Grid layout columns based on device
+    private var gridColumns: [GridItem] {
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            return [
+                GridItem(.flexible(), spacing: 20),
+                GridItem(.flexible(), spacing: 20)
+            ]
+        } else {
+            return [GridItem(.flexible())]
+        }
+    }
+
     var body: some View {
         NavigationView {
             VStack(alignment: .leading) {
@@ -38,17 +50,19 @@ struct ResourcesAppView: View {
                         if let image = profileImage {
                             Image(uiImage: image)
                                 .resizable()
-                                .frame(width: 35, height: 35)
+                                .frame(width: UIDevice.current.userInterfaceIdiom == .pad ? 50 : 35, 
+                                       height: UIDevice.current.userInterfaceIdiom == .pad ? 50 : 35)
                                 .clipShape(Circle())
                                 .overlay(Circle().stroke(Color.white, lineWidth: 2))
                                 .shadow(radius: 4)
-                                .padding(.leading)
+                                .padding(.leading, UIDevice.current.userInterfaceIdiom == .pad ? 24 : 16)
                         } else {
                             Image(systemName: "person.circle.fill")
                                 .resizable()
-                                .frame(width: 35, height: 35)
+                                .frame(width: UIDevice.current.userInterfaceIdiom == .pad ? 50 : 35, 
+                                       height: UIDevice.current.userInterfaceIdiom == .pad ? 50 : 35)
                                 .foregroundColor(.white)
-                                .padding(.leading)
+                                .padding(.leading, UIDevice.current.userInterfaceIdiom == .pad ? 24 : 16)
                         }
                     }
                     Spacer()
@@ -61,28 +75,25 @@ struct ResourcesAppView: View {
                 
                 // Title
                 Text("Resources")
-                    .font(.custom("Lobster1.4", size: 60))
+                    .font(.custom("Lobster1.4", size: UIDevice.current.userInterfaceIdiom == .pad ? 80 : 60))
                     .foregroundColor(.white)
                     .padding(.top, -1)
                     .padding(.bottom, -10)
                     .frame(maxWidth: .infinity, alignment: .center)
 
-                // Search Bar and Filter Dropdown
-                Spacer(minLength: 20)
-                HStack(spacing: 10) {
+                // Search and Filter Section
+                HStack {
+                    // Search Bar
                     HStack {
                         Image(systemName: "magnifyingglass")
                             .foregroundColor(.gray)
-                        TextField("Search Resources...", text: $searchText)
-                            .padding(.vertical, 8)
-                            .autocapitalization(.none)
-                            .disableAutocorrection(true)
+                        TextField("Search resources...", text: $searchText)
+                            .textFieldStyle(PlainTextFieldStyle())
                     }
-                    .padding(.horizontal, 12)
+                    .padding()
                     .background(Color.white)
-                    .cornerRadius(12)
-                    .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
-
+                    .cornerRadius(10)
+                    
                     // Filter Menu
                     Menu {
                         Picker("Filter", selection: $selectedFilter) {
@@ -93,10 +104,10 @@ struct ResourcesAppView: View {
                     } label: {
                         HStack {
                             Text(selectedFilter)
-                                .font(.callout)
+                                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 14))
                                 .foregroundColor(.white)
                             Image(systemName: "arrowtriangle.down.fill")
-                                .font(.system(size: 10))
+                                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 12 : 10))
                                 .foregroundColor(.white)
                         }
                         .padding(.horizontal, 12)
@@ -106,25 +117,26 @@ struct ResourcesAppView: View {
                         .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
                     }
                 }
-                .padding(.horizontal)
+                .padding(.horizontal, UIDevice.current.userInterfaceIdiom == .pad ? 24 : 16)
                 .padding(.top, 10)
 
                 // Display filtered resources
                 ScrollView {
-                    LazyVStack(spacing: 16) {
+                    LazyVGrid(columns: gridColumns, spacing: UIDevice.current.userInterfaceIdiom == .pad ? 24 : 16) {
                         if filteredResources.isEmpty {
                             Text("No resources found.")
                                 .font(.headline)
                                 .foregroundColor(.gray)
                                 .padding(.top)
                                 .frame(maxWidth: .infinity, alignment: .center)
+                                .gridCellColumns(gridColumns.count)
                         } else {
                             ForEach(filteredResources) { resource in
                                 ResourceCard(resource: resource)
-                                    .padding(.horizontal)
                             }
                         }
                     }
+                    .padding(.horizontal, UIDevice.current.userInterfaceIdiom == .pad ? 24 : 16)
                     .padding(.top, 12)
                 }
 
@@ -140,6 +152,7 @@ struct ResourcesAppView: View {
 
             .navigationBarTitleDisplayMode(.inline)
         }
+        .navigationViewStyle(StackNavigationViewStyle())
     }
 
     // Fetch resources from Firestore
@@ -236,38 +249,38 @@ struct ResourceCard: View {
         HStack {
             VStack(alignment: .leading, spacing: 8) {
                 Text(resource.title)
-                    .font(.headline)
+                    .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 20 : 17, weight: .bold))
                     .foregroundColor(.white)
                     .multilineTextAlignment(.leading)
                     .lineLimit(2)
 
                 if let phoneNumber = resource.phone_number {
                     Text("Phone: \(phoneNumber)")
-                        .font(.subheadline)
+                        .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 15))
                         .foregroundColor(.white.opacity(0.7))
                         .lineLimit(1)
                 }
 
                 if let website = resource.website, !website.isEmpty, let url = URL(string: website) {
                     Link("Visit Website", destination: url)
-                        .font(.subheadline)
+                        .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 15))
                         .foregroundColor(.blue)
                 } else {
                     Text("Website unavailable")
-                        .font(.subheadline)
+                        .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 15))
                         .foregroundColor(.gray)
                 }
             }
             Spacer()
 
-            // Heart Button
             Button(action: toggleSaveResource) {
                 Image(systemName: isLiked ? "heart.fill" : "heart")
                     .foregroundColor(isLiked ? .red : .gray)
-                    .font(.title3)
+                    .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 24 : 20))
             }
         }
-        .padding(12)
+        .padding(UIDevice.current.userInterfaceIdiom == .pad ? 16 : 12)
+        .frame(maxWidth: .infinity, minHeight: UIDevice.current.userInterfaceIdiom == .pad ? 150 : 120)
         .background(Color.white.opacity(0.2))
         .cornerRadius(12)
         .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
