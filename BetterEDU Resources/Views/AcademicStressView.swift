@@ -6,30 +6,24 @@
 //
 
 import SwiftUI
+import Firebase
+import FirebaseFirestore
 
 struct AcademicStressView: View {
     @State private var searchText = ""
-    
-    // Temporary placeholder data for academic stress resources
-    private let resources = [
-        AcademicStressResource(name: "Time Management Tips", description: "Learn how to manage your time effectively to reduce stress."),
-        AcademicStressResource(name: "Study Techniques", description: "Explore various study techniques to improve learning and retention."),
-        AcademicStressResource(name: "Stress Relief Activities", description: "Discover activities that help relieve academic stress.")
-    ]
+    @State private var academicResources: [ResourceItem] = [] // Dynamic resources fetched from Firestore
+    private let db = Firestore.firestore()
     
     var body: some View {
         VStack(alignment: .leading) {
             // Title
-            Spacer()
             Text("Academic Stress Support")
                 .font(.custom("Impact", size: 35))
                 .foregroundColor(Color(hex: "98b6f8"))
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.top)
-            Spacer()
 
             // Search Bar
-            Spacer()
             TextField("Search Resources", text: $searchText)
                 .padding()
                 .background(Color.white)
@@ -38,27 +32,22 @@ struct AcademicStressView: View {
 
             // Resource List
             ScrollView {
-                VStack(spacing: 16) {
-                    ForEach(filteredResources, id: \.name) { resource in
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(resource.name)
-                                .font(.headline)
-                                .foregroundColor(Color(hex: "251db4"))
-                            
-                            Text(resource.description)
-                                .font(.subheadline)
-                                .foregroundColor(.gray)
+                LazyVStack(spacing: 16) {
+                    if filteredResources.isEmpty {
+                        Text("No resources found.")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .padding(.top)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                    } else {
+                        ForEach(filteredResources) { resource in
+                            ResourceCard(resource: resource)
+                                .padding(.horizontal)
                         }
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(Color.white)
-                        .cornerRadius(10)
-                        .shadow(radius: 2)
                     }
                 }
-                .padding(.horizontal)
+                .padding(.top, 12)
             }
-            .padding(.top)
         }
         .padding()
         .background(
@@ -69,22 +58,31 @@ struct AcademicStressView: View {
         )
         .navigationTitle("Academic Stress Support")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear(perform: fetchAcademicResources)
+    }
+
+    // Fetch academic resources from Firestore
+    private func fetchAcademicResources() {
+        db.collection("resourcesApp")
+            .whereField("Resource Type", isEqualTo: "academic")
+            .getDocuments { querySnapshot, error in
+                if let error = error {
+                    print("Error fetching academic resources: \(error)")
+                } else {
+                    guard let documents = querySnapshot?.documents else { return }
+                    self.academicResources = documents.compactMap { document in
+                        try? document.data(as: ResourceItem.self)
+                    }
+                }
+            }
     }
 
     // Filter resources based on search text
-    private var filteredResources: [AcademicStressResource] {
-        if searchText.isEmpty {
-            return resources
-        } else {
-            return resources.filter { $0.name.lowercased().contains(searchText.lowercased()) }
+    private var filteredResources: [ResourceItem] {
+        academicResources.filter { resource in
+            searchText.isEmpty || resource.title.lowercased().contains(searchText.lowercased())
         }
     }
-}
-
-// Sample AcademicStressResource model for static data
-struct AcademicStressResource {
-    let name: String
-    let description: String
 }
 
 struct AcademicStressView_Previews: PreviewProvider {
