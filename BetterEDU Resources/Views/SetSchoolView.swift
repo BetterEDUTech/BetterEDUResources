@@ -19,7 +19,7 @@ struct SetSchoolView: View {
     var body: some View {
         ZStack {
             // Background gradient
-            LinearGradient(gradient: Gradient(colors: [Color("3b3aaf"), Color("1d1ba9")]),
+            LinearGradient(gradient: Gradient(colors: [Color(hex: "3b3aaf"), Color(hex: "1d1ba9")]),
                            startPoint: .topLeading, endPoint: .bottomTrailing)
                 .ignoresSafeArea()
 
@@ -94,7 +94,7 @@ struct SetSchoolView: View {
                 }) {
                     Text("Save")
                         .fontWeight(.bold)
-                        .foregroundColor(Color("251db4"))
+                        .foregroundColor(Color(hex: "251db4"))
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(Color.white)

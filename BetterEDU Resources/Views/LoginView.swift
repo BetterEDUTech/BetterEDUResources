@@ -44,9 +44,9 @@ struct LoginView: View {
 
                                 TextField("name@example.com", text: $email)
                                     .padding()
-                                    .background(Color("98b6f8"))
+                                    .background(Color(hex: "98b6f8"))
                                     .cornerRadius(10)
-                                    .foregroundColor(Color("251db4"))
+                                    .foregroundColor(Color(hex: "251db4"))
                                     .keyboardType(.emailAddress)
                                     .autocapitalization(.none)
                                     .frame(maxWidth: .infinity)
@@ -63,17 +63,17 @@ struct LoginView: View {
                                     if isPasswordVisible {
                                         TextField("Password", text: $password)
                                             .padding()
-                                            .background(Color("98b6f8"))
+                                            .background(Color(hex: "98b6f8"))
                                             .cornerRadius(10)
-                                            .foregroundColor(Color("251db4"))
+                                            .foregroundColor(Color(hex: "251db4"))
                                             .frame(maxWidth: .infinity)
                                             .padding(.horizontal, 16)
                                     } else {
                                         SecureField("Password", text: $password)
                                             .padding()
-                                            .background(Color("98b6f8"))
+                                            .background(Color(hex: "98b6f8"))
                                             .cornerRadius(10)
-                                            .foregroundColor(Color("251db4"))
+                                            .foregroundColor(Color(hex: "251db4"))
                                             .frame(maxWidth: .infinity)
                                             .padding(.horizontal, 16)
                                     }
@@ -82,7 +82,7 @@ struct LoginView: View {
                                         isPasswordVisible.toggle()
                                     }) {
                                         Image(systemName: isPasswordVisible ? "eye" : "eye.slash")
-                                            .foregroundColor(Color("251db4"))
+                                            .foregroundColor(Color(hex: "251db4"))
                                             .padding(.trailing, 26) // Align with padding
                                     }
                                 }
@@ -104,7 +104,7 @@ struct LoginView: View {
                                 .font(.custom("Impact", size: 22)) // Reduce font size
                                 .frame(maxWidth: .infinity) // Adjust max width if needed
                                 .padding(12) // Reduce padding
-                                .background(Color("5a0ef6"))
+                                .background(Color(hex: "5a0ef6"))
                                 .foregroundColor(.white)
                                 .cornerRadius(8) // Slightly smaller corner radius
                                 .padding(.horizontal, 12) // Reduce horizontal padding
@@ -117,7 +117,7 @@ struct LoginView: View {
                                 .font(.custom("Impact", size: 22)) // Reduce font size
                                 .frame(maxWidth: .infinity) // Adjust max width if needed
                                 .padding(12) // Reduce padding
-                                .background(Color("5a0ef6"))
+                                .background(Color(hex: "5a0ef6"))
                                 .foregroundColor(.white)
                                 .cornerRadius(8) // Slightly smaller corner radius
                                 .padding(.horizontal, 12) // Reduce horizontal padding

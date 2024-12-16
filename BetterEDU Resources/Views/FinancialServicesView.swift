@@ -11,11 +11,13 @@ struct FinancialServicesView: View {
         VStack(alignment: .leading) {
             // Title
             Text("Financial Services")
-                .font(.custom("Impact", size: 30))
-                .foregroundColor(Color("98b6f8"))
+                .font(.custom("Impact", size: 35))
+                .foregroundColor(Color(hex: "98b6f8"))
+                .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.top)
 
             // Search Bar
+            Spacer(minLength: 30)
             TextField("Search Resources", text: $searchText)
                 .padding()
                 .background(Color.white)

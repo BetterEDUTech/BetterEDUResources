@@ -43,7 +43,7 @@ struct FeedbackView: View {
 
                 // Welcome Text
                 Text("Your thoughts matter to us, \(userName). Let us know how we can improve.")
-                    .font(.custom("Lobster1.4", size: 40))
+                    .font(.custom("Lobster1.4", size: 35))
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 40)
@@ -57,7 +57,7 @@ struct FeedbackView: View {
                             .fill(Color.white)
                             .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
                     )
-                    .frame(maxHeight: .infinity)
+                    .frame(height: 350)
                     .padding(.horizontal, 20)
                     .overlay(
                         RoundedRectangle(cornerRadius: 10)
@@ -75,7 +75,7 @@ struct FeedbackView: View {
                         .padding()
                         .frame(maxWidth: .infinity)
                         .background(
-                            LinearGradient(gradient: Gradient(colors: [Color("#5a0ef6"), Color("#7849fd")]), startPoint: .leading, endPoint: .trailing)
+                            LinearGradient(gradient: Gradient(colors: [Color(hex: "#5a0ef6"), Color(hex: "#7849fd")]), startPoint: .leading, endPoint: .trailing)
                         )
                         .cornerRadius(10)
                         .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 5)

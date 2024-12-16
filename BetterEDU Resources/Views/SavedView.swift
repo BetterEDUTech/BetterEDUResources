@@ -29,13 +29,13 @@ struct SavedView: View {
                                     .clipShape(Circle())
                                     .overlay(Circle().stroke(Color.white, lineWidth: 2))
                                     .shadow(radius: 4)
-                                    .padding(.leading)
+                                    .padding(.leading, 30)
                             } else {
                                 Image(systemName: "person.circle.fill")
                                     .resizable()
                                     .frame(width: 40, height: 40)
                                     .foregroundColor(.white)
-                                    .padding(.leading)
+                                    .padding(.leading, 30)
                             }
                         }
                         Spacer()
@@ -43,7 +43,7 @@ struct SavedView: View {
 
                     // Title
                     Text("My Saved Resources")
-                        .font(.custom("Lobster1.4", size: 40))
+                        .font(.custom("Impact", size: 40))
                         .foregroundColor(.white)
                         .padding()
 

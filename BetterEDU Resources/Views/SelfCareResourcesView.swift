@@ -1,18 +1,26 @@
+//
+//  SelfCareResourcesView.swift
+//  BetterEDU Resources
+//
+//  Created by Nick Arana on 11/5/24.
+//
+
 import SwiftUI
 import Firebase
 import FirebaseFirestore
 
-struct FinancialServicesView: View {
+struct SelfCareResourcesView: View {
     @State private var searchText = ""
-    @State private var financialResources: [ResourceItem] = [] // Dynamic resources fetched from Firestore
+    @State private var selfCareResources: [ResourceItem] = [] // Dynamic resources fetched from Firestore
     private let db = Firestore.firestore()
 
     var body: some View {
         VStack(alignment: .leading) {
             // Title
-            Text("Financial Services")
-                .font(.custom("Impact", size: 30))
+            Text("Self-Care Resources")
+                .font(.custom("Impact", size: 35))
                 .foregroundColor(Color(hex: "98b6f8"))
+                .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.top)
 
             // Search Bar
@@ -48,21 +56,21 @@ struct FinancialServicesView: View {
                 .scaledToFill()
                 .ignoresSafeArea()
         )
-        .navigationTitle("Financial Services")
+        .navigationTitle("Self-Care Resources")
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear(perform: fetchFinancialResources)
+        .onAppear(perform: fetchSelfCareResources)
     }
 
-    // Fetch financial resources from Firestore
-    private func fetchFinancialResources() {
+    // Fetch self-care resources from Firestore
+    private func fetchSelfCareResources() {
         db.collection("resourcesApp")
-            .whereField("Resource Type", isEqualTo: "financial")
+            .whereField("Resource Type", isEqualTo: "self care")
             .getDocuments { querySnapshot, error in
                 if let error = error {
-                    print("Error fetching financial resources: \(error)")
+                    print("Error fetching self-care resources: \(error)")
                 } else {
                     guard let documents = querySnapshot?.documents else { return }
-                    self.financialResources = documents.compactMap { document in
+                    self.selfCareResources = documents.compactMap { document in
                         try? document.data(as: ResourceItem.self)
                     }
                 }
@@ -71,14 +79,15 @@ struct FinancialServicesView: View {
 
     // Filter resources based on search text
     private var filteredResources: [ResourceItem] {
-        financialResources.filter { resource in
+        selfCareResources.filter { resource in
             searchText.isEmpty || resource.title.lowercased().contains(searchText.lowercased())
         }
     }
 }
 
-struct FinancialServicesView_Previews: PreviewProvider {
+
+struct SelfCareResourcesView_Previews: PreviewProvider {
     static var previews: some View {
-        FinancialServicesView()
+        SelfCareResourcesView()
     }
 }

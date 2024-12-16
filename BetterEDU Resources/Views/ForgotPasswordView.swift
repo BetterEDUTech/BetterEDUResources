@@ -22,17 +22,17 @@ struct ForgotPasswordView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(height: 200)
-                    .padding(.top, -50)
+                    .padding(.top, -100)
 
                 // Title
                 Text("Forgot Password")
-                    .font(.custom("Impact", size: 24))
+                    .font(.custom("Impact", size: 35))
                     .foregroundColor(.white)
                     .padding(.bottom, 10)
 
                 // Instruction Text
                 Text("Enter your email to receive reset instructions.")
-                    .font(.custom("Impact", size: 16))
+                    .font(.custom("Impact", size: 24))
                     .foregroundColor(.white.opacity(0.8))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 40)
@@ -45,14 +45,13 @@ struct ForgotPasswordView: View {
 
                     TextField("name@example.com", text: $email)
                         .padding()
-                        .background(Color("98b6f8"))
+                        .background(Color(hex: "98b6f8"))
                         .cornerRadius(10)
-                        .foregroundColor(Color("251db4"))
+                        .foregroundColor(Color(hex: "251db4"))
                         .keyboardType(.emailAddress)
                         .autocapitalization(.none)
                 }
                 .padding(.horizontal)
-
                 // Submit Button styled to match other views
                 Button(action: {
                     sendPasswordReset()
@@ -61,7 +60,7 @@ struct ForgotPasswordView: View {
                         .font(.custom("Impact", size: 24))
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color("5a0ef6"))
+                        .background(Color(hex: "5a0ef6"))
                         .foregroundColor(.white)
                         .cornerRadius(10)
                 }

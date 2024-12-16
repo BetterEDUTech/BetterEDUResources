@@ -68,6 +68,7 @@ struct ResourcesAppView: View {
                     .frame(maxWidth: .infinity, alignment: .center)
 
                 // Search Bar and Filter Dropdown
+                Spacer(minLength: 20)
                 HStack(spacing: 10) {
                     HStack {
                         Image(systemName: "magnifyingglass")

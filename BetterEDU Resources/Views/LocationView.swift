@@ -11,7 +11,7 @@ struct LocationView: View {
     var body: some View {
         ZStack {
             // Background gradient
-            LinearGradient(gradient: Gradient(colors: [Color("3b3aaf"), Color("1d1ba9")]),
+            LinearGradient(gradient: Gradient(colors: [Color(hex: "3b3aaf"), Color(hex: "1d1ba9")]),
                            startPoint: .topLeading, endPoint: .bottomTrailing)
                 .ignoresSafeArea()
 
@@ -31,8 +31,9 @@ struct LocationView: View {
                 .padding([.top, .leading])
 
                 Text("Set Location")
-                    .font(.system(size: 32, weight: .bold))
+                    .font(.system(size: 35, weight: .bold))
                     .foregroundColor(.white)
+                    .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.top, -10)
 
                 // Search Field with Icon and custom placeholder color
@@ -85,7 +86,7 @@ struct LocationView: View {
                 }) {
                     Text("Save")
                         .fontWeight(.bold)
-                        .foregroundColor(Color("251db4"))
+                        .foregroundColor(Color(hex: "251db4"))
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(Color.white)
