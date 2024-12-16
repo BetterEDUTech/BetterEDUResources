@@ -18,67 +18,84 @@ struct SavedView: View {
                     .scaledToFill()
                     .ignoresSafeArea()
 
-                VStack(spacing: 20) {
-                    // Header with profile picture on the left
-                    HStack {
-                        NavigationLink(destination: ProfileView()) {
-                            if let image = profileImage {
-                                Image(uiImage: image)
-                                    .resizable()
-                                    .frame(width: 40, height: 40)
-                                    .clipShape(Circle())
-                                    .overlay(Circle().stroke(Color.white, lineWidth: 2))
-                                    .shadow(radius: 4)
-                                    .padding(.leading, 30)
-                            } else {
-                                Image(systemName: "person.circle.fill")
-                                    .resizable()
-                                    .frame(width: 40, height: 40)
-                                    .foregroundColor(.white)
-                                    .padding(.leading, 30)
+                GeometryReader { geometry in
+                    ScrollView(showsIndicators: false) {
+                        VStack(spacing: UIDevice.current.userInterfaceIdiom == .pad ? 32 : 20) {
+                            // Add safe area padding at the top
+                            Color.clear.frame(height: UIDevice.current.userInterfaceIdiom == .pad ? 60 : 40)
+                            
+                            // Header with profile picture
+                            HStack {
+                                NavigationLink(destination: ProfileView()) {
+                                    if let image = profileImage {
+                                        Image(uiImage: image)
+                                            .resizable()
+                                            .frame(width: UIDevice.current.userInterfaceIdiom == .pad ? 60 : 40,
+                                                   height: UIDevice.current.userInterfaceIdiom == .pad ? 60 : 40)
+                                            .clipShape(Circle())
+                                            .overlay(Circle().stroke(Color.white, lineWidth: 2))
+                                            .shadow(radius: 4)
+                                    } else {
+                                        Image(systemName: "person.circle.fill")
+                                            .resizable()
+                                            .frame(width: UIDevice.current.userInterfaceIdiom == .pad ? 60 : 40,
+                                                   height: UIDevice.current.userInterfaceIdiom == .pad ? 60 : 40)
+                                            .foregroundColor(.white)
+                                    }
+                                }
+                                .padding(.leading, UIDevice.current.userInterfaceIdiom == .pad ? 40 : 30)
+                                Spacer()
                             }
-                        }
-                        Spacer()
-                    }
-
-                    // Title
-                    Text("My Saved Resources")
-                        .font(.custom("Impact", size: 40))
-                        .foregroundColor(.white)
-                        .padding()
-
-                    // Scrollable grid of saved resources
-                    if savedResources.isEmpty {
-                        Text("No saved resources yet.")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .padding()
-                    } else {
-                        ScrollView {
-                            LazyVGrid(
-                                columns: [GridItem(.adaptive(minimum: 150), spacing: 16)],
-                                spacing: 16
-                            ) {
-                                ForEach(savedResources) { resource in
-                                    SavedResourceCard(resource: resource, onRemove: { removedResource in
-                                        // Remove the resource from the savedResources array
-                                        if let index = savedResources.firstIndex(where: { $0.id == removedResource.id }) {
-                                            savedResources.remove(at: index)
+                            .padding(.top, UIDevice.current.userInterfaceIdiom == .pad ? 40 : 20)
+                            
+                            // Title
+                            Text("My Saved Resources")
+                                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 48 : 40, weight: .bold))
+                                .foregroundColor(.white)
+                                .padding(.bottom, UIDevice.current.userInterfaceIdiom == .pad ? 24 : 16)
+                            
+                            // Content
+                            Group {
+                                if savedResources.isEmpty {
+                                    Text("No saved resources yet.")
+                                        .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 24 : 18))
+                                        .foregroundColor(.white)
+                                        .padding()
+                                } else {
+                                    ScrollView {
+                                        LazyVGrid(
+                                            columns: [
+                                                GridItem(.adaptive(minimum: UIDevice.current.userInterfaceIdiom == .pad ? 300 : 150),
+                                                        spacing: UIDevice.current.userInterfaceIdiom == .pad ? 24 : 16)
+                                            ],
+                                            spacing: UIDevice.current.userInterfaceIdiom == .pad ? 24 : 16
+                                        ) {
+                                            ForEach(savedResources) { resource in
+                                                SavedResourceCard(resource: resource, onRemove: { removedResource in
+                                                    if let index = savedResources.firstIndex(where: { $0.id == removedResource.id }) {
+                                                        savedResources.remove(at: index)
+                                                    }
+                                                })
+                                            }
                                         }
-                                    })
+                                        .padding(.horizontal, UIDevice.current.userInterfaceIdiom == .pad ? 32 : 16)
+                                    }
                                 }
                             }
-                            .padding(.horizontal)
+                            .frame(maxWidth: UIDevice.current.userInterfaceIdiom == .pad ? min(geometry.size.width * 0.8, 1200) : .infinity)
                         }
+                        .padding(.top, UIDevice.current.userInterfaceIdiom == .pad ? 130 : -90)
                     }
-
-                    Spacer()
+                    .safeAreaInset(edge: .top) {
+                        Color.clear.frame(height: 0)
+                    }
                 }
             }
-            .onAppear(perform: {
-                loadProfileImage()
-                fetchSavedResources()
-            })
+        }
+        .navigationViewStyle(StackNavigationViewStyle())
+        .onAppear {
+            loadProfileImage()
+            fetchSavedResources()
         }
     }
 
@@ -169,21 +186,21 @@ struct SavedResourceCard: View {
     let onRemove: (SavedResourceItem) -> Void // Callback for removing resource
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: UIDevice.current.userInterfaceIdiom == .pad ? 16 : 8) {
             Text(resource.title)
-                .font(.headline)
+                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 22 : 16, weight: .bold))
                 .foregroundColor(.white)
                 .multilineTextAlignment(.leading)
                 .lineLimit(2)
 
             Text("Phone: \(resource.phone_number)")
-                .font(.subheadline)
+                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 14))
                 .foregroundColor(.white.opacity(0.7))
                 .lineLimit(1)
 
             if let website = resource.website, !website.isEmpty {
                 Link("Visit Website", destination: URL(string: website)!)
-                    .font(.subheadline)
+                    .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 14))
                     .foregroundColor(.blue)
             }
 
@@ -195,14 +212,14 @@ struct SavedResourceCard: View {
                 Button(action: toggleSaveResource) {
                     Image(systemName: isLiked ? "heart.fill" : "heart")
                         .foregroundColor(isLiked ? .red : .gray)
-                        .font(.title3)
+                        .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 24 : 20))
                 }
             }
         }
-        .padding()
-        .frame(width: 150, height: 120) // Maintain uniform size
+        .padding(UIDevice.current.userInterfaceIdiom == .pad ? 24 : 16)
+        .frame(height: UIDevice.current.userInterfaceIdiom == .pad ? 180 : 120)
         .background(Color.white.opacity(0.2))
-        .cornerRadius(12)
+        .cornerRadius(16)
         .shadow(radius: 4)
         .onAppear(perform: checkIfResourceIsSaved)
     }
