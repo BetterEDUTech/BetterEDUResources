@@ -1,46 +1,39 @@
-//
-//  SelfCareResourcesView.swift
-//  BetterEDU Resources
-//
-//  Created by Nick Arana on 11/5/24.
-//
-
 import SwiftUI
 import Firebase
 import FirebaseFirestore
 
-struct SelfCareResourcesView: View {
+struct EmergencyHotlinesView: View {
     @State private var searchText = ""
-    @State private var selfCareResources: [ResourceItem] = [] // Dynamic resources fetched from Firestore
+    @State private var emergencyHotlines: [ResourceItem] = [] // Dynamic resources fetched from Firestore
     private let db = Firestore.firestore()
 
     var body: some View {
         VStack(alignment: .leading) {
             // Title
-            Text("Self-Care Resources")
+            Text("Emergency Hotlines")
                 .font(.custom("Impact", size: 30))
-                .foregroundColor(Color(hex: "98b6f8"))
+                .foregroundColor(Color("98b6f8"))
                 .padding(.top)
 
             // Search Bar
-            TextField("Search Resources", text: $searchText)
+            TextField("Search Hotlines", text: $searchText)
                 .padding()
                 .background(Color.white)
                 .cornerRadius(10)
                 .padding(.horizontal)
 
-            // Resource List
+            // Hotline List
             ScrollView {
                 LazyVStack(spacing: 16) {
-                    if filteredResources.isEmpty {
-                        Text("No resources found.")
+                    if filteredHotlines.isEmpty {
+                        Text("No hotlines found.")
                             .font(.headline)
                             .foregroundColor(.white)
                             .padding(.top)
                             .frame(maxWidth: .infinity, alignment: .center)
                     } else {
-                        ForEach(filteredResources) { resource in
-                            ResourceCard(resource: resource)
+                        ForEach(filteredHotlines) { hotline in
+                            ResourceCard(resource: hotline)
                                 .padding(.horizontal)
                         }
                     }
@@ -55,38 +48,39 @@ struct SelfCareResourcesView: View {
                 .scaledToFill()
                 .ignoresSafeArea()
         )
-        .navigationTitle("Self-Care Resources")
+        .navigationTitle("Emergency Hotlines")
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear(perform: fetchSelfCareResources)
+        .onAppear(perform: fetchEmergencyHotlines)
     }
 
-    // Fetch self-care resources from Firestore
-    private func fetchSelfCareResources() {
+    // Fetch emergency hotlines from Firestore
+    private func fetchEmergencyHotlines() {
         db.collection("resourcesApp")
-            .whereField("Resource Type", isEqualTo: "self care")
+            .whereField("Resource Type", isEqualTo: "emergency")
             .getDocuments { querySnapshot, error in
                 if let error = error {
-                    print("Error fetching self-care resources: \(error)")
+                    print("Error fetching emergency hotlines: \(error)")
                 } else {
                     guard let documents = querySnapshot?.documents else { return }
-                    self.selfCareResources = documents.compactMap { document in
+                    self.emergencyHotlines = documents.compactMap { document in
                         try? document.data(as: ResourceItem.self)
                     }
                 }
             }
     }
 
-    // Filter resources based on search text
-    private var filteredResources: [ResourceItem] {
-        selfCareResources.filter { resource in
-            searchText.isEmpty || resource.title.lowercased().contains(searchText.lowercased())
+    // Filter hotlines based on search text
+    private var filteredHotlines: [ResourceItem] {
+        emergencyHotlines.filter { hotline in
+            searchText.isEmpty || hotline.title.lowercased().contains(searchText.lowercased())
         }
     }
 }
 
 
-struct SelfCareResourcesView_Previews: PreviewProvider {
+
+struct EmergencyHotlinesView_Previews: PreviewProvider {
     static var previews: some View {
-        SelfCareResourcesView()
+        EmergencyHotlinesView()
     }
 }

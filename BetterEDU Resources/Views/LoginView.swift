@@ -7,7 +7,8 @@ struct LoginView: View {
     @State private var isPasswordVisible = false
     @State private var errorMessage: String?
     @State private var isLoggedIn = false
-
+    //@State private var guest = false
+    
     var body: some View {
         NavigationView {
             ZStack {
@@ -29,7 +30,7 @@ struct LoginView: View {
                             .padding(.top, -10)
                         
                         Text("Your Journey to Wellness Starts Here")
-                            .font(.custom("Impact", size: 18))
+                            .font(.custom("Impact", size: 22))
                             .fontWeight(.semibold)
                             .foregroundColor(.white)
                             .padding(.top, 10)
@@ -43,9 +44,9 @@ struct LoginView: View {
 
                                 TextField("name@example.com", text: $email)
                                     .padding()
-                                    .background(Color(hex: "98b6f8"))
+                                    .background(Color("98b6f8"))
                                     .cornerRadius(10)
-                                    .foregroundColor(Color(hex: "251db4"))
+                                    .foregroundColor(Color("251db4"))
                                     .keyboardType(.emailAddress)
                                     .autocapitalization(.none)
                                     .frame(maxWidth: .infinity)
@@ -62,17 +63,17 @@ struct LoginView: View {
                                     if isPasswordVisible {
                                         TextField("Password", text: $password)
                                             .padding()
-                                            .background(Color(hex: "98b6f8"))
+                                            .background(Color("98b6f8"))
                                             .cornerRadius(10)
-                                            .foregroundColor(Color(hex: "251db4"))
+                                            .foregroundColor(Color("251db4"))
                                             .frame(maxWidth: .infinity)
                                             .padding(.horizontal, 16)
                                     } else {
                                         SecureField("Password", text: $password)
                                             .padding()
-                                            .background(Color(hex: "98b6f8"))
+                                            .background(Color("98b6f8"))
                                             .cornerRadius(10)
-                                            .foregroundColor(Color(hex: "251db4"))
+                                            .foregroundColor(Color("251db4"))
                                             .frame(maxWidth: .infinity)
                                             .padding(.horizontal, 16)
                                     }
@@ -81,7 +82,7 @@ struct LoginView: View {
                                         isPasswordVisible.toggle()
                                     }) {
                                         Image(systemName: isPasswordVisible ? "eye" : "eye.slash")
-                                            .foregroundColor(Color(hex: "251db4"))
+                                            .foregroundColor(Color("251db4"))
                                             .padding(.trailing, 26) // Align with padding
                                     }
                                 }
@@ -98,17 +99,29 @@ struct LoginView: View {
                         }
 
                         // Sign In Button
-                        Button(action: { signInUser() }) {
+                        Button(action: { signInUser(asGuest: false) }) {
                             Text("Sign In")
-                                .font(.custom("Impact", size: 30))
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color(hex: "5a0ef6"))
+                                .font(.custom("Impact", size: 22)) // Reduce font size
+                                .frame(maxWidth: .infinity) // Adjust max width if needed
+                                .padding(12) // Reduce padding
+                                .background(Color("5a0ef6"))
                                 .foregroundColor(.white)
-                                .cornerRadius(10)
-                                .padding(.horizontal, 16)
+                                .cornerRadius(8) // Slightly smaller corner radius
+                                .padding(.horizontal, 12) // Reduce horizontal padding
                         }
-                        .padding(.top, 20)
+                        .padding(.top, 10) // Reduce top padding
+
+                        // Continue as Guest Button
+                        Button(action: { signInUser(asGuest: true) }) {
+                            Text("Continue as Guest")
+                                .font(.custom("Impact", size: 22)) // Reduce font size
+                                .frame(maxWidth: .infinity) // Adjust max width if needed
+                                .padding(12) // Reduce padding
+                                .background(Color("5a0ef6"))
+                                .foregroundColor(.white)
+                                .cornerRadius(8) // Slightly smaller corner radius
+                                .padding(.horizontal, 12) // Reduce horizontal padding
+                        }
 
                         // Error Message Placeholder (Reserve space)
                         Text(errorMessage ?? " ")
@@ -120,19 +133,19 @@ struct LoginView: View {
                         // "Not a member?" and "Sign Up" section
                         HStack(spacing: 5) {
                             Text("Not a member?")
-                                .font(.custom("Impact", size: 16))
+                                .font(.custom("Impact", size: 22))
                                 .italic()
                                 .foregroundColor(.white)
 
                             NavigationLink(destination: SignUpView()) {
                                 Text("Sign Up")
-                                    .font(.custom("Impact", size: 18))
+                                    .font(.custom("Impact", size: 22))
                                     .bold()
                                     .foregroundColor(.white)
                             }
                         }
                         .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.top, 0) // Move it higher with top padding
+                        .padding(.top, -25) // Move it higher with top padding
 
                         Spacer()
                     }
@@ -145,20 +158,33 @@ struct LoginView: View {
         }
     }
     
-    private func signInUser() {
-        guard !email.isEmpty, !password.isEmpty else {
-            errorMessage = "Please enter your email and password."
-            return
-        }
+    private func signInUser(asGuest: Bool) {
+        if asGuest {
+            // Sign in anonymously as a guest
+            Auth.auth().signInAnonymously { authResult, error in
+                if let error = error {
+                    self.errorMessage = error.localizedDescription
+                } else {
+                    self.isLoggedIn = true
+                }
+            }
+        } else {
+            // Regular sign-in with email and password
+            guard !email.isEmpty, !password.isEmpty else {
+                errorMessage = "Please enter your email and password."
+                return
+            }
 
-        Auth.auth().signIn(withEmail: email, password: password) { authResult, error in
-            if let error = error {
-                self.errorMessage = error.localizedDescription
-            } else {
-                self.isLoggedIn = true
+            Auth.auth().signIn(withEmail: email, password: password) { authResult, error in
+                if let error = error {
+                    self.errorMessage = error.localizedDescription
+                } else {
+                    self.isLoggedIn = true
+                }
             }
         }
     }
+
 }
 
 struct LoginView_Previews: PreviewProvider {
