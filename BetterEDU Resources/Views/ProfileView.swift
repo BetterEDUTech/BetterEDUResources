@@ -31,22 +31,11 @@ struct ProfileView: View {
 
                 GeometryReader { geometry in
                     ScrollView(showsIndicators: false) {
-                        VStack(spacing: UIDevice.current.userInterfaceIdiom == .pad ? 40 : 20) {
+                        VStack(spacing: UIDevice.current.userInterfaceIdiom == .pad ? 40 : -20) {
                             // Add top safe area padding
                             Color.clear.frame(height: UIDevice.current.userInterfaceIdiom == .pad ? 95 : -50)
                             
-                            // Close Button
-                            HStack {
-                                Spacer()
-                                Button(action: {
-                                    // Close or navigate back
-                                }) {
-                                    Image(systemName: "xmark")
-                                        .foregroundColor(.white)
-                                        .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 24 : 20))
-                                        .padding()
-                                }
-                            }
+                            
                             .padding(.horizontal, UIDevice.current.userInterfaceIdiom == .pad ? 32 : 16)
                             
                             // Profile Image Section

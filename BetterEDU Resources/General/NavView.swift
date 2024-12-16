@@ -3,6 +3,20 @@ import SwiftUI
 struct NavView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
 
+    init() {
+        // Configure navigation bar appearance for all views
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = .black
+        appearance.titleTextAttributes = [.foregroundColor: UIColor.white]
+        appearance.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
+        
+        UINavigationBar.appearance().standardAppearance = appearance
+        UINavigationBar.appearance().compactAppearance = appearance
+        UINavigationBar.appearance().scrollEdgeAppearance = appearance
+        UINavigationBar.appearance().tintColor = .white
+    }
+
     var body: some View {
         ZStack {
             // Background for the app content
@@ -38,16 +52,16 @@ struct NavView: View {
                             Spacer()
                             Rectangle()
                                 .fill(Color.black)
-                                .frame(height: geometry.safeAreaInsets.bottom + 70) // Adjusted height
+                                .frame(height: geometry.safeAreaInsets.bottom + 70)
                                 .ignoresSafeArea(edges: .bottom)
                         }
                     }
                 )
                 .onAppear {
                     let tabBarAppearance = UITabBar.appearance()
-                    tabBarAppearance.backgroundColor = UIColor.black // Transparent background
-                    tabBarAppearance.unselectedItemTintColor = UIColor.lightGray // Inactive tabs
-                    tabBarAppearance.tintColor = UIColor.white // Active tab color
+                    tabBarAppearance.backgroundColor = UIColor.black
+                    tabBarAppearance.unselectedItemTintColor = UIColor.lightGray
+                    tabBarAppearance.tintColor = UIColor.white
                 }
             }
         }

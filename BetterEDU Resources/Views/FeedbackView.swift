@@ -51,7 +51,7 @@ struct FeedbackView: View {
 
                             // Welcome Text
                             Text("Your thoughts matter to us, \(userName). Let us know how we can improve.")
-                                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 42 : 35, weight: .bold))
+                                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 42 : 29, weight: .bold))
                                 .foregroundColor(.white)
                                 .multilineTextAlignment(.center)
                                 .padding(.horizontal, UIDevice.current.userInterfaceIdiom == .pad ? 60 : 40)
@@ -74,14 +74,14 @@ struct FeedbackView: View {
                             }
                             .frame(maxWidth: UIDevice.current.userInterfaceIdiom == .pad ? min(geometry.size.width * 0.7, 800) : .infinity)
                             .padding(.horizontal, UIDevice.current.userInterfaceIdiom == .pad ? 0 : 20)
-                            .padding(.top, UIDevice.current.userInterfaceIdiom == .pad ? 32 : 20)
+                            .padding(.top, UIDevice.current.userInterfaceIdiom == .pad ? 32 : 0)
 
                             // Submit Button
                             Button(action: {
                                 submitFeedback()
                             }) {
                                 Text("Submit Feedback")
-                                    .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 24 : 18, weight: .bold))
+                                    .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 24 : 23, weight: .bold))
                                     .foregroundColor(.white)
                                     .padding(.vertical, UIDevice.current.userInterfaceIdiom == .pad ? 20 : 16)
                                     .frame(maxWidth: UIDevice.current.userInterfaceIdiom == .pad ? min(geometry.size.width * 0.7, 800) : .infinity)
