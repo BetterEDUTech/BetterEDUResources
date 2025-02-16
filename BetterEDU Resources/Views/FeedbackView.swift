@@ -2,12 +2,15 @@ import SwiftUI
 import Firebase
 import FirebaseAuth
 import FirebaseFirestore
+import Combine
 
 struct FeedbackView: View {
     @State private var feedbackText: String = ""
     @State private var profileImage: UIImage? = nil
     @State private var userName: String = "[Name]"
     @State private var showSubmissionAlert = false
+    @State private var keyboardHeight: CGFloat = 0
+    @FocusState private var isFeedbackFocused: Bool
 
     private let db = Firestore.firestore()
 
@@ -18,6 +21,12 @@ struct FeedbackView: View {
                     .resizable()
                     .scaledToFill()
                     .ignoresSafeArea()
+                
+                // Add tap gesture to dismiss keyboard
+                Color.black.opacity(0.01)
+                    .onTapGesture {
+                        isFeedbackFocused = false
+                    }
 
                 GeometryReader { geometry in
                     ScrollView(showsIndicators: false) {
@@ -60,6 +69,7 @@ struct FeedbackView: View {
                             // Text Editor for Feedback
                             VStack {
                                 TextEditor(text: $feedbackText)
+                                    .focused($isFeedbackFocused)
                                     .padding()
                                     .frame(height: UIDevice.current.userInterfaceIdiom == .pad ? 400 : 350)
                                     .background(
@@ -78,6 +88,7 @@ struct FeedbackView: View {
 
                             // Submit Button
                             Button(action: {
+                                isFeedbackFocused = false
                                 submitFeedback()
                             }) {
                                 Text("Submit Feedback")
@@ -100,6 +111,11 @@ struct FeedbackView: View {
                                      dismissButton: .default(Text("OK")))
                             }
 
+                            // Add extra padding at bottom for keyboard
+                            if UIDevice.current.userInterfaceIdiom != .pad {
+                                Spacer().frame(height: keyboardHeight)
+                            }
+                            
                             Spacer(minLength: UIDevice.current.userInterfaceIdiom == .pad ? 40 : 20)
                         }
                         .padding(.top, UIDevice.current.userInterfaceIdiom == .pad ? 130 : -90)
@@ -114,7 +130,27 @@ struct FeedbackView: View {
         .onAppear {
             loadProfileImage()
             loadUserName()
+            setupKeyboardObservers()
         }
+        .onDisappear {
+            removeKeyboardObservers()
+        }
+    }
+    
+    private func setupKeyboardObservers() {
+        NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillShowNotification, object: nil, queue: .main) { notification in
+            guard let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
+            keyboardHeight = keyboardFrame.height
+        }
+        
+        NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil, queue: .main) { _ in
+            keyboardHeight = 0
+        }
+    }
+    
+    private func removeKeyboardObservers() {
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
     }
     
     // Function to load the user's profile image from Firestore

@@ -17,6 +17,8 @@ struct ProfileView: View {
     @State private var selectedSchool: String = "[School]"
     @State private var isSchoolDropdownExpanded: Bool = false
     @State private var showDeleteConfirmation = false
+    @State private var isEditingName: Bool = false
+    @State private var tempUserName: String = ""
 
     private let db = Firestore.firestore()
     private let storage = Storage.storage()
@@ -69,10 +71,56 @@ struct ProfileView: View {
                                         isShowingImagePicker = true
                                     }
                                 
-                                Text(userName)
-                                    .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 36 : 24, weight: .bold))
-                                    .foregroundColor(.white)
-                                    .multilineTextAlignment(.center)
+                                HStack(spacing: 10) {
+                                    Text(userName)
+                                        .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 36 : 24, weight: .bold))
+                                        .foregroundColor(.white)
+                                        .multilineTextAlignment(.center)
+                                    
+                                    Button(action: {
+                                        tempUserName = userName
+                                        isEditingName = true
+                                    }) {
+                                        Image(systemName: "pencil.circle.fill")
+                                            .foregroundColor(.white)
+                                            .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 30 : 20))
+                                    }
+                                }
+                                
+                                if isEditingName {
+                                    HStack {
+                                        TextField("Enter new name", text: $tempUserName)
+                                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                                            .foregroundColor(.black)
+                                            .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 24 : 18))
+                                            .padding(.horizontal)
+                                        
+                                        Button(action: {
+                                            updateUserName(tempUserName)
+                                            isEditingName = false
+                                        }) {
+                                            Text("Save")
+                                                .foregroundColor(.white)
+                                                .padding(.horizontal, 20)
+                                                .padding(.vertical, 10)
+                                                .background(Color.blue)
+                                                .cornerRadius(8)
+                                        }
+                                        
+                                        Button(action: {
+                                            isEditingName = false
+                                            tempUserName = userName
+                                        }) {
+                                            Text("Cancel")
+                                                .foregroundColor(.white)
+                                                .padding(.horizontal, 20)
+                                                .padding(.vertical, 10)
+                                                .background(Color.red)
+                                                .cornerRadius(8)
+                                        }
+                                    }
+                                    .padding(.horizontal)
+                                }
                             }
                             .padding(.bottom, UIDevice.current.userInterfaceIdiom == .pad ? 32 : 16)
                             
@@ -379,6 +427,21 @@ struct ProfileView: View {
                 self.errorMessage = "Error updating school: \(error.localizedDescription)"
             } else {
                 self.selectedSchool = school
+            }
+        }
+    }
+
+    private func updateUserName(_ newName: String) {
+        guard !newName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        
+        db.collection("users").document(uid).updateData([
+            "name": newName
+        ]) { error in
+            if let error = error {
+                self.errorMessage = "Error updating name: \(error.localizedDescription)"
+            } else {
+                self.userName = newName
             }
         }
     }
