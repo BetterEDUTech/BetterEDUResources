@@ -2,19 +2,11 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>CFBundleURLName</key>
-			<string>BetterEDU.BetterEDU-Resources</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>com.googleusercontent.apps.957759097123-p9uhmbhep8bv33to2org291l7f83l795
-</string>
-			</array>
-		</dict>
-	</array>
+    <key>CFBundleShortVersionString</key>
+    <string>1.1</string>
+
+    <key>CFBundleVersion</key>
+    <string>2</string>
 </dict>
 </plist>
+
