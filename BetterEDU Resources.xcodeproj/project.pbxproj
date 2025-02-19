@@ -37,9 +37,22 @@
 		DF1BD8742CC046EF007E102D /* BetterEDU Resources.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "BetterEDU Resources.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		BBD53EBC2D66816800E0722E /* Exceptions for "BetterEDU Resources" folder in "BetterEDU Resources" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"BetterEDU-Resources-Info.plist",
+			);
+			target = DF1BD8732CC046EF007E102D /* BetterEDU Resources */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		DF1BD8762CC046EF007E102D /* BetterEDU Resources */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				BBD53EBC2D66816800E0722E /* Exceptions for "BetterEDU Resources" folder in "BetterEDU Resources" target */,
+			);
 			path = "BetterEDU Resources";
 			sourceTree = "<group>";
 		};
@@ -464,6 +477,7 @@
 				DEVELOPMENT_TEAM = 59X4M9ZSZU;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "BetterEDU-Resources-Info.plist";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -493,6 +507,7 @@
 				DEVELOPMENT_TEAM = 59X4M9ZSZU;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "BetterEDU-Resources-Info.plist";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
