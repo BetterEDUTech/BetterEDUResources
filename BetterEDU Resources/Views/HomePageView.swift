@@ -25,93 +25,111 @@ struct HomePageView: View {
     var body: some View {
         GeometryReader { geometry in
             NavigationView {
-                VStack(spacing: 16) {
-                    // Header Section with profile picture
-                    HStack {
-                        NavigationLink(destination: ProfileView()) {
-                            if let image = profileImage {
-                                Image(uiImage: image)
-                                    .resizable()
-                                    .frame(width: UIDevice.current.userInterfaceIdiom == .pad ? 50 : 40, 
-                                           height: UIDevice.current.userInterfaceIdiom == .pad ? 50 : 40)
-                                    .clipShape(Circle())
-                                    .overlay(Circle().stroke(Color.white, lineWidth: 2))
-                                    .shadow(radius: 4)
-                            } else {
-                                Image(systemName: "person.circle.fill")
-                                    .resizable()
-                                    .frame(width: UIDevice.current.userInterfaceIdiom == .pad ? 50 : 40, 
-                                           height: UIDevice.current.userInterfaceIdiom == .pad ? 50 : 40)
-                                    .foregroundColor(.white)
-                            }
-                        }
-                        Spacer()
-                    }
-                    .padding([.horizontal, .top], UIDevice.current.userInterfaceIdiom == .pad ? 24 : 16)
-
-                    // Title
-                    Text("BetterResources")
-                        .font(.custom("Impact", size: UIDevice.current.userInterfaceIdiom == .pad ? 65 : 55))
-                        .multilineTextAlignment(.center)
-                        .foregroundColor(.white)
-                        .padding(.top, -10)
-
-                    // Subtitle
-                    Text("Mental Health Resources for Students")
-                        .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 28 : 24))
-                        .foregroundColor(.white)
-                        .padding(.bottom, 10)
-
-                    // Search Bar
-                    HStack {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundColor(.gray)
-                        TextField("Search resources...", text: $searchText)
-                            .textFieldStyle(PlainTextFieldStyle())
-                    }
-                    .padding()
-                    .background(Color.white)
-                    .cornerRadius(10)
-                    .padding(.horizontal, UIDevice.current.userInterfaceIdiom == .pad ? 24 : 16)
-
-                    // Content Area
-                    ScrollView {
-                        if searchText.isEmpty {
-                            // Category Grid
-                            LazyVGrid(columns: gridColumns, spacing: 20) {
-                                NavigationLink(destination: FinancialServicesView()) {
-                                    categoryButton(icon: "building.columns.fill", title: "Financial Services")
-                                }
-                                NavigationLink(destination: EmergencyHotlinesView()) {
-                                    categoryButton(icon: "phone.arrow.up.right.fill", title: "Emergency Hotlines")
-                                }
-                                NavigationLink(destination: SelfCareResourcesView()) {
-                                    categoryButton(icon: "heart.fill", title: "Self-Care Resources")
-                                }
-                                NavigationLink(destination: AcademicStressView()) {
-                                    categoryButton(icon: "book.fill", title: "Academic Stress Support")
-                                }
-                            }
-                            .padding(.horizontal, UIDevice.current.userInterfaceIdiom == .pad ? 24 : 16)
-                        } else {
-                            // Search Results
-                            LazyVGrid(columns: gridColumns, spacing: 20) {
-                                if filteredResources.isEmpty {
-                                    Text("No resources found.")
-                                        .font(.headline)
-                                        .foregroundColor(.white)
-                                        .padding(.top, 16)
-                                        .gridCellColumns(gridColumns.count)
+                VStack(spacing: 0) {  // Changed spacing to 0 for manual control
+                    // Header Section
+                    VStack(spacing: 16) {
+                        // Header Section with profile picture
+                        HStack {
+                            NavigationLink(destination: ProfileView()) {
+                                if let image = profileImage {
+                                    Image(uiImage: image)
+                                        .resizable()
+                                        .frame(width: UIDevice.current.userInterfaceIdiom == .pad ? 50 : 40, 
+                                               height: UIDevice.current.userInterfaceIdiom == .pad ? 50 : 40)
+                                        .clipShape(Circle())
+                                        .overlay(Circle().stroke(Color.white, lineWidth: 2))
+                                        .shadow(radius: 4)
                                 } else {
-                                    ForEach(filteredResources) { resource in
-                                        resourceCard(resource: resource)
+                                    Image(systemName: "person.circle.fill")
+                                        .resizable()
+                                        .frame(width: UIDevice.current.userInterfaceIdiom == .pad ? 50 : 40, 
+                                               height: UIDevice.current.userInterfaceIdiom == .pad ? 50 : 40)
+                                        .foregroundColor(.white)
+                                }
+                            }
+                            Spacer()
+                        }
+                        .padding([.horizontal, .top], UIDevice.current.userInterfaceIdiom == .pad ? 24 : 16)
+
+                        // Title
+                        Text("BetterResources")
+                            .font(.custom("tan-nimbus", size: UIDevice.current.userInterfaceIdiom == .pad ? 55 : 39))
+                            .multilineTextAlignment(.center)
+                            .foregroundColor(.white)
+                            .padding(.top, -10)
+
+                        // Subtitle
+                        VStack(spacing: 0) {
+                            Text("Mental Health Resources")
+                                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 28 : 24))
+                                .foregroundColor(.white)
+                            Text("for Students")
+                                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 28 : 24))
+                                .foregroundColor(.white)
+                        }
+                    }
+                    .padding(.bottom, 20)
+                    
+                    // Visual Divider
+                    Rectangle()
+                        .fill(Color.white.opacity(0.3))
+                        .frame(height: 1)
+                        .padding(.horizontal, UIDevice.current.userInterfaceIdiom == .pad ? 40 : 20)
+                    
+                    // Content Section
+                    VStack(spacing: 24) {  // Increased spacing between elements
+                        // Search Bar
+                        HStack {
+                            Image(systemName: "magnifyingglass")
+                                .foregroundColor(.gray)
+                            TextField("Search resources...", text: $searchText)
+                                .textFieldStyle(PlainTextFieldStyle())
+                        }
+                        .padding()
+                        .background(Color.white)
+                        .cornerRadius(10)
+                        .padding(.horizontal, UIDevice.current.userInterfaceIdiom == .pad ? 24 : 16)
+                        .padding(.top, 20)  // Added top padding after divider
+
+                        // Content Area
+                        ScrollView {
+                            if searchText.isEmpty {
+                                // Category Grid
+                                LazyVGrid(columns: gridColumns, spacing: 20) {
+                                    NavigationLink(destination: FinancialServicesView()) {
+                                        categoryButton(icon: "building.columns.fill", title: "Financial Services")
+                                    }
+                                    NavigationLink(destination: EmergencyHotlinesView()) {
+                                        categoryButton(icon: "phone.arrow.up.right.fill", title: "Emergency Hotlines")
+                                    }
+                                    NavigationLink(destination: SelfCareResourcesView()) {
+                                        categoryButton(icon: "heart.fill", title: "Self-Care Resources")
+                                    }
+                                    NavigationLink(destination: AcademicStressView()) {
+                                        categoryButton(icon: "book.fill", title: "Academic Stress Support")
                                     }
                                 }
+                                .padding(.horizontal, UIDevice.current.userInterfaceIdiom == .pad ? 24 : 16)
+                            } else {
+                                // Search Results
+                                LazyVGrid(columns: gridColumns, spacing: 20) {
+                                    if filteredResources.isEmpty {
+                                        Text("No resources found.")
+                                            .font(.headline)
+                                            .foregroundColor(.white)
+                                            .padding(.top, 16)
+                                            .gridCellColumns(gridColumns.count)
+                                    } else {
+                                        ForEach(filteredResources) { resource in
+                                            resourceCard(resource: resource)
+                                        }
+                                    }
+                                }
+                                .padding(.horizontal, UIDevice.current.userInterfaceIdiom == .pad ? 24 : 16)
                             }
-                            .padding(.horizontal, UIDevice.current.userInterfaceIdiom == .pad ? 24 : 16)
                         }
+                        .padding(.top, 8)
                     }
-                    .padding(.top, 8)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(
@@ -176,7 +194,7 @@ struct HomePageView: View {
         .padding()
         .frame(height: UIDevice.current.userInterfaceIdiom == .pad ? 100 : 80)
         .background(Color.white)
-        .foregroundColor(.blue)
+        .foregroundColor(Color(hex: "#5a0ef6"))
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
     }

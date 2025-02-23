@@ -7,6 +7,14 @@
 
     <key>CFBundleVersion</key>
     <string>2</string>
+    
+    <key>UIAppFonts</key>
+    <array>
+        <string>tan-nimbus.otf</string>
+        <string>Lobster 1.4.otf</string>
+        <string>Lobster-1.4.ttf</string>
+        <string>GrandHotel-Regular.ttf</string>
+    </array>
 </dict>
 </plist>
 

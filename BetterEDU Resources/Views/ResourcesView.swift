@@ -112,7 +112,7 @@ struct ResourcesAppView: View {
                         }
                         .padding(.horizontal, 12)
                         .padding(.vertical, 10)
-                        .background(Color.white.opacity(0.2))
+                        .background(Color.black.opacity(0.4))
                         .cornerRadius(12)
                         .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
                     }
@@ -281,7 +281,7 @@ struct ResourceCard: View {
         }
         .padding(UIDevice.current.userInterfaceIdiom == .pad ? 16 : 12)
         .frame(maxWidth: .infinity, minHeight: UIDevice.current.userInterfaceIdiom == .pad ? 150 : 120)
-        .background(Color.white.opacity(0.2))
+        .background(Color.black.opacity(0.4))
         .cornerRadius(12)
         .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
         .onAppear(perform: checkIfResourceIsSaved)
