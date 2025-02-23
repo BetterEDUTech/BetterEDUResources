@@ -10,176 +10,312 @@ struct FeedbackView: View {
     @State private var userName: String = "[Name]"
     @State private var showSubmissionAlert = false
     @State private var keyboardHeight: CGFloat = 0
+    @State private var emailText: String = ""
     @FocusState private var isFeedbackFocused: Bool
+    @FocusState private var isEmailFocused: Bool
 
     private let db = Firestore.firestore()
+    
+    // Device-specific sizing
+    private var isIPad: Bool {
+        UIDevice.current.userInterfaceIdiom == .pad
+    }
+    
+    private var spacing: CGFloat {
+        isIPad ? 32 : 16  // Reduced spacing for iPhone
+    }
+    
+    private var horizontalPadding: CGFloat {
+        isIPad ? 40 : 20
+    }
+    
+    private var profileImageSize: CGFloat {
+        isIPad ? 60 : 40  // Slightly larger profile image for iPhone
+    }
+    
+    private var titleFontSize: CGFloat {
+        isIPad ? 32 : 20  // Slightly smaller title for iPhone
+    }
 
     var body: some View {
         NavigationView {
+            GeometryReader { geometry in
             ZStack {
+                    // Background image fills screen
                 Image("background")
                     .resizable()
-                    .scaledToFill()
+                        .aspectRatio(contentMode: .fill)
                     .ignoresSafeArea()
-                
-                // Add tap gesture to dismiss keyboard
-                Color.black.opacity(0.01)
-                    .onTapGesture {
-                        isFeedbackFocused = false
-                    }
 
-                GeometryReader { geometry in
-                    ScrollView(showsIndicators: false) {
-                        VStack(spacing: UIDevice.current.userInterfaceIdiom == .pad ? 32 : 20) {
-                            // Add safe area padding at the top
-                            Color.clear.frame(height: UIDevice.current.userInterfaceIdiom == .pad ? 95 : 40)
-                            
-                            // Header Section with Profile Icon
+                    // Dismiss keyboard on tap
+                    Color.clear
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            isFeedbackFocused = false
+                            isEmailFocused = false
+                        }
+
+                    // Main content
+                    VStack(spacing: spacing) {
+                        // Top safe area spacing
+                        Color.clear.frame(height: isIPad ? 40 : 20)
+                        
+                        // Content container
+                        VStack(alignment: .leading, spacing: spacing) {
+                            // Profile icon
                             HStack {
                                 NavigationLink(destination: ProfileView()) {
                                     if let image = profileImage {
                                         Image(uiImage: image)
                                             .resizable()
-                                            .frame(width: UIDevice.current.userInterfaceIdiom == .pad ? 60 : 35,
-                                                   height: UIDevice.current.userInterfaceIdiom == .pad ? 60 : 35)
+                                            .frame(width: profileImageSize, height: profileImageSize)
                                             .clipShape(Circle())
                                             .overlay(Circle().stroke(Color.white, lineWidth: 2))
                                             .shadow(radius: 4)
                                     } else {
                                         Image(systemName: "person.circle.fill")
                                             .resizable()
-                                            .frame(width: UIDevice.current.userInterfaceIdiom == .pad ? 60 : 35,
-                                                   height: UIDevice.current.userInterfaceIdiom == .pad ? 60 : 35)
+                                            .frame(width: profileImageSize, height: profileImageSize)
                                             .foregroundColor(.white)
                                     }
                                 }
-                                .padding(.leading, UIDevice.current.userInterfaceIdiom == .pad ? 40 : 30)
                                 Spacer()
                             }
-                            .padding(.top, UIDevice.current.userInterfaceIdiom == .pad ? 20 : 10)
+                            .padding(.horizontal, horizontalPadding)
 
-                            // Welcome Text
-                            Text("Your thoughts matter to us, \(userName). Let us know how we can improve.")
-                                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 42 : 29, weight: .bold))
-                                .foregroundColor(.white)
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal, UIDevice.current.userInterfaceIdiom == .pad ? 60 : 40)
-                                .padding(.top, UIDevice.current.userInterfaceIdiom == .pad ? 20 : 10)
+                            // Welcome text
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Your thoughts matter to us,")
+                                    .font(.custom("tan-nimbus", size: isIPad ? 45 : 22))
+                                    .foregroundColor(.white)
+                                Text(userName)
+                                    .font(.custom("tan-nimbus", size: isIPad ? 45 : 32))
+                                    .foregroundColor(.white)
+                                Text("Let us know how we")
+                                    .font(.custom("tan-nimbus", size: isIPad ? 45 : 26))
+                                    .foregroundColor(.white)
+                                Text("can improve.")
+                                    .font(.custom("tan-nimbus", size: isIPad ? 45 : 26))
+                                    .foregroundColor(.white)
+                            }
+                            .multilineTextAlignment(.leading)
+                            .padding(.horizontal, horizontalPadding)
 
-                            // Text Editor for Feedback
-                            VStack {
-                                TextEditor(text: $feedbackText)
-                                    .focused($isFeedbackFocused)
-                                    .padding()
-                                    .frame(height: UIDevice.current.userInterfaceIdiom == .pad ? 400 : 350)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 16)
-                                            .fill(Color.white)
-                                            .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
+                            Spacer()
+                                .frame(height: isIPad ? spacing : 8)
+
+                            // Email field
+                            ZStack {
+                                // Glassmorphic background
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(.ultraThinMaterial)
+                                    .overlay(
+                                    RoundedRectangle(cornerRadius: 16)
+                                            .stroke(
+                                                LinearGradient(
+                                                    gradient: Gradient(colors: [
+                                                        Color.white.opacity(0.5),
+                                                        Color.white.opacity(0.2),
+                                                        Color.white.opacity(0.1)
+                                                    ]),
+                                                    startPoint: .topLeading,
+                                                    endPoint: .bottomTrailing
+                                                ),
+                                                lineWidth: 1
+                                            )
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 16)
+                                            .fill(
+                                                LinearGradient(
+                                                    gradient: Gradient(colors: [
+                                                        Color(hex: "#5a0ef6").opacity(0.1),
+                                                        Color(hex: "#7849fd").opacity(0.05)
+                                                    ]),
+                                                    startPoint: .topLeading,
+                                                    endPoint: .bottomTrailing
+                                                )
+                                            )
+                                    )
+                                    .shadow(color: Color.white.opacity(0.2), radius: 2, x: -1, y: -1)
+                                    .shadow(color: Color.black.opacity(0.3), radius: 3, x: 2, y: 2)
+
+                                HStack {
+                                    Image(systemName: "envelope.fill")
+                                        .foregroundColor(.white.opacity(0.9))
+                                        .font(.system(size: isIPad ? 20 : 16))
+                                    
+                                    TextField("Enter your email", text: $emailText)
+                                        .focused($isEmailFocused)
+                                        .foregroundColor(.white)
+                                        .font(.system(size: isIPad ? 18 : 16))
+                                        .tint(.white)
+                                        .textContentType(.emailAddress)
+                                        .keyboardType(.emailAddress)
+                                        .autocapitalization(.none)
+                                }
+                                .padding(.horizontal, 16)
+                            }
+                            .frame(width: isIPad ? geometry.size.width * 0.8 : min(geometry.size.width * 0.85, 300))
+                            .frame(height: isIPad ? 60 : 50)
+                            .padding(.leading, horizontalPadding)
+                            .padding(.top, isIPad ? spacing : 8)
+
+                            Spacer()
+                                .frame(height: isIPad ? spacing : 8)
+
+                            // Feedback text editor
+                            ZStack {
+                                // Glassmorphic background
+                                RoundedRectangle(cornerRadius: 20)
+                                    .fill(.ultraThinMaterial)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 20)
+                                            .stroke(
+                                                LinearGradient(
+                                                    gradient: Gradient(colors: [
+                                                        Color.white.opacity(0.5),
+                                                        Color.white.opacity(0.2),
+                                                        Color.white.opacity(0.1)
+                                                    ]),
+                                                    startPoint: .topLeading,
+                                                    endPoint: .bottomTrailing
+                                                ),
+                                                lineWidth: 1
+                                            )
                                     )
                                     .overlay(
-                                        RoundedRectangle(cornerRadius: 16)
-                                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                        RoundedRectangle(cornerRadius: 20)
+                                            .fill(
+                                                LinearGradient(
+                                                    gradient: Gradient(colors: [
+                                                        Color(hex: "#5a0ef6").opacity(0.1),
+                                                        Color(hex: "#7849fd").opacity(0.05)
+                                                    ]),
+                                                    startPoint: .topLeading,
+                                                    endPoint: .bottomTrailing
+                                                )
+                                            )
                                     )
-                            }
-                            .frame(maxWidth: UIDevice.current.userInterfaceIdiom == .pad ? min(geometry.size.width * 0.7, 800) : .infinity)
-                            .padding(.horizontal, UIDevice.current.userInterfaceIdiom == .pad ? 0 : 20)
-                            .padding(.top, UIDevice.current.userInterfaceIdiom == .pad ? 32 : 0)
+                                    .shadow(color: Color.white.opacity(0.2), radius: 2, x: -1, y: -1)
+                                    .shadow(color: Color.black.opacity(0.3), radius: 3, x: 2, y: 2)
 
-                            // Submit Button
-                            Button(action: {
+                                TextEditor(text: $feedbackText)
+                                    .focused($isFeedbackFocused)
+                                    .scrollContentBackground(.hidden)
+                                    .background(Color.clear)
+                                    .foregroundColor(.white)
+                                    .tint(Color(hex: "#5a0ef6"))
+                                    .font(.system(size: isIPad ? 18 : 16))
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 12)
+                            }
+                            .frame(width: isIPad ? geometry.size.width * 0.8 : min(geometry.size.width * 0.85, 300))
+                            .frame(height: isIPad ? geometry.size.height * 0.3 : min(geometry.size.height * 0.35, 200))
+                            .padding(.leading, horizontalPadding)
+                            .padding(.top, isIPad ? spacing : 8)
+
+                            Spacer()
+                                .frame(height: isIPad ? spacing : 8)
+
+                            // Submit button
+                            Button {
                                 isFeedbackFocused = false
                                 submitFeedback()
-                            }) {
-                                Text("Submit Feedback")
-                                    .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 24 : 23, weight: .bold))
-                                    .foregroundColor(.white)
-                                    .padding(.vertical, UIDevice.current.userInterfaceIdiom == .pad ? 20 : 16)
-                                    .frame(maxWidth: UIDevice.current.userInterfaceIdiom == .pad ? min(geometry.size.width * 0.7, 800) : .infinity)
-                                    .background(
-                                        LinearGradient(gradient: Gradient(colors: [Color(hex: "#5a0ef6"), Color(hex: "#7849fd")]), 
-                                                     startPoint: .leading, endPoint: .trailing)
-                                    )
-                                    .cornerRadius(16)
-                                    .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 5)
+                            } label: {
+                            Text("Submit Feedback")
+                                    .font(.system(size: isIPad ? 22 : 17, weight: .bold))
+                                .foregroundColor(.white)
+                                    .padding(.vertical, isIPad ? 20 : 14)
+                                    .frame(width: isIPad ? geometry.size.width * 0.4 : min(geometry.size.width * 0.5, 200))
+                                .background(
+                                        LinearGradient(
+                                            gradient: Gradient(colors: [Color(hex: "#5a0ef6"), Color(hex: "#7849fd")]),
+                                            startPoint: .leading,
+                                            endPoint: .trailing
+                                        )
+                                )
+                                .cornerRadius(16)
+                                    .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 5)
                             }
-                            .padding(.horizontal, UIDevice.current.userInterfaceIdiom == .pad ? 0 : 20)
-                            .padding(.top, UIDevice.current.userInterfaceIdiom == .pad ? 32 : 20)
-                            .alert(isPresented: $showSubmissionAlert) {
-                                Alert(title: Text("Thank you!"), 
-                                     message: Text("Your feedback has been submitted."), 
-                                     dismissButton: .default(Text("OK")))
-                            }
-
-                            // Add extra padding at bottom for keyboard
-                            if UIDevice.current.userInterfaceIdiom != .pad {
-                                Spacer().frame(height: keyboardHeight)
-                            }
-                            
-                            Spacer(minLength: UIDevice.current.userInterfaceIdiom == .pad ? 40 : 20)
+                            .padding(.leading, horizontalPadding)
+                            .padding(.top, isIPad ? spacing : 12)
                         }
-                        .padding(.top, UIDevice.current.userInterfaceIdiom == .pad ? 130 : -90)
-                    }
-                    .safeAreaInset(edge: .top) {
-                        Color.clear.frame(height: 0)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
+                .ignoresSafeArea(.keyboard)
             }
+            .navigationBarHidden(true)
         }
         .navigationViewStyle(StackNavigationViewStyle())
         .onAppear {
             loadProfileImage()
             loadUserName()
             setupKeyboardObservers()
+            emailText = Auth.auth().currentUser?.email ?? ""
         }
         .onDisappear {
             removeKeyboardObservers()
         }
+        .alert("Thank You!", isPresented: $showSubmissionAlert) {
+            Button("OK", role: .cancel) {
+                // Clear the fields after submission
+                feedbackText = ""
+                emailText = Auth.auth().currentUser?.email ?? ""
+            }
+        } message: {
+            Text("Your feedback has been submitted successfully. We appreciate your input!")
+        }
     }
-    
+
+    // MARK: - Keyboard
     private func setupKeyboardObservers() {
-        NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillShowNotification, object: nil, queue: .main) { notification in
+        NotificationCenter.default.addObserver(
+            forName: UIResponder.keyboardWillShowNotification,
+            object: nil,
+            queue: .main
+        ) { notification in
             guard let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
             keyboardHeight = keyboardFrame.height
         }
-        
-        NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil, queue: .main) { _ in
+
+        NotificationCenter.default.addObserver(
+            forName: UIResponder.keyboardWillHideNotification,
+            object: nil,
+            queue: .main
+        ) { _ in
             keyboardHeight = 0
         }
     }
-    
+
     private func removeKeyboardObservers() {
         NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
         NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
     }
-    
-    // Function to load the user's profile image from Firestore
+
+    // MARK: - Profile Image
     private func loadProfileImage() {
         guard let uid = Auth.auth().currentUser?.uid else { return }
-
         db.collection("users").document(uid).getDocument { document, error in
             if let error = error {
                 print("Error loading profile image URL: \(error.localizedDescription)")
                 return
             }
-            
-            if let document = document, document.exists,
-               let profileImageURLString = document.data()?["profileImageURL"] as? String,
-               let url = URL(string: profileImageURLString) {
-                
+            if let doc = document, doc.exists,
+               let urlString = doc.data()?["profileImageURL"] as? String,
+               let url = URL(string: urlString) {
                 fetchImage(from: url)
             }
         }
     }
     
-    // Helper function to fetch an image from a URL
     private func fetchImage(from url: URL) {
         URLSession.shared.dataTask(with: url) { data, _, error in
             if let error = error {
                 print("Error fetching profile image: \(error.localizedDescription)")
                 return
             }
-            
             if let data = data, let uiImage = UIImage(data: data) {
                 DispatchQueue.main.async {
                     self.profileImage = uiImage
@@ -188,18 +324,16 @@ struct FeedbackView: View {
         }.resume()
     }
 
-    // Function to load the user's name from Firestore
+    // MARK: - User Name
     private func loadUserName() {
         guard let uid = Auth.auth().currentUser?.uid else { return }
-        
         db.collection("users").document(uid).getDocument { document, error in
             if let error = error {
                 print("Error loading user name: \(error.localizedDescription)")
                 return
             }
-            
-            if let document = document, document.exists,
-               let name = document.data()?["name"] as? String {
+            if let doc = document, doc.exists,
+               let name = doc.data()?["name"] as? String {
                 DispatchQueue.main.async {
                     self.userName = name
                 }
@@ -207,14 +341,14 @@ struct FeedbackView: View {
         }
     }
 
-    // Function to submit feedback to Firestore
+    // MARK: - Submit Feedback
     private func submitFeedback() {
         guard let uid = Auth.auth().currentUser?.uid,
-              let email = Auth.auth().currentUser?.email else { return }
+              !emailText.isEmpty else { return }
         
         let feedbackData: [String: Any] = [
             "userId": uid,
-            "userEmail": email,
+            "userEmail": emailText,
             "feedbackText": feedbackText,
             "timestamp": Timestamp()
         ]
@@ -223,12 +357,14 @@ struct FeedbackView: View {
             if let error = error {
                 print("Error submitting feedback: \(error.localizedDescription)")
             } else {
-                self.feedbackText = "" // Clear feedback text after submission
-                self.showSubmissionAlert = true // Show submission confirmation alert
+                DispatchQueue.main.async {
+                    self.showSubmissionAlert = true
+                }
             }
         }
     }
 }
+
 
 #Preview {
     FeedbackView()
