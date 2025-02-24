@@ -11,7 +11,7 @@ struct ForgotPasswordView: View {
             // Background image
             Image("background")
                 .resizable()
-                .scaledToFill()
+                //.scaledToFill()
                 .ignoresSafeArea()
 
             VStack(spacing: 20) {

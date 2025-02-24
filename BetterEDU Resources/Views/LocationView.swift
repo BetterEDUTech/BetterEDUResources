@@ -10,9 +10,8 @@ struct LocationView: View {
 
     var body: some View {
         ZStack {
-            // Background gradient
-            LinearGradient(gradient: Gradient(colors: [Color(hex: "3b3aaf"), Color(hex: "1d1ba9")]),
-                           startPoint: .topLeading, endPoint: .bottomTrailing)
+            Image("background") // Use the same background image as the other views
+                .resizable()
                 .ignoresSafeArea()
 
             VStack(alignment: .leading, spacing: 20) {
@@ -38,17 +37,18 @@ struct LocationView: View {
 
                 // Search Field with Icon and custom placeholder color
                 HStack {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundColor(.white.opacity(0.7))
+                    
                     TextField("Search for your state", text: $searchText)
                         .foregroundColor(.white)
                         .placeholder(when: searchText.isEmpty) {
                             Text("Search for your state")
                                 .foregroundColor(Color.white.opacity(0.9)) // More visible placeholder color
                         }
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(.blue.opacity(0.7))
                 }
                 .padding()
-                .background(Color.white.opacity(0.2))
+                .background(Color.white)
                 .cornerRadius(10)
 
                 // Filtered List of States
@@ -68,7 +68,7 @@ struct LocationView: View {
                                     }
                                 }
                                 .padding()
-                                .background(selectedState == state ? Color.white.opacity(0.2) : Color.white.opacity(0.1))
+                                .background(selectedState == state ? Color.white.opacity(0.2) : Color.purple.opacity(0.8))
                                 .cornerRadius(8)
                             }
                         }

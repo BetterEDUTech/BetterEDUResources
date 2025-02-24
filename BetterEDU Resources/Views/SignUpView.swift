@@ -21,120 +21,61 @@ struct SignUpView: View {
                         .resizable()
                         .scaledToFill()
                         .ignoresSafeArea()
-                    
+
                     ScrollView(showsIndicators: false) {
                         VStack(spacing: 20) {
-                            // Add top padding
-                            Color.clear.frame(height: 20)
-                            
-                            // Logo with adaptive sizing
+                            // Logo
                             Image("BetterLogo2")
                                 .resizable()
                                 .scaledToFit()
                                 .frame(height: UIDevice.current.userInterfaceIdiom == .pad ? 300 : 200)
-                                .padding(.top, UIDevice.current.userInterfaceIdiom == .pad ? 20 : 0)
-                            
-                            // Title with adaptive font
+                                .padding(.top, 20)
+
+                            // Title
                             Text("Create an Account")
-                                .font(.custom("Impact", size: UIDevice.current.userInterfaceIdiom == .pad ? 28 : 24))
+                                .font(.custom("Impact", size: UIDevice.current.userInterfaceIdiom == .pad ? 32 : 26))
                                 .foregroundColor(.white)
                                 .padding(.bottom, 10)
-                            
-                            // Form fields with adaptive width
-                            VStack(spacing: 20) {
-                                // Name Field
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("   Name")
-                                        .font(.custom("Impact", size: 18))
-                                        .foregroundColor(.white)
-                                    TextField("Enter your name", text: $name)
-                                        .padding()
-                                        .background(Color(hex: "98b6f8"))
-                                        .cornerRadius(10)
-                                        .foregroundColor(Color(hex: "251db4"))
-                                        .frame(maxWidth: .infinity)
-                                        .padding(.horizontal, 16)
-                                }
-                                
-                                // Email Field
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("   Email")
-                                        .font(.custom("Impact", size: 18))
-                                        .foregroundColor(.white)
-                                    TextField("name@example.com", text: $email)
-                                        .padding()
-                                        .background(Color(hex: "98b6f8"))
-                                        .cornerRadius(10)
-                                        .foregroundColor(Color(hex: "251db4"))
-                                        .keyboardType(.emailAddress)
-                                        .autocapitalization(.none)
-                                        .frame(maxWidth: .infinity)
-                                        .padding(.horizontal, 16)
-                                }
-                                
-                                // Password Field
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("   Password")
-                                        .font(.custom("Impact", size: 18))
-                                        .foregroundColor(.white)
-                                    ZStack(alignment: .trailing) {
-                                        if isPasswordVisible {
-                                            TextField("Password", text: $password)
-                                                .padding()
-                                                .background(Color(hex: "98b6f8"))
-                                                .cornerRadius(10)
-                                                .foregroundColor(Color(hex: "251db4"))
-                                                .frame(maxWidth: .infinity)
-                                                .padding(.horizontal, 16)
-                                        } else {
-                                            SecureField("Password", text: $password)
-                                                .padding()
-                                                .background(Color(hex: "98b6f8"))
-                                                .cornerRadius(10)
-                                                .foregroundColor(Color(hex: "251db4"))
-                                                .frame(maxWidth: .infinity)
-                                                .padding(.horizontal, 16)
-                                        }
-                                        Button(action: { isPasswordVisible.toggle() }) {
-                                            Image(systemName: isPasswordVisible ? "eye" : "eye.slash")
-                                                .foregroundColor(Color(hex: "251db4"))
-                                                .padding(.trailing, 26)
-                                        }
-                                    }
-                                }
+
+                            // Form fields
+                            VStack(spacing: 16) {
+                                CustomTextField(label: "Name", placeholder: "Enter your name", text: $name)
+                                CustomTextField(label: "Email", placeholder: "name@example.com", text: $email, keyboardType: .emailAddress)
+                                CustomSecureField(label: "Password", placeholder: "Password", text: $password, isPasswordVisible: $isPasswordVisible)
                             }
-                            .frame(maxWidth: UIDevice.current.userInterfaceIdiom == .pad ? geometry.size.width * 0.6 : .infinity)
-                            .padding(.horizontal, UIDevice.current.userInterfaceIdiom == .pad ? 40 : 15)
-                            
+                            .frame(maxWidth: geometry.size.width > 600 ? 700 : 350)
+                            .padding(.horizontal)
+
                             // Sign Up Button
-                            Button(action: { signUpUser() }) {
+                            Button(action: signUpUser) {
                                 Text("Sign Up")
-                                    .font(.custom("Impact", size: UIDevice.current.userInterfaceIdiom == .pad ? 26 : 22))
+                                    .font(.custom("Impact", size: 22))
                                     .frame(maxWidth: .infinity)
-                                    .padding(UIDevice.current.userInterfaceIdiom == .pad ? 16 : 12)
+                                    .padding()
                                     .background(Color(hex: "5a0ef6"))
                                     .foregroundColor(.white)
                                     .cornerRadius(10)
                             }
-                            .frame(maxWidth: UIDevice.current.userInterfaceIdiom == .pad ? geometry.size.width * 0.6 : .infinity)
-                            .padding(.horizontal, UIDevice.current.userInterfaceIdiom == .pad ? 40 : 25)
-                            
+                            .frame(maxWidth: geometry.size.width > 600 ? 700 : 350)
+                            .padding(.horizontal)
+
                             // Error message
                             if let errorMessage = errorMessage {
                                 Text(errorMessage)
                                     .foregroundColor(.red)
                                     .multilineTextAlignment(.center)
-                                    .fixedSize(horizontal: false, vertical: true)
-                                    .padding(.horizontal, 16)
+                                    .padding(.horizontal)
                             }
-                            
-                            // Add bottom padding
-                            Color.clear.frame(height: 40)
+
+                            Spacer(minLength: 20)
                         }
                         .frame(minHeight: geometry.size.height)
-                        .padding(.horizontal)
+                        .padding(.vertical, 30)
+                        .frame(maxWidth: geometry.size.width)
+                        .multilineTextAlignment(.center)
                     }
                 }
+                .frame(width: geometry.size.width, height: geometry.size.height)
             }
         }
         .navigationViewStyle(StackNavigationViewStyle())
@@ -142,7 +83,7 @@ struct SignUpView: View {
             HomePageView()
         }
     }
-    
+
     private func signUpUser() {
         guard !email.isEmpty, !password.isEmpty, !name.isEmpty else {
             errorMessage = "Please fill in all fields."
@@ -175,8 +116,61 @@ struct SignUpView: View {
     }
 }
 
+struct CustomTextField: View {
+    var label: String
+    var placeholder: String
+    @Binding var text: String
+    var keyboardType: UIKeyboardType = .default
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("   \(label)")
+                .font(.custom("Impact", size: 18))
+                .foregroundColor(.white)
+            TextField(placeholder, text: $text)
+                .padding()
+                .background(Color(hex: "ffffff"))
+                .cornerRadius(10)
+                .foregroundColor(Color(hex: "251db4"))
+                .keyboardType(keyboardType)
+                .autocapitalization(.none)
+        }
+    }
+}
+
+struct CustomSecureField: View {
+    var label: String
+    var placeholder: String
+    @Binding var text: String
+    @Binding var isPasswordVisible: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("   \(label)")
+                .font(.custom("Impact", size: 18))
+                .foregroundColor(.white)
+            ZStack(alignment: .trailing) {
+                if isPasswordVisible {
+                    TextField(placeholder, text: $text)
+                } else {
+                    SecureField(placeholder, text: $text)
+                }
+                Button(action: { isPasswordVisible.toggle() }) {
+                    Image(systemName: isPasswordVisible ? "eye" : "eye.slash")
+                        .foregroundColor(Color(hex: "251db4"))
+                        .padding(.trailing, 16)
+                }
+            }
+            .padding()
+            .background(Color(hex: "ffffff"))
+            .cornerRadius(10)
+        }
+    }
+}
+
 struct SignUpView_Previews: PreviewProvider {
     static var previews: some View {
         SignUpView()
     }
 }
+

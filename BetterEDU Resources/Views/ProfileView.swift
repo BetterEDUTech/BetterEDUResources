@@ -17,235 +17,131 @@ struct ProfileView: View {
     @State private var tempUserName = ""
     @State private var showLocationPicker = false
     @State private var showSchoolPicker = false
-    
+
     private let db = Firestore.firestore()
     private let storage = Storage.storage()
-    
-    // Device-specific sizing
+
     private var isIPad: Bool {
         UIDevice.current.userInterfaceIdiom == .pad
     }
-    
-    // Available options for dropdowns
-    private let locations = ["Arizona", "California"]
-    private let schools = [
-        "Arizona State University",
-        "University of Arizona",
-        "Northern Arizona University",
-        "UCLA",
-        "UC Berkeley",
-        "Stanford University",
-        "University of Southern California",
-        "San Diego State University"
-    ]
-    
+
     var body: some View {
         NavigationView {
-            GeometryReader { geometry in
-                ZStack {
-                    // Background
-                    Image("background")
-                        .resizable()
-                        .scaledToFill()
-                        .ignoresSafeArea()
-                    
-                    ScrollView(showsIndicators: false) {
-                        VStack(alignment: .leading, spacing: isIPad ? 24 : 16) {
-                            // Dismiss Button
-                            HStack {
-                                Button(action: { dismiss() }) {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .font(.system(size: isIPad ? 32 : 24))
-                                        .foregroundColor(.white)
-                                }
-                                .padding(.leading, isIPad ? 24 : 16)
-                                .padding(.top, isIPad ? 16 : 12)
-                                Spacer()
-                            }
-                            
-                            // Profile Image Section
-                            VStack(alignment: .leading, spacing: isIPad ? 16 : 12) {
-                                Button(action: { isShowingImagePicker = true }) {
-                                    if let image = profileImage {
-                                        Image(uiImage: image)
-                                            .resizable()
-                                            .aspectRatio(contentMode: .fill)
-                                            .frame(width: isIPad ? 160 : 100, height: isIPad ? 160 : 100)
-                                            .clipShape(Circle())
-                                            .overlay(Circle().stroke(Color.white, lineWidth: 2))
-                                    } else {
-                                        Circle()
-                                            .fill(Color.white.opacity(0.2))
-                                            .frame(width: isIPad ? 160 : 100, height: isIPad ? 160 : 100)
-                                            .overlay(
-                                                Image(systemName: "camera.fill")
-                                                    .foregroundColor(.white)
-                                                    .font(.system(size: isIPad ? 40 : 30))
-                                            )
-                                    }
-                                }
-                                .overlay(
-                                    Circle()
-                                        .fill(Color.blue)
-                                        .frame(width: isIPad ? 40 : 30, height: isIPad ? 40 : 30)
-                                        .overlay(
-                                            Image(systemName: "pencil")
-                                                .foregroundColor(.white)
-                                                .font(.system(size: isIPad ? 20 : 15))
-                                        )
-                                        .offset(x: isIPad ? 55 : 35, y: isIPad ? 55 : 35)
-                                )
-                                
-                                // Name Section
-                                if isEditingName {
-                                    HStack(spacing: 8) {
-                                        TextField("Enter name", text: $tempUserName)
-                                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                                            .font(.system(size: isIPad ? 22 : 17))
-                                            .frame(width: min(geometry.size.width * 0.6, 200))
-                                        
-                                        Button("Save") {
-                                            updateUserName(tempUserName)
-                                            isEditingName = false
-                                        }
-                                        .foregroundColor(.blue)
-                                        
-                                        Button("Cancel") {
-                                            isEditingName = false
-                                            tempUserName = userName
-                                        }
-                                        .foregroundColor(.red)
-                                    }
-                                } else {
-                                    HStack {
-                                        Text(userName)
-                                            .font(.system(size: isIPad ? 28 : 22, weight: .bold))
-                                            .foregroundColor(.white)
-                                        
-                                        Button(action: {
-                                            tempUserName = userName
-                                            isEditingName = true
-                                        }) {
-                                            Image(systemName: "pencil.circle.fill")
-                                                .foregroundColor(.white)
-                                                .font(.system(size: isIPad ? 24 : 20))
-                                        }
-                                    }
-                                }
-                            }
-                            .padding(.top, isIPad ? 20 : 12)
-                            .padding(.leading, isIPad ? 24 : 20)
-                            
-                            // Info Cards
-                            VStack(alignment: .leading, spacing: isIPad ? 16 : 12) {
-                                // Email Card
-                                infoCard(title: "Email", value: email, icon: "envelope.fill")
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.horizontal, isIPad ? 0 : 16)
-                                
-                                // Location Card
-                                Button(action: { showLocationPicker = true }) {
-                                    infoCard(title: "Location", value: selectedLocation, icon: "location.fill")
-                                }
-                                .frame(maxWidth: .infinity)
-                                .padding(.horizontal, isIPad ? 0 : 16)
-                                .confirmationDialog("Select Location", 
-                                    isPresented: $showLocationPicker,
-                                    titleVisibility: .visible) {
-                                    ForEach(locations, id: \.self) { location in
-                                        Button(location) {
-                                            selectedLocation = location
-                                            updateUserData(field: "location", value: location)
-                                        }
-                                    }
-                                    Button("Cancel", role: .cancel) {}
-                                }
-                                
-                                // School Card
-                                Button(action: { showSchoolPicker = true }) {
-                                    infoCard(title: "School", value: selectedSchool, icon: "book.fill")
-                                }
-                                .frame(maxWidth: .infinity)
-                                .padding(.horizontal, isIPad ? 0 : 16)
-                                .confirmationDialog("Select School", 
-                                    isPresented: $showSchoolPicker,
-                                    titleVisibility: .visible) {
-                                    ForEach(schools, id: \.self) { school in
-                                        Button(school) {
-                                            selectedSchool = school
-                                            updateUserData(field: "school", value: school)
-                                        }
-                                    }
-                                    Button("Cancel", role: .cancel) {}
-                                }
-                                
-                                // Saved Resources Button
-                                NavigationLink(destination: SavedView().navigationBarHidden(true)) {
-                                    HStack {
-                                        Image(systemName: "heart.fill")
-                                            .font(.system(size: isIPad ? 24 : 20))
-                                        Text("Saved Resources")
-                                            .font(.system(size: isIPad ? 20 : 17, weight: .semibold))
-                                        Spacer()
-                                        Image(systemName: "chevron.right")
-                                            .font(.system(size: isIPad ? 20 : 16))
-                                    }
-                                    .foregroundColor(.white)
-                                    .padding(.horizontal, isIPad ? 20 : 12)
-                                    .padding(.vertical, isIPad ? 16 : 10)
-                                    .background(Color.white.opacity(0.2))
-                                    .cornerRadius(12)
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.horizontal, isIPad ? 0 : 16)
-                                }
-                                .padding(.top, isIPad ? 16 : 12)
-                                
-                                // Log Out Button
-                                Button(action: { authViewModel.signOut() }) {
-                                    HStack {
-                                        Image(systemName: "arrow.right.square.fill")
-                                        Text("Log Out")
-                                            .font(.system(size: isIPad ? 20 : 17, weight: .semibold))
-                                        Spacer()
-                                    }
-                                    .foregroundColor(.white)
-                                    .padding(.horizontal, isIPad ? 20 : 12)
-                                    .padding(.vertical, isIPad ? 16 : 10)
-                                    .background(Color.red.opacity(0.8))
-                                    .cornerRadius(12)
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.horizontal, isIPad ? 0 : 16)
-                                }
-                                .padding(.top, isIPad ? 16 : 12)
-                                
-                                // Delete Account Button
-                                Button(action: { showDeleteConfirmation = true }) {
-                                    HStack {
-                                        Image(systemName: "trash")
-                                        Text("Delete Account")
-                                            .font(.system(size: isIPad ? 20 : 17, weight: .semibold))
-                                        Spacer()
-                                    }
-                                    .foregroundColor(.white)
-                                    .padding(.horizontal, isIPad ? 20 : 12)
-                                    .padding(.vertical, isIPad ? 16 : 10)
-                                    .background(Color.red.opacity(0.8))
-                                    .cornerRadius(12)
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.horizontal, isIPad ? 0 : 16)
-                                }
-                            }
-                            .padding(.horizontal, isIPad ? 24 : 8)
-                            
-                            Spacer(minLength: isIPad ? 30 : 20)
+            ZStack {
+                Image("background")
+                    .resizable()
+                    .scaledToFill()
+                    .ignoresSafeArea()
+
+                VStack {
+                    HStack {
+                        Button(action: { dismiss() }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: isIPad ? 32 : 24))
+                                .foregroundColor(.white)
                         }
-                        .frame(minHeight: geometry.size.height)
+                        Spacer()
                     }
+                    .padding(.horizontal, isIPad ? 32 : 0)
+                    .padding(.top, isIPad ? 40 : 20)
+
+                    Spacer()
+
+                    VStack(spacing: isIPad ? 24 : 16) {
+                        // Profile Image
+                        Button(action: { isShowingImagePicker = true }) {
+                            if let image = profileImage {
+                                Image(uiImage: image)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(width: isIPad ? 160 : 100, height: isIPad ? 160 : 100)
+                                    .clipShape(Circle())
+                                    .overlay(Circle().stroke(Color.white, lineWidth: 2))
+                            } else {
+                                Circle()
+                                    .fill(Color.white.opacity(0.2))
+                                    .frame(width: isIPad ? 160 : 100, height: isIPad ? 160 : 100)
+                                    .overlay(
+                                        Image(systemName: "camera.fill")
+                                            .foregroundColor(.white)
+                                            .font(.system(size: isIPad ? 40 : 30))
+                                    )
+                            }
+                        }
+
+                        // User Name
+                        if isEditingName {
+                            HStack(spacing: 8) {
+                                TextField("Enter name", text: $tempUserName)
+                                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                                    .frame(width: isIPad ? 700 : 350)
+
+                                Button("Save") {
+                                    updateUserName(tempUserName)
+                                    isEditingName = false
+                                }
+                                .foregroundColor(.blue)
+
+                                Button("Cancel") {
+                                    isEditingName = false
+                                    tempUserName = userName
+                                }
+                                .foregroundColor(.red)
+                            }
+                        } else {
+                            HStack {
+                                Text(userName)
+                                    .font(.system(size: isIPad ? 28 : 22, weight: .bold))
+                                    .foregroundColor(.white)
+
+                                Button(action: {
+                                    tempUserName = userName
+                                    isEditingName = true
+                                }) {
+                                    Image(systemName: "pencil.circle.fill")
+                                        .foregroundColor(.white)
+                                        .font(.system(size: isIPad ? 24 : 20))
+                                }
+                            }
+                        }
+
+                        // Info Cards
+                        VStack(spacing: 12) {
+                            infoCard(title: "Email", value: email, icon: "envelope.fill")
+                                .frame(width: isIPad ? 700 : 350)
+
+                            Button(action: { showLocationPicker = true }) {
+                                infoCard(title: "Location", value: selectedLocation, icon: "location.fill")
+                            }
+                            .frame(width: isIPad ? 700 : 350)
+
+                            Button(action: { showSchoolPicker = true }) {
+                                infoCard(title: "School", value: selectedSchool, icon: "book.fill")
+                            }
+                            .frame(width: isIPad ? 700 : 350)
+
+                            NavigationLink(destination: SavedView().navigationBarHidden(true)) {
+                                actionButton(icon: "heart.fill", text: "Saved Resources", color: Color.purple)
+                            }
+                            .frame(width: isIPad ? 700 : 350)
+
+                            Button(action: { authViewModel.signOut() }) {
+                                actionButton(icon: "arrow.right.square.fill", text: "Log Out", color: .red)
+                            }
+                            .frame(width: isIPad ? 700 : 350)
+
+                            Button(action: { showDeleteConfirmation = true }) {
+                                actionButton(icon: "trash", text: "Delete Account", color: .red)
+                            }
+                            .frame(width: isIPad ? 700 : 350)
+                        }
+                    }
+
+                    Spacer()
                 }
             }
         }
         .navigationBarHidden(true)
-        .navigationViewStyle(StackNavigationViewStyle())
         .onAppear { loadUserData() }
         .sheet(isPresented: $isShowingImagePicker) {
             PhotoPicker(selectedImage: $profileImage, onImagePicked: saveProfileImage)
@@ -257,7 +153,7 @@ struct ProfileView: View {
             Text("Are you sure you want to delete your account? This action cannot be undone.")
         }
     }
-    
+
     private func infoCard(title: String, value: String, icon: String) -> some View {
         HStack {
             Image(systemName: icon)
@@ -276,11 +172,25 @@ struct ProfileView: View {
             }
         }
         .foregroundColor(.white)
-        .padding(.horizontal, isIPad ? 20 : 12)
-        .padding(.vertical, isIPad ? 16 : 10)
-        .background(Color.white.opacity(0.2))
+        .padding()
+        .background(Color.purple.opacity(0.8))
         .cornerRadius(12)
     }
+
+    private func actionButton(icon: String, text: String, color: Color = .white) -> some View {
+        HStack {
+            Image(systemName: icon)
+                .font(.system(size: isIPad ? 24 : 20))
+            Text(text)
+                .font(.system(size: isIPad ? 20 : 17, weight: .semibold))
+            Spacer()
+        }
+        .foregroundColor(.white)
+        .padding()
+        .background(color.opacity(0.8))
+        .cornerRadius(12)
+    }
+
     
     // MARK: - Data Management Functions
     private func loadUserData() {

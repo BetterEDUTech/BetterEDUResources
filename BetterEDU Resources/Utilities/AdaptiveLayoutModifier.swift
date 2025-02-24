@@ -6,7 +6,7 @@ struct AdaptiveLayoutModifier: ViewModifier {
     
     func body(content: Content) -> some View {
         content
-            .frame(maxWidth: idealWidth)
+            .frame(maxWidth: idealWidth, maxHeight: idealHeight)
             .padding(.horizontal, horizontalPadding)
     }
     
@@ -18,7 +18,9 @@ struct AdaptiveLayoutModifier: ViewModifier {
         // For iPhone
         return nil
     }
-    
+    private var idealHeight: CGFloat? {
+        verticalSizeClass == .regular ? nil : 500
+    }
     private var horizontalPadding: CGFloat {
         UIDevice.current.userInterfaceIdiom == .pad ? 40 : 20
     }

@@ -7,197 +7,202 @@ struct LoginView: View {
     @State private var isPasswordVisible = false
     @State private var errorMessage: String?
     @State private var isLoggedIn = false
-    //@State private var guest = false
-    
+    @State private var keyboardHeight: CGFloat = 0
+    @Environment(\.horizontalSizeClass) var sizeClass
+
     var body: some View {
         NavigationView {
-            GeometryReader { geometry in
-                ZStack {
-                    // Background
-                    Image("background")
-                        .resizable()
-                        .scaledToFill()
-                        .ignoresSafeArea()
-                    
+            ZStack {
+                // Background
+                Image("background")
+                    .resizable()
+                    .scaledToFill()
+                    .ignoresSafeArea()
+
+                VStack {
+                    Spacer()
+
                     ScrollView(showsIndicators: false) {
-                        VStack(spacing: 20) {
-                            // Add some top padding to prevent content from being under status bar
-                            Color.clear.frame(height: 20)
-                            
-                            // Logo section with adaptive sizing
+                        VStack(spacing: sizeClass == .regular ? 30 : 20) {
                             Image("BetterLogo2")
                                 .resizable()
                                 .scaledToFit()
-                                .frame(height: UIDevice.current.userInterfaceIdiom == .pad ? 300 : 200)
-                                .padding(.top, UIDevice.current.userInterfaceIdiom == .pad ? 20 : 0)
-                            
+                                .frame(height: sizeClass == .regular ? 300 : 200)
+                                .padding(.top, sizeClass == .regular ? 40 : 20)
+
                             Text("Your Journey to Wellness Starts Here")
-                                .font(.custom("Impact", size: UIDevice.current.userInterfaceIdiom == .pad ? 28 : 22))
+                                .font(.custom("Impact", size: sizeClass == .regular ? 30 : 22))
                                 .fontWeight(.semibold)
                                 .foregroundColor(.white)
-                                .padding(.bottom, 20)
-                            
-                            // Form fields with adaptive width
-                            VStack(alignment: .leading, spacing: 20) {
-                                // Email Field
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("   Email")
-                                        .font(.custom("Impact", size: 18))
-                                        .foregroundColor(.white)
+                                .multilineTextAlignment(.center)
 
-                                    TextField("name@example.com", text: $email)
-                                        .padding()
-                                        .background(Color(hex: "98b6f8"))
-                                        .cornerRadius(10)
-                                        .foregroundColor(Color(hex: "251db4"))
-                                        .keyboardType(.emailAddress)
-                                        .autocapitalization(.none)
-                                        .frame(maxWidth: .infinity)
-                                        .padding(.horizontal, 16)
-                                }
-                                
-                                // Password Field
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("   Password")
-                                        .font(.custom("Impact", size: 18))
-                                        .foregroundColor(.white)
+                            // Form fields
+                            formFields()
 
-                                    ZStack(alignment: .trailing) {
-                                        if isPasswordVisible {
-                                            TextField("Password", text: $password)
-                                                .padding()
-                                                .background(Color(hex: "98b6f8"))
-                                                .cornerRadius(10)
-                                                .foregroundColor(Color(hex: "251db4"))
-                                                .frame(maxWidth: .infinity)
-                                                .padding(.horizontal, 16)
-                                        } else {
-                                            SecureField("Password", text: $password)
-                                                .padding()
-                                                .background(Color(hex: "98b6f8"))
-                                                .cornerRadius(10)
-                                                .foregroundColor(Color(hex: "251db4"))
-                                                .frame(maxWidth: .infinity)
-                                                .padding(.horizontal, 16)
-                                        }
+                            // Action buttons
+                            actionButtons()
 
-                                        Button(action: {
-                                            isPasswordVisible.toggle()
-                                        }) {
-                                            Image(systemName: isPasswordVisible ? "eye" : "eye.slash")
-                                                .foregroundColor(Color(hex: "251db4"))
-                                                .padding(.trailing, 26) // Align with padding
-                                        }
-                                    }
-                                }
-
-                                // Forgot Password Link
-                                NavigationLink(destination: ForgotPasswordView()) {
-                                    Text("Forgot Password?")
-                                        .font(.custom("Impact", size: 16))
-                                        .foregroundColor(.white)
-                                        .padding(.horizontal, 16) // Align with text fields
-                                }
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            }
-                            .frame(maxWidth: UIDevice.current.userInterfaceIdiom == .pad ? geometry.size.width * 0.6 : .infinity)
-                            .padding(.horizontal, UIDevice.current.userInterfaceIdiom == .pad ? 40 : 15)
-                            
-                            // Buttons with adaptive width
-                            Group {
-                                Button(action: { signInUser(asGuest: false) }) {
-                                    Text("Sign In")
-                                        .font(.custom("Impact", size: UIDevice.current.userInterfaceIdiom == .pad ? 26 : 22))
-                                        .frame(maxWidth: .infinity)
-                                        .padding(UIDevice.current.userInterfaceIdiom == .pad ? 16 : 12)
-                                        .background(Color(hex: "5a0ef6"))
-                                        .foregroundColor(.white)
-                                        .cornerRadius(10)
-                                }
-                                
-                                Button(action: { signInUser(asGuest: true) }) {
-                                    Text("Continue as Guest")
-                                        .font(.custom("Impact", size: UIDevice.current.userInterfaceIdiom == .pad ? 26 : 22))
-                                        .frame(maxWidth: .infinity)
-                                        .padding(UIDevice.current.userInterfaceIdiom == .pad ? 16 : 12)
-                                        .background(Color(hex: "5a0ef6"))
-                                        .foregroundColor(.white)
-                                        .cornerRadius(10)
-                                }
-                            }
-                            .frame(maxWidth: UIDevice.current.userInterfaceIdiom == .pad ? geometry.size.width * 0.6 : .infinity)
-                            .padding(.horizontal, UIDevice.current.userInterfaceIdiom == .pad ? 40 : 25)
-                            
-                            // Error Message Placeholder (Reserve space)
-                            VStack(spacing: 15) {
-                                Text(errorMessage ?? " ")
-                                    .foregroundColor(.red)
-                                    .multilineTextAlignment(.center)
-                                    .fixedSize(horizontal: false, vertical: true)
-                                    .padding(.horizontal, 16)
-                                
-                                HStack(spacing: 5) {
-                                    Text("Not a member?")
-                                        .font(.custom("Impact", size: 22))
-                                        .italic()
-                                        .foregroundColor(.white)
-                                    
-                                    NavigationLink(destination: SignUpView()) {
-                                        Text("Sign Up")
-                                            .font(.custom("Impact", size: 22))
-                                            .bold()
-                                            .foregroundColor(.white)
-                                    }
-                                }
-                            }
-                            .padding(.vertical, 20)
-                            
-                            // Add bottom padding to ensure content isn't cut off
-                            Color.clear.frame(height: 40)
+                            // Error message and sign-up link
+                            footerSection()
                         }
-                        .frame(minHeight: geometry.size.height)
-                        .padding(.horizontal)
+                        .padding(.horizontal, sizeClass == .regular ? 40 : 16)
+                        .frame(maxWidth: sizeClass == .regular ? 700 : 600)
+                        .padding(.bottom, keyboardHeight)
+                        .animation(.easeOut(duration: 0.3), value: keyboardHeight)
                     }
+
+                    Spacer()
                 }
             }
         }
-        .navigationViewStyle(StackNavigationViewStyle()) // This helps with iPad layout
+        .navigationViewStyle(StackNavigationViewStyle())
+        .onAppear { addKeyboardObservers() }
+        .onDisappear { removeKeyboardObservers() }
         .fullScreenCover(isPresented: $isLoggedIn) {
             HomePageView()
         }
     }
-    
+
+    // MARK: - Form Fields
+    @ViewBuilder
+    private func formFields() -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            fieldLabel("Email")
+            TextField("name@example.com", text: $email)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .autocapitalization(.none)
+                .keyboardType(.emailAddress)
+
+            fieldLabel("Password")
+            ZStack(alignment: .trailing) {
+                if isPasswordVisible {
+                    TextField("Password", text: $password)
+                } else {
+                    SecureField("Password", text: $password)
+                }
+                Button(action: { isPasswordVisible.toggle() }) {
+                    Image(systemName: isPasswordVisible ? "eye" : "eye.slash")
+                        .foregroundColor(.gray)
+                }
+            }
+            .textFieldStyle(RoundedBorderTextFieldStyle())
+
+            NavigationLink(destination: ForgotPasswordView()) {
+                Text("Forgot Password?")
+                    .font(.custom("Impact", size: 16))
+                    .foregroundColor(.white)
+            }
+        }
+        .padding(.horizontal, sizeClass == .regular ? 24 : 16)
+        .frame(maxWidth: sizeClass == .regular ? 700 : 350)
+    }
+
+    // MARK: - Action Buttons
+    @ViewBuilder
+    private func actionButtons() -> some View {
+        VStack(spacing: 12) {
+            Button(action: { signInUser(asGuest: false) }) {
+                Text("Sign In")
+                    .font(.custom("Impact", size: sizeClass == .regular ? 26 : 22))
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color(hex: "5a0ef6"))
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+            }
+
+            Button(action: { signInUser(asGuest: true) }) {
+                Text("Continue as Guest")
+                    .font(.custom("Impact", size: sizeClass == .regular ? 26 : 22))
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color(hex: "5a0ef6"))
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+            }
+        }
+        .frame(maxWidth: sizeClass == .regular ? 700 : 350)
+        .padding(.horizontal, sizeClass == .regular ? 24 : 16)
+    }
+
+    // MARK: - Footer Section
+    @ViewBuilder
+    private func footerSection() -> some View {
+        VStack(spacing: 15) {
+            if let errorMessage = errorMessage {
+                Text(errorMessage)
+                    .foregroundColor(.red)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 16)
+            }
+
+            HStack {
+                Text("Not a member?")
+                    .foregroundColor(.white)
+                NavigationLink(destination: SignUpView()) {
+                    Text("Sign Up")
+                        .bold()
+                        .foregroundColor(.white)
+                }
+            }
+        }
+        .padding(.vertical, sizeClass == .regular ? 30 : 20)
+    }
+
+    // MARK: - Helpers
+    private func fieldLabel(_ text: String) -> some View {
+        Text(text)
+            .font(.custom("Impact", size: sizeClass == .regular ? 20 : 18))
+            .foregroundColor(.white)
+    }
+
+    private func addKeyboardObservers() {
+        NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillShowNotification, object: nil, queue: .main) { notification in
+            if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
+                keyboardHeight = keyboardFrame.height
+            }
+        }
+
+        NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil, queue: .main) { _ in
+            keyboardHeight = 0
+        }
+    }
+
+    private func removeKeyboardObservers() {
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
+    }
+
     private func signInUser(asGuest: Bool) {
         if asGuest {
-            // Sign in anonymously as a guest
-            Auth.auth().signInAnonymously { authResult, error in
+            Auth.auth().signInAnonymously { _, error in
                 if let error = error {
-                    self.errorMessage = error.localizedDescription
+                    errorMessage = error.localizedDescription
                 } else {
-                    self.isLoggedIn = true
+                    isLoggedIn = true
                 }
             }
         } else {
-            // Regular sign-in with email and password
             guard !email.isEmpty, !password.isEmpty else {
                 errorMessage = "Please enter your email and password."
                 return
             }
 
-            Auth.auth().signIn(withEmail: email, password: password) { authResult, error in
+            Auth.auth().signIn(withEmail: email, password: password) { _, error in
                 if let error = error {
-                    self.errorMessage = error.localizedDescription
+                    errorMessage = error.localizedDescription
                 } else {
-                    self.isLoggedIn = true
+                    isLoggedIn = true
                 }
             }
         }
     }
-
 }
+
 
 struct LoginView_Previews: PreviewProvider {
     static var previews: some View {
         LoginView()
     }
 }
+

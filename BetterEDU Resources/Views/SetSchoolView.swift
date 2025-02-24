@@ -18,9 +18,9 @@ struct SetSchoolView: View {
 
     var body: some View {
         ZStack {
-            // Background gradient
-            LinearGradient(gradient: Gradient(colors: [Color(hex: "3b3aaf"), Color(hex: "1d1ba9")]),
-                           startPoint: .topLeading, endPoint: .bottomTrailing)
+            // Background image
+            Image("background") // Use the same background image as the SignUpView
+                .resizable()
                 .ignoresSafeArea()
 
             VStack(alignment: .leading, spacing: 20) {
@@ -128,3 +128,4 @@ struct SetSchoolView: View {
 #Preview {
     SetSchoolView()
 }
+
