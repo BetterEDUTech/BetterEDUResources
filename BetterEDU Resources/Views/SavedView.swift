@@ -4,98 +4,113 @@ import FirebaseAuth
 import FirebaseFirestore
 
 struct SavedView: View {
-    @State private var savedResources: [SavedResourceItem] = [] // Dynamically fetched saved resources
-    @State private var profileImage: UIImage? = nil // State to store the profile image
-
+    @State private var savedResources: [SavedResourceItem] = []
+    @State private var profileImage: UIImage? = nil
+    @State private var searchText: String = ""
     private let db = Firestore.firestore()
 
     var body: some View {
         NavigationView {
-            ZStack {
-                // Background color
+            VStack(alignment: .leading) {
+                // Header with profile icon
+                HStack {
+                    NavigationLink(destination: ProfileView()) {
+                        if let image = profileImage {
+                            Image(uiImage: image)
+                                .resizable()
+                                .frame(width: 35, height: 35)
+                                .clipShape(Circle())
+                                .overlay(Circle().stroke(Color.white, lineWidth: 2))
+                                .shadow(radius: 4)
+                                .padding(.leading, 16)
+                        } else {
+                            Image(systemName: "person.circle.fill")
+                                .resizable()
+                                .frame(width: 35, height: 35)
+                                .foregroundColor(.white)
+                                .padding(.leading, 16)
+                        }
+                    }
+                    Spacer()
+                }
+                .padding(.top)
+
+                // Title
+                Text("Saved Resources")
+                    .font(.custom("Lobster1.4", size: 60))
+                    .foregroundColor(.white)
+                    .padding(.top, -1)
+                    .padding(.bottom, -10)
+                    .frame(maxWidth: .infinity, alignment: .center)
+
+                // Search and Filter Section
+                HStack {
+                    // Search Bar
+                    HStack {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundColor(.gray)
+                        TextField("Search resources...", text: $searchText)
+                            .textFieldStyle(PlainTextFieldStyle())
+                    }
+                    .padding()
+                    .background(Color.white)
+                    .cornerRadius(10)
+
+                    // Filter Button
+                    Menu {
+                        Button("All", action: {})
+                        Button("Emergency", action: {})
+                        Button("Financial", action: {})
+                        Button("Mental Health", action: {})
+                    } label: {
+                        Text("All")
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(Color.black.opacity(0.4))
+                            .cornerRadius(8)
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 10)
+
+                // Resources List
+                ScrollView {
+                    VStack(spacing: 12) {
+                        ForEach(filteredResources) { resource in
+                            SavedResourceCard(resource: resource, onRemove: { removedResource in
+                                if let index = savedResources.firstIndex(where: { $0.id == removedResource.id }) {
+                                    savedResources.remove(at: index)
+                                }
+                            })
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 12)
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(
                 Image("background")
                     .resizable()
                     .scaledToFill()
                     .ignoresSafeArea()
-
-                GeometryReader { geometry in
-                    ScrollView(showsIndicators: false) {
-                        VStack(spacing: UIDevice.current.userInterfaceIdiom == .pad ? 32 : 20) {
-                            // Add safe area padding at the top
-                            Color.clear.frame(height: UIDevice.current.userInterfaceIdiom == .pad ? 60 : 40)
-                            
-                            // Header with profile picture
-                            HStack {
-                                NavigationLink(destination: ProfileView()) {
-                                    if let image = profileImage {
-                                        Image(uiImage: image)
-                                            .resizable()
-                                            .frame(width: UIDevice.current.userInterfaceIdiom == .pad ? 60 : 40,
-                                                   height: UIDevice.current.userInterfaceIdiom == .pad ? 60 : 40)
-                                            .clipShape(Circle())
-                                            .overlay(Circle().stroke(Color.white, lineWidth: 2))
-                                            .shadow(radius: 4)
-                                    } else {
-                                        Image(systemName: "person.circle.fill")
-                                            .resizable()
-                                            .frame(width: UIDevice.current.userInterfaceIdiom == .pad ? 60 : 40,
-                                                   height: UIDevice.current.userInterfaceIdiom == .pad ? 60 : 40)
-                                            .foregroundColor(.white)
-                                    }
-                                }
-                                .padding(.leading, UIDevice.current.userInterfaceIdiom == .pad ? 40 : 30)
-                                Spacer()
-                            }
-                            .padding(.top, UIDevice.current.userInterfaceIdiom == .pad ? 40 : 20)
-                            
-                            // Title
-                            Text("My Saved Resources")
-                                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 48 : 40, weight: .bold))
-                                .foregroundColor(.white)
-                                .padding(.bottom, UIDevice.current.userInterfaceIdiom == .pad ? 24 : 16)
-                            
-                            // Content
-                            Group {
-                                if savedResources.isEmpty {
-                                    Text("No saved resources yet.")
-                                        .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 24 : 18))
-                                        .foregroundColor(.white)
-                                        .padding()
-                                } else {
-                                    ScrollView {
-                                        LazyVGrid(
-                                            columns: [
-                                                GridItem(.adaptive(minimum: UIDevice.current.userInterfaceIdiom == .pad ? 300 : 150),
-                                                        spacing: UIDevice.current.userInterfaceIdiom == .pad ? 24 : 16)
-                                            ],
-                                            spacing: UIDevice.current.userInterfaceIdiom == .pad ? 24 : 16
-                                        ) {
-                                            ForEach(savedResources) { resource in
-                                                SavedResourceCard(resource: resource, onRemove: { removedResource in
-                                                    if let index = savedResources.firstIndex(where: { $0.id == removedResource.id }) {
-                                                        savedResources.remove(at: index)
-                                                    }
-                                                })
-                                            }
-                                        }
-                                        .padding(.horizontal, UIDevice.current.userInterfaceIdiom == .pad ? 32 : 16)
-                                    }
-                                }
-                            }
-                            .frame(maxWidth: UIDevice.current.userInterfaceIdiom == .pad ? min(geometry.size.width * 0.8, 1200) : .infinity)
-                        }
-                        .padding(.top, UIDevice.current.userInterfaceIdiom == .pad ? 130 : -90)
-                    }
-                    .safeAreaInset(edge: .top) {
-                        Color.clear.frame(height: 0)
-                    }
-                }
-            }
+            )
         }
         .navigationViewStyle(StackNavigationViewStyle())
         .onAppear {
             loadProfileImage()
             fetchSavedResources()
+        }
+    }
+
+    private var filteredResources: [SavedResourceItem] {
+        if searchText.isEmpty {
+            return savedResources
+        } else {
+            return savedResources.filter { resource in
+                resource.title.lowercased().contains(searchText.lowercased())
+            }
         }
     }
 
@@ -183,44 +198,47 @@ struct SavedResourceCard: View {
     let resource: SavedResourceItem
     @State private var isLiked: Bool = false
     private let db = Firestore.firestore()
-    let onRemove: (SavedResourceItem) -> Void // Callback for removing resource
+    let onRemove: (SavedResourceItem) -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: UIDevice.current.userInterfaceIdiom == .pad ? 16 : 8) {
+        VStack(alignment: .leading, spacing: 8) {
             Text(resource.title)
-                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 22 : 16, weight: .bold))
+                .font(.system(size: 17, weight: .bold))
                 .foregroundColor(.white)
                 .multilineTextAlignment(.leading)
                 .lineLimit(2)
 
-            Text("Phone: \(resource.phone_number)")
-                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 14))
-                .foregroundColor(.white.opacity(0.7))
-                .lineLimit(1)
+            if !resource.phone_number.isEmpty {
+                Text("Phone: \(resource.phone_number)")
+                    .font(.system(size: 15))
+                    .foregroundColor(.white.opacity(0.7))
+                    .lineLimit(1)
+            }
 
             if let website = resource.website, !website.isEmpty {
                 Link("Visit Website", destination: URL(string: website)!)
-                    .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 14))
+                    .font(.system(size: 15))
                     .foregroundColor(.blue)
+            } else {
+                Text("Website unavailable")
+                    .font(.system(size: 15))
+                    .foregroundColor(.gray)
             }
 
-            Spacer()
-
-            // Heart Button
             HStack {
                 Spacer()
                 Button(action: toggleSaveResource) {
                     Image(systemName: isLiked ? "heart.fill" : "heart")
                         .foregroundColor(isLiked ? .red : .gray)
-                        .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 24 : 20))
+                        .font(.system(size: 20))
                 }
             }
         }
-        .padding(UIDevice.current.userInterfaceIdiom == .pad ? 24 : 16)
-        .frame(height: UIDevice.current.userInterfaceIdiom == .pad ? 180 : 120)
-        .background(Color.white.opacity(0.2))
-        .cornerRadius(16)
-        .shadow(radius: 4)
+        .padding(16)
+        .frame(maxWidth: .infinity)
+        .background(Color.black.opacity(0.4))
+        .cornerRadius(12)
+        .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
         .onAppear(perform: checkIfResourceIsSaved)
     }
 
