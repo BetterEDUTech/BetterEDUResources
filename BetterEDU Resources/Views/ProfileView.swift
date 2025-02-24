@@ -5,473 +5,482 @@ import FirebaseStorage
 
 struct ProfileView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
+    @Environment(\.dismiss) private var dismiss
     @State private var userName: String = "[Name]"
     @State private var email: String = "[Email]"
     @State private var profileImage: UIImage? = nil
-    @State private var profileImageURL: URL?
     @State private var isShowingImagePicker = false
-    @State private var errorMessage: String?
-    @State private var isShowingSavedResources = false
     @State private var selectedLocation: String = "[Location]"
-    @State private var isLocationDropdownExpanded: Bool = false
     @State private var selectedSchool: String = "[School]"
-    @State private var isSchoolDropdownExpanded: Bool = false
     @State private var showDeleteConfirmation = false
-    @State private var isEditingName: Bool = false
-    @State private var tempUserName: String = ""
-
+    @State private var isEditingName = false
+    @State private var tempUserName = ""
+    @State private var showLocationPicker = false
+    @State private var showSchoolPicker = false
+    
     private let db = Firestore.firestore()
     private let storage = Storage.storage()
-
+    
+    // Device-specific sizing
+    private var isIPad: Bool {
+        UIDevice.current.userInterfaceIdiom == .pad
+    }
+    
+    // Available options for dropdowns
+    private let locations = ["Arizona", "California"]
+    private let schools = [
+        "Arizona State University",
+        "University of Arizona",
+        "Northern Arizona University",
+        "UCLA",
+        "UC Berkeley",
+        "Stanford University",
+        "University of Southern California",
+        "San Diego State University"
+    ]
+    
     var body: some View {
         NavigationView {
-            ZStack {
-                Image("background")
-                    .resizable()
-                    .scaledToFill()
-                    .ignoresSafeArea()
-
-                GeometryReader { geometry in
+            GeometryReader { geometry in
+                ZStack {
+                    // Background
+                    Image("background")
+                        .resizable()
+                        .scaledToFill()
+                        .ignoresSafeArea()
+                    
                     ScrollView(showsIndicators: false) {
-                        VStack(spacing: UIDevice.current.userInterfaceIdiom == .pad ? 40 : -20) {
-                            // Add top safe area padding
-                            Color.clear.frame(height: UIDevice.current.userInterfaceIdiom == .pad ? 95 : -50)
-                            
-                            
-                            .padding(.horizontal, UIDevice.current.userInterfaceIdiom == .pad ? 32 : 16)
+                        VStack(alignment: .leading, spacing: isIPad ? 24 : 16) {
+                            // Dismiss Button
+                            HStack {
+                                Button(action: { dismiss() }) {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .font(.system(size: isIPad ? 32 : 24))
+                                        .foregroundColor(.white)
+                                }
+                                .padding(.leading, isIPad ? 24 : 16)
+                                .padding(.top, isIPad ? 16 : 12)
+                                Spacer()
+                            }
                             
                             // Profile Image Section
-                            VStack(spacing: UIDevice.current.userInterfaceIdiom == .pad ? 16 : 8) {
-                                if let image = profileImage {
-                                    Image(uiImage: image)
-                                        .resizable()
-                                        .frame(width: UIDevice.current.userInterfaceIdiom == .pad ? 180 : 100,
-                                               height: UIDevice.current.userInterfaceIdiom == .pad ? 180 : 100)
-                                        .clipShape(Circle())
-                                        .overlay(Circle().stroke(Color.white, lineWidth: 2))
-                                        .shadow(radius: 4)
-                                } else {
+                            VStack(alignment: .leading, spacing: isIPad ? 16 : 12) {
+                                Button(action: { isShowingImagePicker = true }) {
+                                    if let image = profileImage {
+                                        Image(uiImage: image)
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fill)
+                                            .frame(width: isIPad ? 160 : 100, height: isIPad ? 160 : 100)
+                                            .clipShape(Circle())
+                                            .overlay(Circle().stroke(Color.white, lineWidth: 2))
+                                    } else {
+                                        Circle()
+                                            .fill(Color.white.opacity(0.2))
+                                            .frame(width: isIPad ? 160 : 100, height: isIPad ? 160 : 100)
+                                            .overlay(
+                                                Image(systemName: "camera.fill")
+                                                    .foregroundColor(.white)
+                                                    .font(.system(size: isIPad ? 40 : 30))
+                                            )
+                                    }
+                                }
+                                .overlay(
                                     Circle()
-                                        .fill(Color.white.opacity(0.3))
-                                        .frame(width: UIDevice.current.userInterfaceIdiom == .pad ? 180 : 100,
-                                               height: UIDevice.current.userInterfaceIdiom == .pad ? 180 : 100)
+                                        .fill(Color.blue)
+                                        .frame(width: isIPad ? 40 : 30, height: isIPad ? 40 : 30)
                                         .overlay(
-                                            Image(systemName: "camera.fill")
+                                            Image(systemName: "pencil")
                                                 .foregroundColor(.white)
-                                                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 50 : 30))
+                                                .font(.system(size: isIPad ? 20 : 15))
                                         )
-                                        .shadow(radius: 4)
-                                }
+                                        .offset(x: isIPad ? 55 : 35, y: isIPad ? 55 : 35)
+                                )
                                 
-                                Text("Change Profile Picture")
-                                    .foregroundColor(.white)
-                                    .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 22 : 16))
-                                    .padding(.top, UIDevice.current.userInterfaceIdiom == .pad ? 12 : 8)
-                                    .onTapGesture {
-                                        isShowingImagePicker = true
-                                    }
-                                
-                                HStack(spacing: 10) {
-                                    Text(userName)
-                                        .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 36 : 24, weight: .bold))
-                                        .foregroundColor(.white)
-                                        .multilineTextAlignment(.center)
-                                    
-                                    Button(action: {
-                                        tempUserName = userName
-                                        isEditingName = true
-                                    }) {
-                                        Image(systemName: "pencil.circle.fill")
-                                            .foregroundColor(.white)
-                                            .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 30 : 20))
-                                    }
-                                }
-                                
+                                // Name Section
                                 if isEditingName {
-                                    HStack {
-                                        TextField("Enter new name", text: $tempUserName)
+                                    HStack(spacing: 8) {
+                                        TextField("Enter name", text: $tempUserName)
                                             .textFieldStyle(RoundedBorderTextFieldStyle())
-                                            .foregroundColor(.black)
-                                            .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 24 : 18))
-                                            .padding(.horizontal)
+                                            .font(.system(size: isIPad ? 22 : 17))
+                                            .frame(width: min(geometry.size.width * 0.6, 200))
                                         
-                                        Button(action: {
+                                        Button("Save") {
                                             updateUserName(tempUserName)
                                             isEditingName = false
-                                        }) {
-                                            Text("Save")
-                                                .foregroundColor(.white)
-                                                .padding(.horizontal, 20)
-                                                .padding(.vertical, 10)
-                                                .background(Color.blue)
-                                                .cornerRadius(8)
                                         }
+                                        .foregroundColor(.blue)
                                         
-                                        Button(action: {
+                                        Button("Cancel") {
                                             isEditingName = false
                                             tempUserName = userName
+                                        }
+                                        .foregroundColor(.red)
+                                    }
+                                } else {
+                                    HStack {
+                                        Text(userName)
+                                            .font(.system(size: isIPad ? 28 : 22, weight: .bold))
+                                            .foregroundColor(.white)
+                                        
+                                        Button(action: {
+                                            tempUserName = userName
+                                            isEditingName = true
                                         }) {
-                                            Text("Cancel")
+                                            Image(systemName: "pencil.circle.fill")
                                                 .foregroundColor(.white)
-                                                .padding(.horizontal, 20)
-                                                .padding(.vertical, 10)
-                                                .background(Color.red)
-                                                .cornerRadius(8)
+                                                .font(.system(size: isIPad ? 24 : 20))
                                         }
                                     }
-                                    .padding(.horizontal)
                                 }
                             }
-                            .padding(.bottom, UIDevice.current.userInterfaceIdiom == .pad ? 32 : 16)
+                            .padding(.top, isIPad ? 20 : 12)
+                            .padding(.leading, isIPad ? 24 : 20)
                             
-                            // Form Fields Container
-                            VStack(spacing: UIDevice.current.userInterfaceIdiom == .pad ? 32 : 20) {
-                                // Form Fields Content
-                                VStack(spacing: UIDevice.current.userInterfaceIdiom == .pad ? 32 : 20) {
-                                    formSection(title: "Email") {
-                                    TextField("Email", text: .constant(email))
-                                        .foregroundColor(.white)
-                                        .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 20 : 16))
-                                        .padding()
-                                        .background(Color.white.opacity(0.15))
-                                        .cornerRadius(12)
-                                        .disabled(true)
+                            // Info Cards
+                            VStack(alignment: .leading, spacing: isIPad ? 16 : 12) {
+                                // Email Card
+                                infoCard(title: "Email", value: email, icon: "envelope.fill")
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.horizontal, isIPad ? 0 : 16)
+                                
+                                // Location Card
+                                Button(action: { showLocationPicker = true }) {
+                                    infoCard(title: "Location", value: selectedLocation, icon: "location.fill")
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.horizontal, isIPad ? 0 : 16)
+                                .confirmationDialog("Select Location", 
+                                    isPresented: $showLocationPicker,
+                                    titleVisibility: .visible) {
+                                    ForEach(locations, id: \.self) { location in
+                                        Button(location) {
+                                            selectedLocation = location
+                                            updateUserData(field: "location", value: location)
+                                        }
+                                    }
+                                    Button("Cancel", role: .cancel) {}
                                 }
                                 
-                                    formSection(title: "Location") {
-                                        locationButton
-                                        if isLocationDropdownExpanded {
-                                            locationDropdown
-                                        }
-                                    }
-                                    
-                                    formSection(title: "School") {
-                                        schoolButton
-                                        if isSchoolDropdownExpanded {
-                                            schoolDropdown
-                                        }
-                                    }
+                                // School Card
+                                Button(action: { showSchoolPicker = true }) {
+                                    infoCard(title: "School", value: selectedSchool, icon: "book.fill")
                                 }
-                            
-                            // Action Buttons
-                                VStack(spacing: UIDevice.current.userInterfaceIdiom == .pad ? 20 : 16) {
+                                .frame(maxWidth: .infinity)
+                                .padding(.horizontal, isIPad ? 0 : 16)
+                                .confirmationDialog("Select School", 
+                                    isPresented: $showSchoolPicker,
+                                    titleVisibility: .visible) {
+                                    ForEach(schools, id: \.self) { school in
+                                        Button(school) {
+                                            selectedSchool = school
+                                            updateUserData(field: "school", value: school)
+                                        }
+                                    }
+                                    Button("Cancel", role: .cancel) {}
+                                }
+                                
+                                // Saved Resources Button
                                 NavigationLink(destination: SavedView().navigationBarHidden(true)) {
-                                    profileRow(icon: "heart.fill", text: "Saved Resources")
+                                    HStack {
+                                        Image(systemName: "heart.fill")
+                                            .font(.system(size: isIPad ? 24 : 20))
+                                        Text("Saved Resources")
+                                            .font(.system(size: isIPad ? 20 : 17, weight: .semibold))
+                                        Spacer()
+                                        Image(systemName: "chevron.right")
+                                            .font(.system(size: isIPad ? 20 : 16))
+                                    }
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, isIPad ? 20 : 12)
+                                    .padding(.vertical, isIPad ? 16 : 10)
+                                    .background(Color.white.opacity(0.2))
+                                    .cornerRadius(12)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.horizontal, isIPad ? 0 : 16)
                                 }
+                                .padding(.top, isIPad ? 16 : 12)
                                 
-                                    Button(action: { authViewModel.signOut() }) {
+                                // Log Out Button
+                                Button(action: { authViewModel.signOut() }) {
                                     HStack {
                                         Image(systemName: "arrow.right.square.fill")
-                                            .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 24 : 20))
                                         Text("Log Out")
-                                                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 24 : 18, weight: .bold))
+                                            .font(.system(size: isIPad ? 20 : 17, weight: .semibold))
+                                        Spacer()
                                     }
                                     .foregroundColor(.white)
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, UIDevice.current.userInterfaceIdiom == .pad ? 20 : 16)
+                                    .padding(.horizontal, isIPad ? 20 : 12)
+                                    .padding(.vertical, isIPad ? 16 : 10)
                                     .background(Color.red.opacity(0.8))
                                     .cornerRadius(12)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.horizontal, isIPad ? 0 : 16)
                                 }
+                                .padding(.top, isIPad ? 16 : 12)
                                 
-                                    Button(action: { showDeleteConfirmation = true }) {
+                                // Delete Account Button
+                                Button(action: { showDeleteConfirmation = true }) {
                                     HStack {
                                         Image(systemName: "trash")
-                                            .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 24 : 20))
                                         Text("Delete Account")
-                                                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 24 : 18, weight: .bold))
+                                            .font(.system(size: isIPad ? 20 : 17, weight: .semibold))
+                                        Spacer()
                                     }
                                     .foregroundColor(.white)
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, UIDevice.current.userInterfaceIdiom == .pad ? 20 : 16)
+                                    .padding(.horizontal, isIPad ? 20 : 12)
+                                    .padding(.vertical, isIPad ? 16 : 10)
                                     .background(Color.red.opacity(0.8))
                                     .cornerRadius(12)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.horizontal, isIPad ? 0 : 16)
                                 }
                             }
-                            }
-                            .frame(maxWidth: UIDevice.current.userInterfaceIdiom == .pad ? min(geometry.size.width * 0.5, 600) : .infinity)
-                            .padding(.horizontal, UIDevice.current.userInterfaceIdiom == .pad ? 0 : 16)
+                            .padding(.horizontal, isIPad ? 24 : 8)
+                            
+                            Spacer(minLength: isIPad ? 30 : 20)
                         }
-                        .padding(.top, UIDevice.current.userInterfaceIdiom == .pad ? 20 : 0)
-                    }
-                    .safeAreaInset(edge: .top) {
-                        Color.clear.frame(height: 0)
+                        .frame(minHeight: geometry.size.height)
                     }
                 }
             }
         }
+        .navigationBarHidden(true)
         .navigationViewStyle(StackNavigationViewStyle())
         .onAppear { loadUserData() }
         .sheet(isPresented: $isShowingImagePicker) {
             PhotoPicker(selectedImage: $profileImage, onImagePicked: saveProfileImage)
         }
-        .alert("Confirm Account Deletion", isPresented: $showDeleteConfirmation) {
+        .alert("Delete Account", isPresented: $showDeleteConfirmation) {
             Button("Cancel", role: .cancel) { }
-            Button("Delete", role: .destructive) {
-                authViewModel.deleteAccount()
-            }
+            Button("Delete", role: .destructive) { authViewModel.deleteAccount() }
         } message: {
             Text("Are you sure you want to delete your account? This action cannot be undone.")
         }
     }
-
-    private var locationButton: some View {
-        Button(action: {
-            withAnimation { isLocationDropdownExpanded.toggle() }
-        }) {
-            HStack {
-                Text(selectedLocation)
-                    .foregroundColor(.white)
-                    .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 20 : 16))
-                Spacer()
-                Image(systemName: isLocationDropdownExpanded ? "chevron.up" : "chevron.down")
-                    .foregroundColor(.white)
-                    .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 14))
-            }
-            .padding()
-            .background(Color.white.opacity(0.15))
-            .cornerRadius(12)
-        }
-    }
-
-    private var locationDropdown: some View {
-        VStack(spacing: 0) {
-            locationOption("Arizona")
-            Divider().background(Color.white)
-            locationOption("California")
-        }
-        .background(Color.white.opacity(0.15))
-        .cornerRadius(12)
-    }
-
-    private var schoolButton: some View {
-        Button(action: {
-            withAnimation { isSchoolDropdownExpanded.toggle() }
-        }) {
-            HStack {
-                Text(selectedSchool)
-                    .foregroundColor(.white)
-                    .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 20 : 16))
-                Spacer()
-                Image(systemName: isSchoolDropdownExpanded ? "chevron.up" : "chevron.down")
-                    .foregroundColor(.white)
-                    .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 14))
-            }
-            .padding()
-            .background(Color.white.opacity(0.15))
-            .cornerRadius(12)
-        }
-    }
-
-    private var schoolDropdown: some View {
-        VStack(spacing: 0) {
-            ForEach(filteredSchools, id: \.self) { school in
-                schoolOption(school)
-            }
-        }
-        .background(Color.white.opacity(0.15))
-        .cornerRadius(12)
-    }
-
-    private func formSection(title: String, @ViewBuilder content: () -> some View) -> some View {
-        VStack(alignment: .leading, spacing: UIDevice.current.userInterfaceIdiom == .pad ? 12 : 8) {
-            Text(title)
-                .foregroundColor(.white)
-                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 24 : 18, weight: .bold))
-            content()
-        }
-    }
-
-    private func locationOption(_ location: String) -> some View {
-        Button(action: {
-            withAnimation {
-                isLocationDropdownExpanded = false
-            }
-            updateLocation(location)
-        }) {
-            Text(location)
-                .foregroundColor(.white)
-                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 20 : 16))
-                .padding(.vertical, UIDevice.current.userInterfaceIdiom == .pad ? 16 : 12)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal)
-        }
-    }
-
-    private func schoolOption(_ school: String) -> some View {
-        Button(action: {
-            withAnimation {
-                isSchoolDropdownExpanded = false
-            }
-            updateSchool(school)
-        }) {
-            Text(school)
-                .foregroundColor(.white)
-                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 20 : 16))
-                .padding(.vertical, UIDevice.current.userInterfaceIdiom == .pad ? 16 : 12)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal)
-        }
-    }
-
-    private func profileRow(icon: String, text: String) -> some View {
+    
+    private func infoCard(title: String, value: String, icon: String) -> some View {
         HStack {
             Image(systemName: icon)
-                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 24 : 20))
-            Text(text)
-                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 22 : 18, weight: .bold))
+                .font(.system(size: isIPad ? 24 : 20))
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.system(size: isIPad ? 16 : 14))
+                    .foregroundColor(.white.opacity(0.7))
+                Text(value)
+                    .font(.system(size: isIPad ? 20 : 17))
+            }
             Spacer()
+            if title != "Email" {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: isIPad ? 20 : 16))
+            }
         }
         .foregroundColor(.white)
-        .padding(.vertical, UIDevice.current.userInterfaceIdiom == .pad ? 20 : 16)
-        .padding(.horizontal)
+        .padding(.horizontal, isIPad ? 20 : 12)
+        .padding(.vertical, isIPad ? 16 : 10)
         .background(Color.white.opacity(0.2))
         .cornerRadius(12)
     }
-
-    private var filteredSchools: [String] {
-        let arizonaSchools = ["Arizona State University", "University of Arizona", "Northern Arizona University"]
-        let californiaSchools = [
-            "Stanford University", "California Institute of Technology", "University of California, Berkeley",
-            "University of Southern California", "University of California, Los Angeles"
-        ]
-
-        switch selectedLocation {
-        case "Arizona":
-            return arizonaSchools
-        case "California":
-            return californiaSchools
-        default:
-            return []
-        }
-    }
-
+    
+    // MARK: - Data Management Functions
     private func loadUserData() {
-        guard let uid = Auth.auth().currentUser?.uid else { return }
-        db.collection("users").document(uid).getDocument { document, error in
+        guard let uid = Auth.auth().currentUser?.uid else {
+            print("Error: No user ID available")
+            return
+        }
+        
+        print("Loading user data for UID: \(uid)")
+        
+        // Listen for real-time updates
+        db.collection("users").document(uid)
+            .addSnapshotListener { documentSnapshot, error in
+                if let error = error {
+                    print("Error fetching document: \(error.localizedDescription)")
+                    return
+                }
+                
+                guard let document = documentSnapshot, document.exists,
+                      let data = document.data() else {
+                    print("No document data found")
+                    return
+                }
+                
+                print("Received user data update")
+                
+                DispatchQueue.main.async {
+                    self.userName = data["name"] as? String ?? "[Name]"
+                    self.email = data["email"] as? String ?? "[Email]"
+                    self.selectedLocation = data["location"] as? String ?? "[Location]"
+                    self.selectedSchool = data["school"] as? String ?? "[School]"
+                    
+                    if let profileImageURLString = data["profileImageURL"] as? String {
+                        print("Found profile image URL: \(profileImageURLString)")
+                        if let url = URL(string: profileImageURLString) {
+                            self.loadImage(from: url)
+                        }
+                    } else {
+                        print("No profile image URL found in user data")
+                    }
+                }
+            }
+    }
+    
+    private func loadImage(from url: URL) {
+        print("Loading image from URL: \(url.absoluteString)")
+        
+        let task = URLSession.shared.dataTask(with: url) { data, response, error in
             if let error = error {
-                self.errorMessage = "Error loading user data: \(error.localizedDescription)"
+                print("Error loading image: \(error.localizedDescription)")
                 return
             }
-            if let document = document, document.exists {
-                let data = document.data()
-                self.userName = data?["name"] as? String ?? "[Name]"
-                self.email = data?["email"] as? String ?? "[Email]"
-                self.selectedLocation = data?["location"] as? String ?? "[Location]"
-                self.selectedSchool = data?["school"] as? String ?? "[School]"
-                if let profileImageURLString = data?["profileImageURL"] as? String,
-                   let url = URL(string: profileImageURLString) {
-                    self.profileImageURL = url
-                    loadImage(from: url)
-                }
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                print("Invalid response type")
+                return
             }
-        }
-    }
-
-    private func loadImage(from url: URL) {
-        let task = URLSession.shared.dataTask(with: url) { data, _, _ in
-            if let data = data, let uiImage = UIImage(data: data) {
-                DispatchQueue.main.async {
-                    self.profileImage = uiImage
-                }
+            
+            if !(200...299).contains(httpResponse.statusCode) {
+                print("Invalid response status code: \(httpResponse.statusCode)")
+                return
+            }
+            
+            guard let data = data else {
+                print("No data received")
+                return
+            }
+            
+            guard let image = UIImage(data: data) else {
+                print("Could not create image from data")
+                return
+            }
+            
+            print("Successfully loaded profile image")
+            DispatchQueue.main.async {
+                self.profileImage = image
             }
         }
         task.resume()
     }
-
+    
     private func saveProfileImage(_ image: UIImage) {
-        guard let uid = Auth.auth().currentUser?.uid else { return }
-        guard let imageData = image.jpegData(compressionQuality: 0.8) else { return }
-
-        let storageRef = storage.reference().child("profile_images/\(uid).jpg")
-        storageRef.putData(imageData, metadata: nil) { _, error in
+        guard let uid = Auth.auth().currentUser?.uid,
+              let imageData = image.jpegData(compressionQuality: 0.5) else {
+            print("Error: Failed to get user ID or convert image to data")
+            return
+        }
+        
+        print("Starting profile image upload for user: \(uid)")
+        
+        // Show the image immediately in UI
+        DispatchQueue.main.async {
+            self.profileImage = image
+        }
+        
+        // Create a reference to Firebase Storage
+        let storageRef = storage.reference()
+        let imageRef = storageRef.child("profile_images/\(uid).jpg")
+        
+        // Create metadata
+        let metadata = StorageMetadata()
+        metadata.contentType = "image/jpeg"
+        
+        // Upload the new image data directly without trying to delete first
+        print("Uploading image data...")
+        imageRef.putData(imageData, metadata: metadata) { metadata, error in
             if let error = error {
-                self.errorMessage = "Error uploading profile image: \(error.localizedDescription)"
+                print("Error uploading image: \(error.localizedDescription)")
                 return
             }
-
-            storageRef.downloadURL { url, error in
+            
+            print("Image uploaded successfully, getting download URL...")
+            // Get the download URL
+            imageRef.downloadURL { url, error in
                 if let error = error {
-                    self.errorMessage = "Error retrieving profile image URL: \(error.localizedDescription)"
-                } else if let url = url {
-                    self.profileImageURL = url
-                    self.updateProfileImageURL(uid: uid, url: url)
+                    print("Error getting download URL: \(error.localizedDescription)")
+                    return
+                }
+                
+                guard let downloadURL = url else {
+                    print("Error: Could not get download URL")
+                    return
+                }
+                
+                print("Got download URL: \(downloadURL.absoluteString)")
+                
+                // Update Firestore with the new URL
+                self.db.collection("users").document(uid).updateData([
+                    "profileImageURL": downloadURL.absoluteString,
+                    "lastUpdated": FieldValue.serverTimestamp()
+                ]) { error in
+                    if let error = error {
+                        print("Error updating profile image URL in Firestore: \(error.localizedDescription)")
+                    } else {
+                        print("Profile image URL successfully updated in Firestore")
+                        // Force a reload of user data to verify the update
+                        DispatchQueue.main.async {
+                            self.loadUserData()
+                        }
+                    }
                 }
             }
         }
     }
-
-    private func updateProfileImageURL(uid: String, url: URL) {
-        db.collection("users").document(uid).updateData(["profileImageURL": url.absoluteString]) { error in
-            if let error = error {
-                self.errorMessage = "Error saving profile image URL: \(error.localizedDescription)"
-            }
-        }
-    }
-
-    private func updateLocation(_ location: String) {
-        guard let uid = Auth.auth().currentUser?.uid else { return }
-        db.collection("users").document(uid).updateData(["location": location]) { error in
-            if let error = error {
-                self.errorMessage = "Error updating location: \(error.localizedDescription)"
-            } else {
-                self.selectedLocation = location
-                self.selectedSchool = "[School]"
-            }
-        }
-    }
-
-    private func updateSchool(_ school: String) {
-        guard let uid = Auth.auth().currentUser?.uid else { return }
-        db.collection("users").document(uid).updateData(["school": school]) { error in
-            if let error = error {
-                self.errorMessage = "Error updating school: \(error.localizedDescription)"
-            } else {
-                self.selectedSchool = school
-            }
-        }
-    }
-
+    
     private func updateUserName(_ newName: String) {
-        guard !newName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
-        guard let uid = Auth.auth().currentUser?.uid else { return }
+        guard !newName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              let uid = Auth.auth().currentUser?.uid else { return }
         
         db.collection("users").document(uid).updateData([
             "name": newName
         ]) { error in
             if let error = error {
-                self.errorMessage = "Error updating name: \(error.localizedDescription)"
+                print("Error updating name: \(error.localizedDescription)")
             } else {
                 self.userName = newName
             }
         }
     }
+    
+    private func updateUserData(field: String, value: String) {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        
+        db.collection("users").document(uid).updateData([
+            field: value
+        ]) { error in
+            if let error = error {
+                print("Error updating \(field): \(error.localizedDescription)")
+            }
+        }
+    }
 }
 
+// MARK: - PhotoPicker
 struct PhotoPicker: UIViewControllerRepresentable {
     @Binding var selectedImage: UIImage?
     var onImagePicked: (UIImage) -> Void
-
+    
     func makeUIViewController(context: Context) -> UIImagePickerController {
         let picker = UIImagePickerController()
         picker.sourceType = .photoLibrary
         picker.delegate = context.coordinator
         return picker
     }
-
+    
     func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
-
+    
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
     }
-
+    
     class Coordinator: NSObject, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
         let parent: PhotoPicker
-
+        
         init(_ parent: PhotoPicker) {
             self.parent = parent
         }
-
-        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
+        
+        func imagePickerController(_ picker: UIImagePickerController,
+                                 didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
             if let image = info[.originalImage] as? UIImage {
                 parent.selectedImage = image
                 parent.onImagePicked(image)
