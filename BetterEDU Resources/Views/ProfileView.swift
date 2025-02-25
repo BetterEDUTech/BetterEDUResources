@@ -6,6 +6,7 @@ import FirebaseStorage
 struct ProfileView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.horizontalSizeClass) var sizeClass
     @State private var userName: String = "[Name]"
     @State private var email: String = "[Email]"
     @State private var profileImage: UIImage? = nil
@@ -22,32 +23,31 @@ struct ProfileView: View {
     private let storage = Storage.storage()
 
     private var isIPad: Bool {
-        UIDevice.current.userInterfaceIdiom == .pad
+        sizeClass == .regular
     }
 
     var body: some View {
-        NavigationView {
+        GeometryReader { geometry in
             ZStack {
+                // Background Image
                 Image("background")
                     .resizable()
                     .scaledToFill()
-                    .ignoresSafeArea()
+                    .edgesIgnoringSafeArea(.all)
 
-                VStack {
-                    HStack {
-                        Button(action: { dismiss() }) {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.system(size: isIPad ? 32 : 24))
-                                .foregroundColor(.white)
+                ScrollView {
+                    VStack(spacing: 20) {
+                        // Dismiss Button
+                        HStack {
+                            Button(action: { dismiss() }) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.system(size: isIPad ? 32 : 24))
+                                    .foregroundColor(.white)
+                            }
+                            Spacer()
                         }
-                        Spacer()
-                    }
-                    .padding(.horizontal, isIPad ? 32 : 0)
-                    .padding(.top, isIPad ? 40 : 20)
+                        .padding(.horizontal, isIPad ? 50 : 110)
 
-                    Spacer()
-
-                    VStack(spacing: isIPad ? 24 : 16) {
                         // Profile Image
                         Button(action: { isShowingImagePicker = true }) {
                             if let image = profileImage {
@@ -71,20 +71,19 @@ struct ProfileView: View {
 
                         // User Name
                         if isEditingName {
-                            HStack(spacing: 8) {
+                            HStack {
                                 TextField("Enter name", text: $tempUserName)
                                     .textFieldStyle(RoundedBorderTextFieldStyle())
-                                    .frame(width: isIPad ? 700 : 350)
+                                    .frame(maxWidth: isIPad ? 700 : 350)
 
                                 Button("Save") {
-                                    updateUserName(tempUserName)
+                                    userName = tempUserName
                                     isEditingName = false
                                 }
                                 .foregroundColor(.blue)
 
                                 Button("Cancel") {
                                     isEditingName = false
-                                    tempUserName = userName
                                 }
                                 .foregroundColor(.red)
                             }
@@ -94,10 +93,7 @@ struct ProfileView: View {
                                     .font(.system(size: isIPad ? 28 : 22, weight: .bold))
                                     .foregroundColor(.white)
 
-                                Button(action: {
-                                    tempUserName = userName
-                                    isEditingName = true
-                                }) {
+                                Button(action: { isEditingName = true }) {
                                     Image(systemName: "pencil.circle.fill")
                                         .foregroundColor(.white)
                                         .font(.system(size: isIPad ? 24 : 20))
@@ -105,52 +101,48 @@ struct ProfileView: View {
                             }
                         }
 
-                        // Info Cards
+                        // Info Cards and Actions
                         VStack(spacing: 12) {
                             infoCard(title: "Email", value: email, icon: "envelope.fill")
-                                .frame(width: isIPad ? 700 : 350)
-
+                            
                             Button(action: { showLocationPicker = true }) {
                                 infoCard(title: "Location", value: selectedLocation, icon: "location.fill")
-                            }
-                            .frame(width: isIPad ? 700 : 350)
+                                }
+                                .frame(width: isIPad ? 700 : 350)
+                                .sheet(isPresented: $showLocationPicker) {
+                                    LocationView()
+                                }
 
                             Button(action: { showSchoolPicker = true }) {
                                 infoCard(title: "School", value: selectedSchool, icon: "book.fill")
-                            }
+                                }
                             .frame(width: isIPad ? 700 : 350)
+                            .sheet(isPresented: $showSchoolPicker) {
+                                SetSchoolView()
+                            }
 
-                            NavigationLink(destination: SavedView().navigationBarHidden(true)) {
-                                actionButton(icon: "heart.fill", text: "Saved Resources", color: Color.purple)
-                            }
-                            .frame(width: isIPad ? 700 : 350)
-
-                            Button(action: { authViewModel.signOut() }) {
-                                actionButton(icon: "arrow.right.square.fill", text: "Log Out", color: .red)
-                            }
-                            .frame(width: isIPad ? 700 : 350)
-
-                            Button(action: { showDeleteConfirmation = true }) {
-                                actionButton(icon: "trash", text: "Delete Account", color: .red)
-                            }
-                            .frame(width: isIPad ? 700 : 350)
+                            actionButton(icon: "heart.fill", text: "Saved Resources", color: .purple)
+                            actionButton(icon: "arrow.right.square.fill", text: "Log Out", color: .red)
+                            actionButton(icon: "trash", text: "Delete Account", color: .red)
                         }
+                        .frame(maxWidth: isIPad ? 700 : 350)
+                        .padding(.horizontal, isIPad ? 40 : 16)
                     }
-
-                    Spacer()
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, isIPad ? 150 : 30)
                 }
             }
-        }
-        .navigationBarHidden(true)
-        .onAppear { loadUserData() }
-        .sheet(isPresented: $isShowingImagePicker) {
-            PhotoPicker(selectedImage: $profileImage, onImagePicked: saveProfileImage)
-        }
-        .alert("Delete Account", isPresented: $showDeleteConfirmation) {
-            Button("Cancel", role: .cancel) { }
-            Button("Delete", role: .destructive) { authViewModel.deleteAccount() }
-        } message: {
-            Text("Are you sure you want to delete your account? This action cannot be undone.")
+            .frame(width: geometry.size.width, height: geometry.size.height)
+            .onAppear { loadUserData() }
+            .sheet(isPresented: $isShowingImagePicker) {
+                PhotoPicker(selectedImage: $profileImage, onImagePicked: saveProfileImage)
+            }
+            .alert("Delete Account", isPresented: $showDeleteConfirmation) {
+                Button("Cancel", role: .cancel) { }
+                Button("Delete", role: .destructive) { authViewModel.deleteAccount() }
+            } message: {
+                Text("Are you sure you want to delete your account? This action cannot be undone.")
+            }
         }
     }
 
@@ -173,6 +165,7 @@ struct ProfileView: View {
         }
         .foregroundColor(.white)
         .padding()
+        .frame(maxWidth: .infinity)
         .background(Color.purple.opacity(0.8))
         .cornerRadius(12)
     }
@@ -187,10 +180,10 @@ struct ProfileView: View {
         }
         .foregroundColor(.white)
         .padding()
+        .frame(maxWidth: .infinity)
         .background(color.opacity(0.8))
         .cornerRadius(12)
     }
-
     
     // MARK: - Data Management Functions
     private func loadUserData() {

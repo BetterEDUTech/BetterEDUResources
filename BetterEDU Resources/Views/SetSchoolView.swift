@@ -45,17 +45,17 @@ struct SetSchoolView: View {
 
                 // Search Field with Icon and custom placeholder color
                 HStack {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundColor(.white.opacity(0.7))
                     TextField("Search for your college", text: $searchText)
                         .foregroundColor(.white)
                         .placeholder(when: searchText.isEmpty) {
                             Text("Search for your college")
                                 .foregroundColor(Color.white.opacity(0.9))
                         }
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(.blue.opacity(0.7))
                 }
                 .padding()
-                .background(Color.white.opacity(0.2))
+                .background(Color.white)
                 .cornerRadius(10)
                 .padding(.horizontal)
 
@@ -76,7 +76,7 @@ struct SetSchoolView: View {
                                     }
                                 }
                                 .padding()
-                                .background(selectedCollege == college ? Color.white.opacity(0.2) : Color.white.opacity(0.1))
+                                .background(selectedCollege == college ? Color.white.opacity(0.8) : Color.purple.opacity(0.8))
                                 .cornerRadius(8)
                             }
                         }
