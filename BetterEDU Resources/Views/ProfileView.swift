@@ -18,6 +18,18 @@ struct ProfileView: View {
     @State private var tempUserName = ""
     @State private var showLocationPicker = false
     @State private var showSchoolPicker = false
+    @State private var isLocationDropdownOpen = false
+    @State private var isSchoolDropdownOpen = false
+    
+    private let locations = ["California", "Arizona"]
+    private let schoolsByState = [
+        "California": ["UC Berkeley", "UCLA", "UC San Diego", "Stanford University", "USC"],
+        "Arizona": ["Arizona State University", "University of Arizona", "Northern Arizona University"]
+    ]
+    
+    private var availableSchools: [String] {
+        schoolsByState[selectedLocation] ?? []
+    }
 
     private let db = Firestore.firestore()
     private let storage = Storage.storage()
@@ -105,21 +117,70 @@ struct ProfileView: View {
                         VStack(spacing: 12) {
                             infoCard(title: "Email", value: email, icon: "envelope.fill")
                             
-                            Button(action: { showLocationPicker = true }) {
-                                infoCard(title: "Location", value: selectedLocation, icon: "location.fill")
+                            VStack(alignment: .leading, spacing: 4) {
+                                // Location Dropdown
+                                Button(action: { isLocationDropdownOpen.toggle() }) {
+                                    infoCard(title: "Location", value: selectedLocation, icon: "location.fill")
                                 }
                                 .frame(width: isIPad ? 700 : 350)
-                                .sheet(isPresented: $showLocationPicker) {
-                                    LocationView()
+                                
+                                if isLocationDropdownOpen {
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        ForEach(locations, id: \.self) { location in
+                                            Button(action: {
+                                                selectedLocation = location
+                                                // Reset school selection when location changes
+                                                selectedSchool = "[School]"
+                                                isLocationDropdownOpen = false
+                                                // Update in Firestore
+                                                updateUserData(field: "location", value: location)
+                                            }) {
+                                                Text(location)
+                                                    .foregroundColor(.white)
+                                                    .padding(.vertical, 8)
+                                                    .padding(.horizontal, 16)
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                            }
+                                            .background(selectedLocation == location ? Color.purple.opacity(0.3) : Color.clear)
+                                        }
+                                    }
+                                    .background(Color.purple.opacity(0.8))
+                                    .cornerRadius(12)
+                                    .padding(.top, 4)
                                 }
 
-                            Button(action: { showSchoolPicker = true }) {
-                                infoCard(title: "School", value: selectedSchool, icon: "book.fill")
+                                // School Dropdown
+                                Button(action: { isSchoolDropdownOpen.toggle() }) {
+                                    infoCard(title: "School", value: selectedSchool, icon: "book.fill")
                                 }
-                            .frame(width: isIPad ? 700 : 350)
-                            .sheet(isPresented: $showSchoolPicker) {
-                                SetSchoolView()
+                                .frame(width: isIPad ? 700 : 350)
+                                .disabled(selectedLocation == "[Location]")
+                                
+                                if isSchoolDropdownOpen && selectedLocation != "[Location]" {
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        ForEach(availableSchools, id: \.self) { school in
+                                            Button(action: {
+                                                selectedSchool = school
+                                                isSchoolDropdownOpen = false
+                                                // Update in Firestore
+                                                updateUserData(field: "school", value: school)
+                                            }) {
+                                                Text(school)
+                                                    .foregroundColor(.white)
+                                                    .padding(.vertical, 8)
+                                                    .padding(.horizontal, 16)
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                            }
+                                            .background(selectedSchool == school ? Color.purple.opacity(0.3) : Color.clear)
+                                        }
+                                    }
+                                    .background(Color.purple.opacity(0.8))
+                                    .cornerRadius(12)
+                                    .padding(.top, 4)
+                                }
                             }
+                            .animation(.easeInOut, value: isLocationDropdownOpen)
+                            .animation(.easeInOut, value: isSchoolDropdownOpen)
 
                             actionButton(icon: "heart.fill", text: "Saved Resources", color: .purple)
                             actionButton(icon: "arrow.right.square.fill", text: "Log Out", color: .red)
