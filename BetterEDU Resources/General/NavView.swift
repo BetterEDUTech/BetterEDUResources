@@ -1,7 +1,12 @@
 import SwiftUI
 
+class TabViewModel: ObservableObject {
+    @Published var selectedTab = 0
+}
+
 struct NavView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
+    @StateObject private var tabViewModel = TabViewModel()
 
     init() {
         // Configure navigation bar appearance for all views
@@ -24,26 +29,30 @@ struct NavView: View {
 
             VStack(spacing: 0) {
                 // Main content
-                TabView {
+                TabView(selection: $tabViewModel.selectedTab) {
                     HomePageView()
                         .tabItem {
                             Label("Home", systemImage: "house.fill")
                         }
+                        .tag(0)
 
                     ResourcesAppView()
                         .tabItem {
                             Label("Search", systemImage: "magnifyingglass")
                         }
+                        .tag(1)
 
                     SavedView()
                         .tabItem {
                             Label("Saved", systemImage: "heart.fill")
                         }
+                        .tag(2)
 
                     FeedbackView()
                         .tabItem {
                             Label("Feedback", systemImage: "bubble.left.and.bubble.right.fill")
                         }
+                        .tag(3)
                 }
                 .accentColor(.white) // Selected icon and text
                 .background(
@@ -65,5 +74,6 @@ struct NavView: View {
                 }
             }
         }
+        .environmentObject(tabViewModel)
     }
 }

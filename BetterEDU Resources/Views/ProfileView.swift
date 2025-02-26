@@ -7,6 +7,7 @@ struct ProfileView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
     @Environment(\.dismiss) private var dismiss
     @Environment(\.horizontalSizeClass) var sizeClass
+    @EnvironmentObject var tabViewModel: TabViewModel
     @State private var userName: String = "[Name]"
     @State private var email: String = "[Email]"
     @State private var profileImage: UIImage? = nil
@@ -20,6 +21,7 @@ struct ProfileView: View {
     @State private var showSchoolPicker = false
     @State private var isLocationDropdownOpen = false
     @State private var isSchoolDropdownOpen = false
+    @State private var navigateToSavedResources = false
     
     private let locations = ["California", "Arizona"]
     private let schoolsByState = [
@@ -39,170 +41,177 @@ struct ProfileView: View {
     }
 
     var body: some View {
-        GeometryReader { geometry in
-            ZStack {
-                // Background Image
-                Image("background")
-                    .resizable()
-                    .scaledToFill()
-                    .edgesIgnoringSafeArea(.all)
+        NavigationStack {
+            GeometryReader { geometry in
+                ZStack {
+                    // Background Image
+                    Image("background")
+                        .resizable()
+                        .scaledToFill()
+                        .edgesIgnoringSafeArea(.all)
 
-                ScrollView {
-                    VStack(spacing: 20) {
-                        // Dismiss Button
-                        HStack {
-                            Button(action: { dismiss() }) {
-                                Image(systemName: "xmark.circle.fill")
-                                    .font(.system(size: isIPad ? 32 : 24))
-                                    .foregroundColor(.white)
-                            }
-                            Spacer()
-                        }
-                        .padding(.horizontal, isIPad ? 50 : 110)
-
-                        // Profile Image
-                        Button(action: { isShowingImagePicker = true }) {
-                            if let image = profileImage {
-                                Image(uiImage: image)
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fill)
-                                    .frame(width: isIPad ? 160 : 100, height: isIPad ? 160 : 100)
-                                    .clipShape(Circle())
-                                    .overlay(Circle().stroke(Color.white, lineWidth: 2))
-                            } else {
-                                Circle()
-                                    .fill(Color.white.opacity(0.2))
-                                    .frame(width: isIPad ? 160 : 100, height: isIPad ? 160 : 100)
-                                    .overlay(
-                                        Image(systemName: "camera.fill")
-                                            .foregroundColor(.white)
-                                            .font(.system(size: isIPad ? 40 : 30))
-                                    )
-                            }
-                        }
-
-                        // User Name
-                        if isEditingName {
+                    ScrollView {
+                        VStack(spacing: 20) {
+                            // Dismiss Button
                             HStack {
-                                TextField("Enter name", text: $tempUserName)
-                                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                                    .frame(maxWidth: isIPad ? 700 : 350)
-
-                                Button("Save") {
-                                    userName = tempUserName
-                                    isEditingName = false
-                                }
-                                .foregroundColor(.blue)
-
-                                Button("Cancel") {
-                                    isEditingName = false
-                                }
-                                .foregroundColor(.red)
-                            }
-                        } else {
-                            HStack {
-                                Text(userName)
-                                    .font(.system(size: isIPad ? 28 : 22, weight: .bold))
-                                    .foregroundColor(.white)
-
-                                Button(action: { isEditingName = true }) {
-                                    Image(systemName: "pencil.circle.fill")
+                                Button(action: { dismiss() }) {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .font(.system(size: isIPad ? 32 : 24))
                                         .foregroundColor(.white)
-                                        .font(.system(size: isIPad ? 24 : 20))
+                                }
+                                Spacer()
+                            }
+                            .padding(.horizontal, isIPad ? 50 : 110)
+
+                            // Profile Image
+                            Button(action: { isShowingImagePicker = true }) {
+                                if let image = profileImage {
+                                    Image(uiImage: image)
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fill)
+                                        .frame(width: isIPad ? 160 : 100, height: isIPad ? 160 : 100)
+                                        .clipShape(Circle())
+                                        .overlay(Circle().stroke(Color.white, lineWidth: 2))
+                                } else {
+                                    Circle()
+                                        .fill(Color.white.opacity(0.2))
+                                        .frame(width: isIPad ? 160 : 100, height: isIPad ? 160 : 100)
+                                        .overlay(
+                                            Image(systemName: "camera.fill")
+                                                .foregroundColor(.white)
+                                                .font(.system(size: isIPad ? 40 : 30))
+                                        )
                                 }
                             }
-                        }
 
-                        // Info Cards and Actions
-                        VStack(spacing: 12) {
-                            infoCard(title: "Email", value: email, icon: "envelope.fill")
-                            
-                            VStack(alignment: .leading, spacing: 4) {
-                                // Location Dropdown
-                                Button(action: { isLocationDropdownOpen.toggle() }) {
-                                    infoCard(title: "Location", value: selectedLocation, icon: "location.fill")
-                                }
-                                .frame(width: isIPad ? 700 : 350)
-                                
-                                if isLocationDropdownOpen {
-                                    VStack(alignment: .leading, spacing: 8) {
-                                        ForEach(locations, id: \.self) { location in
-                                            Button(action: {
-                                                selectedLocation = location
-                                                // Reset school selection when location changes
-                                                selectedSchool = "[School]"
-                                                isLocationDropdownOpen = false
-                                                // Update in Firestore
-                                                updateUserData(field: "location", value: location)
-                                            }) {
-                                                Text(location)
-                                                    .foregroundColor(.white)
-                                                    .padding(.vertical, 8)
-                                                    .padding(.horizontal, 16)
-                                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                            }
-                                            .background(selectedLocation == location ? Color.purple.opacity(0.3) : Color.clear)
-                                        }
-                                    }
-                                    .background(Color.purple.opacity(0.8))
-                                    .cornerRadius(12)
-                                    .padding(.top, 4)
-                                }
+                            // User Name
+                            if isEditingName {
+                                HStack {
+                                    TextField("Enter name", text: $tempUserName)
+                                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                                        .frame(maxWidth: isIPad ? 700 : 350)
 
-                                // School Dropdown
-                                Button(action: { isSchoolDropdownOpen.toggle() }) {
-                                    infoCard(title: "School", value: selectedSchool, icon: "book.fill")
-                                }
-                                .frame(width: isIPad ? 700 : 350)
-                                .disabled(selectedLocation == "[Location]")
-                                
-                                if isSchoolDropdownOpen && selectedLocation != "[Location]" {
-                                    VStack(alignment: .leading, spacing: 8) {
-                                        ForEach(availableSchools, id: \.self) { school in
-                                            Button(action: {
-                                                selectedSchool = school
-                                                isSchoolDropdownOpen = false
-                                                // Update in Firestore
-                                                updateUserData(field: "school", value: school)
-                                            }) {
-                                                Text(school)
-                                                    .foregroundColor(.white)
-                                                    .padding(.vertical, 8)
-                                                    .padding(.horizontal, 16)
-                                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                            }
-                                            .background(selectedSchool == school ? Color.purple.opacity(0.3) : Color.clear)
-                                        }
+                                    Button("Save") {
+                                        userName = tempUserName
+                                        isEditingName = false
                                     }
-                                    .background(Color.purple.opacity(0.8))
-                                    .cornerRadius(12)
-                                    .padding(.top, 4)
+                                    .foregroundColor(.blue)
+
+                                    Button("Cancel") {
+                                        isEditingName = false
+                                    }
+                                    .foregroundColor(.red)
+                                }
+                            } else {
+                                HStack {
+                                    Text(userName)
+                                        .font(.system(size: isIPad ? 28 : 22, weight: .bold))
+                                        .foregroundColor(.white)
+
+                                    Button(action: { isEditingName = true }) {
+                                        Image(systemName: "pencil.circle.fill")
+                                            .foregroundColor(.white)
+                                            .font(.system(size: isIPad ? 24 : 20))
+                                    }
                                 }
                             }
-                            .animation(.easeInOut, value: isLocationDropdownOpen)
-                            .animation(.easeInOut, value: isSchoolDropdownOpen)
 
-                            actionButton(icon: "heart.fill", text: "Saved Resources", color: .purple)
-                            actionButton(icon: "arrow.right.square.fill", text: "Log Out", color: .red)
-                            actionButton(icon: "trash", text: "Delete Account", color: .red)
+                            // Info Cards and Actions
+                            VStack(spacing: 12) {
+                                infoCard(title: "Email", value: email, icon: "envelope.fill")
+                                
+                                VStack(alignment: .leading, spacing: 4) {
+                                    // Location Dropdown
+                                    Button(action: { isLocationDropdownOpen.toggle() }) {
+                                        infoCard(title: "Location", value: selectedLocation, icon: "location.fill")
+                                    }
+                                    .frame(width: isIPad ? 700 : 350)
+                                    
+                                    if isLocationDropdownOpen {
+                                        VStack(alignment: .leading, spacing: 8) {
+                                            ForEach(locations, id: \.self) { location in
+                                                Button(action: {
+                                                    selectedLocation = location
+                                                    // Reset school selection when location changes
+                                                    selectedSchool = "[School]"
+                                                    isLocationDropdownOpen = false
+                                                    // Update in Firestore
+                                                    updateUserData(field: "location", value: location)
+                                                }) {
+                                                    Text(location)
+                                                        .foregroundColor(.white)
+                                                        .padding(.vertical, 8)
+                                                        .padding(.horizontal, 16)
+                                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                                }
+                                                .background(selectedLocation == location ? Color.purple.opacity(0.3) : Color.clear)
+                                            }
+                                        }
+                                        .background(Color.purple.opacity(0.8))
+                                        .cornerRadius(12)
+                                        .padding(.top, 4)
+                                    }
+
+                                    // School Dropdown
+                                    Button(action: { isSchoolDropdownOpen.toggle() }) {
+                                        infoCard(title: "School", value: selectedSchool, icon: "book.fill")
+                                    }
+                                    .frame(width: isIPad ? 700 : 350)
+                                    .disabled(selectedLocation == "[Location]")
+                                    
+                                    if isSchoolDropdownOpen && selectedLocation != "[Location]" {
+                                        VStack(alignment: .leading, spacing: 8) {
+                                            ForEach(availableSchools, id: \.self) { school in
+                                                Button(action: {
+                                                    selectedSchool = school
+                                                    isSchoolDropdownOpen = false
+                                                    // Update in Firestore
+                                                    updateUserData(field: "school", value: school)
+                                                }) {
+                                                    Text(school)
+                                                        .foregroundColor(.white)
+                                                        .padding(.vertical, 8)
+                                                        .padding(.horizontal, 16)
+                                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                                }
+                                                .background(selectedSchool == school ? Color.purple.opacity(0.3) : Color.clear)
+                                            }
+                                        }
+                                        .background(Color.purple.opacity(0.8))
+                                        .cornerRadius(12)
+                                        .padding(.top, 4)
+                                    }
+                                }
+                                .animation(.easeInOut, value: isLocationDropdownOpen)
+                                .animation(.easeInOut, value: isSchoolDropdownOpen)
+
+                                Button(action: {
+                                    dismiss()
+                                    tabViewModel.selectedTab = 2  // Switch to Saved tab
+                                }) {
+                                    actionButton(icon: "heart.fill", text: "Saved Resources", color: .purple)
+                                }
+                                actionButton(icon: "arrow.right.square.fill", text: "Log Out", color: .red)
+                                actionButton(icon: "trash", text: "Delete Account", color: .red)
+                            }
+                            .frame(maxWidth: isIPad ? 700 : 350)
+                            .padding(.horizontal, isIPad ? 40 : 16)
                         }
-                        .frame(maxWidth: isIPad ? 700 : 350)
-                        .padding(.horizontal, isIPad ? 40 : 16)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, isIPad ? 150 : 30)
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, isIPad ? 150 : 30)
                 }
-            }
-            .frame(width: geometry.size.width, height: geometry.size.height)
-            .onAppear { loadUserData() }
-            .sheet(isPresented: $isShowingImagePicker) {
-                PhotoPicker(selectedImage: $profileImage, onImagePicked: saveProfileImage)
-            }
-            .alert("Delete Account", isPresented: $showDeleteConfirmation) {
-                Button("Cancel", role: .cancel) { }
-                Button("Delete", role: .destructive) { authViewModel.deleteAccount() }
-            } message: {
-                Text("Are you sure you want to delete your account? This action cannot be undone.")
+                .frame(width: geometry.size.width, height: geometry.size.height)
+                .onAppear { loadUserData() }
+                .sheet(isPresented: $isShowingImagePicker) {
+                    PhotoPicker(selectedImage: $profileImage, onImagePicked: saveProfileImage)
+                }
+                .alert("Delete Account", isPresented: $showDeleteConfirmation) {
+                    Button("Cancel", role: .cancel) { }
+                    Button("Delete", role: .destructive) { authViewModel.deleteAccount() }
+                } message: {
+                    Text("Are you sure you want to delete your account? This action cannot be undone.")
+                }
             }
         }
     }
