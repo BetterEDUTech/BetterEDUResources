@@ -64,7 +64,7 @@ struct FeedbackView: View {
                         VStack(alignment: .leading, spacing: spacing) {
                             // Profile icon
                             HStack {
-                                NavigationLink(destination: ProfileView()) {
+                                NavigationLink(destination: ProfileView().navigationBarHidden(true)) {
                                     if let image = profileImage {
                                         Image(uiImage: image)
                                             .resizable()

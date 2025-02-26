@@ -14,7 +14,7 @@ struct SavedView: View {
             VStack(alignment: .leading) {
                 // Header with profile icon
                 HStack {
-                    NavigationLink(destination: ProfileView()) {
+                    NavigationLink(destination: ProfileView().navigationBarHidden(true)) {
                         if let image = profileImage {
                             Image(uiImage: image)
                                 .resizable()

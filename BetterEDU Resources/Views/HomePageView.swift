@@ -30,7 +30,7 @@ struct HomePageView: View {
                     VStack(spacing: 16) {
                         // Header Section with profile picture
                         HStack {
-                            NavigationLink(destination: ProfileView()) {
+                            NavigationLink(destination: ProfileView().navigationBarHidden(true)) {
                                 if let image = profileImage {
                                     Image(uiImage: image)
                                         .resizable()
