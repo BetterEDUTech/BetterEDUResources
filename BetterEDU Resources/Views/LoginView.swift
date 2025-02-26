@@ -10,6 +10,30 @@ struct LoginView: View {
     @State private var keyboardHeight: CGFloat = 0
     @Environment(\.horizontalSizeClass) var sizeClass
 
+    // Custom text field modifier
+    private func customTextField(_ text: String) -> some View {
+        Group {
+            if text == "Password" && !isPasswordVisible {
+                SecureField("", text: $password)
+            } else if text == "Password" && isPasswordVisible {
+                TextField("", text: $password)
+            } else {
+                TextField("", text: $email)
+            }
+        }
+        .padding()
+        .foregroundColor(.black)
+        .background(Color.white.opacity(0.9))
+        .cornerRadius(25)
+        .overlay(
+            Text(text)
+                .foregroundColor(Color.black.opacity(0.6))
+                .padding(.leading, 16)
+                .opacity(text == "Password" ? (password.isEmpty ? 1 : 0) : (email.isEmpty ? 1 : 0)),
+            alignment: .leading
+        )
+    }
+
     var body: some View {
         NavigationView {
             ZStack {
@@ -68,24 +92,19 @@ struct LoginView: View {
     private func formFields() -> some View {
         VStack(alignment: .leading, spacing: 16) {
             fieldLabel("Email")
-            TextField("name@example.com", text: $email)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
+            customTextField("Email")
                 .autocapitalization(.none)
                 .keyboardType(.emailAddress)
 
             fieldLabel("Password")
             ZStack(alignment: .trailing) {
-                if isPasswordVisible {
-                    TextField("Password", text: $password)
-                } else {
-                    SecureField("Password", text: $password)
-                }
+                customTextField("Password")
                 Button(action: { isPasswordVisible.toggle() }) {
                     Image(systemName: isPasswordVisible ? "eye" : "eye.slash")
-                        .foregroundColor(.gray)
+                        .foregroundColor(.black)
+                        .padding(.trailing, 16)
                 }
             }
-            .textFieldStyle(RoundedBorderTextFieldStyle())
 
             NavigationLink(destination: ForgotPasswordView()) {
                 Text("Forgot Password?")
