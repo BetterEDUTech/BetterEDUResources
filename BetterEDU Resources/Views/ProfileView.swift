@@ -85,36 +85,46 @@ struct ProfileView: View {
                             }
 
                             // User Name
-                            if isEditingName {
-                                HStack {
+                            HStack {
+                                if isEditingName {
                                     TextField("Enter name", text: $tempUserName)
-                                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                                        .frame(maxWidth: isIPad ? 700 : 350)
-
-                                    Button("Save") {
-                                        userName = tempUserName
-                                        isEditingName = false
-                                    }
-                                    .foregroundColor(.blue)
-
-                                    Button("Cancel") {
-                                        isEditingName = false
-                                    }
-                                    .foregroundColor(.red)
-                                }
-                            } else {
-                                HStack {
+                                        .font(.system(size: isIPad ? 28 : 22, weight: .bold))
+                                        .foregroundColor(.white)
+                                        .multilineTextAlignment(.center)
+                                        .background(Color.black.opacity(0.4))
+                                        .cornerRadius(8)
+                                        .onSubmit {
+                                            if !tempUserName.isEmpty {
+                                                userName = tempUserName
+                                                updateUserData(field: "name", value: tempUserName)
+                                            }
+                                            isEditingName = false
+                                        }
+                                } else {
                                     Text(userName)
                                         .font(.system(size: isIPad ? 28 : 22, weight: .bold))
                                         .foregroundColor(.white)
+                                }
 
-                                    Button(action: { isEditingName = true }) {
-                                        Image(systemName: "pencil.circle.fill")
-                                            .foregroundColor(.white)
-                                            .font(.system(size: isIPad ? 24 : 20))
+                                Button(action: { 
+                                    if !isEditingName {
+                                        tempUserName = userName
+                                        isEditingName = true
+                                    } else {
+                                        if !tempUserName.isEmpty {
+                                            userName = tempUserName
+                                            updateUserData(field: "name", value: tempUserName)
+                                        }
+                                        isEditingName = false
                                     }
+                                }) {
+                                    Image(systemName: isEditingName ? "checkmark.circle.fill" : "pencil.circle.fill")
+                                        .foregroundColor(.white)
+                                        .font(.system(size: isIPad ? 24 : 20))
                                 }
                             }
+                            .frame(maxWidth: isIPad ? 700 : 350)
+                            .padding(.horizontal)
 
                             // Info Cards and Actions
                             VStack(spacing: 12) {
@@ -144,10 +154,10 @@ struct ProfileView: View {
                                                         .padding(.horizontal, 16)
                                                         .frame(maxWidth: .infinity, alignment: .leading)
                                                 }
-                                                .background(selectedLocation == location ? Color.purple.opacity(0.3) : Color.clear)
+                                                .background(selectedLocation == location ? Color.black.opacity(0.6) : Color.clear)
                                             }
                                         }
-                                        .background(Color.purple.opacity(0.8))
+                                        .background(Color.black.opacity(0.4))
                                         .cornerRadius(12)
                                         .padding(.top, 4)
                                     }
@@ -174,10 +184,10 @@ struct ProfileView: View {
                                                         .padding(.horizontal, 16)
                                                         .frame(maxWidth: .infinity, alignment: .leading)
                                                 }
-                                                .background(selectedSchool == school ? Color.purple.opacity(0.3) : Color.clear)
+                                                .background(selectedSchool == school ? Color.black.opacity(0.6) : Color.clear)
                                             }
                                         }
-                                        .background(Color.purple.opacity(0.8))
+                                        .background(Color.black.opacity(0.4))
                                         .cornerRadius(12)
                                         .padding(.top, 4)
                                     }
@@ -191,8 +201,19 @@ struct ProfileView: View {
                                 }) {
                                     actionButton(icon: "heart.fill", text: "Saved Resources", color: .purple)
                                 }
-                                actionButton(icon: "arrow.right.square.fill", text: "Log Out", color: .red)
-                                actionButton(icon: "trash", text: "Delete Account", color: .red)
+                                
+                                Button(action: {
+                                    dismiss()
+                                    authViewModel.signOut()
+                                }) {
+                                    actionButton(icon: "arrow.right.square.fill", text: "Log Out", color: .purple)
+                                }
+                                
+                                Button(action: {
+                                    showDeleteConfirmation = true
+                                }) {
+                                    actionButton(icon: "trash", text: "Delete Account", color: .red)
+                                }
                             }
                             .frame(maxWidth: isIPad ? 700 : 350)
                             .padding(.horizontal, isIPad ? 40 : 16)
@@ -236,7 +257,7 @@ struct ProfileView: View {
         .foregroundColor(.white)
         .padding()
         .frame(maxWidth: .infinity)
-        .background(Color.purple.opacity(0.8))
+        .background(Color.black.opacity(0.4))
         .cornerRadius(12)
     }
 
@@ -251,7 +272,17 @@ struct ProfileView: View {
         .foregroundColor(.white)
         .padding()
         .frame(maxWidth: .infinity)
-        .background(color.opacity(0.8))
+        .background(
+            Group {
+                if text == "Log Out" {
+                    Color.purple
+                } else if text == "Delete Account" {
+                    Color.red
+                } else {
+                    Color.black.opacity(0.4)
+                }
+            }
+        )
         .cornerRadius(12)
     }
     
