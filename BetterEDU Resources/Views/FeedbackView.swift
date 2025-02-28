@@ -239,7 +239,7 @@ struct FeedbackView: View {
                                     .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 5)
                             }
                             .padding(.leading, horizontalPadding)
-                            .padding(.top, isIPad ? spacing : 12)
+                            //.padding(.top, isIPad ? spacing : 12)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }

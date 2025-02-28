@@ -12,7 +12,7 @@ struct FinancialServicesView: View {
             // Title
             Text("Financial Services")
                 .font(.custom("Impact", size: 35))
-                .foregroundColor(Color(hex: "98b6f8"))
+                .foregroundColor(Color(hex: "#FFFFFF"))
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.top)
 
