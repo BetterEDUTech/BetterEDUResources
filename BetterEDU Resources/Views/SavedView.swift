@@ -76,7 +76,7 @@ struct SavedView: View {
 
                 // Resources List
                 ScrollView {
-                    VStack(spacing: 12) {
+                    LazyVGrid(columns: [GridItem(.flexible())], spacing: 12) {
                         ForEach(filteredResources) { resource in
                             SavedResourceCard(resource: resource, onRemove: { removedResource in
                                 if let index = savedResources.firstIndex(where: { $0.id == removedResource.id }) {
@@ -87,7 +87,10 @@ struct SavedView: View {
                     }
                     .padding(.horizontal, 16)
                     .padding(.top, 12)
+                    .padding(.bottom, 90) // Add padding at bottom to account for tab bar
                 }
+                
+                Spacer()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(
