@@ -51,6 +51,8 @@ struct SavedView: View {
                             .foregroundColor(.gray)
                         TextField("Search resources...", text: $searchText)
                             .textFieldStyle(PlainTextFieldStyle())
+                            .foregroundColor(.black)
+                            .tint(.black)
                     }
                     .padding()
                     .background(Color.white)
