@@ -9,6 +9,7 @@ struct HomePageView: View {
     @State private var resources: [ResourceItem] = []
     @State private var likedResources: Set<String> = [] // Tracks liked resource IDs locally
     @State private var hasScrolled = false
+    @State private var userState: String = "ALL"        // User's selected state
     @EnvironmentObject var tabViewModel: TabViewModel
     private let db = Firestore.firestore()
 
@@ -184,6 +185,7 @@ struct HomePageView: View {
                 }
                 .onAppear {
                     loadProfileImage()
+                    loadUserData()
                     fetchResources()
                     fetchLikedResources()
                     hasScrolled = false
@@ -224,7 +226,9 @@ struct HomePageView: View {
 
     private var filteredResources: [ResourceItem] {
         resources.filter { resource in
-            searchText.isEmpty || resource.title.lowercased().contains(searchText.lowercased())
+            let matchesSearch = searchText.isEmpty || resource.title.lowercased().contains(searchText.lowercased())
+            let matchesState = resource.state == "ALL" || resource.state == userState
+            return matchesSearch && matchesState
         }
     }
 
@@ -342,6 +346,26 @@ struct HomePageView: View {
                 }
             }
         }.resume()
+    }
+
+    // Load user's profile data from Firestore
+    private func loadUserData() {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+
+        db.collection("users").document(uid).getDocument { document, error in
+            if let error = error {
+                print("Error loading user data: \(error.localizedDescription)")
+                return
+            }
+            
+            if let document = document, document.exists,
+               let state = document.data()?["location"] as? String {
+                // Convert state name to abbreviation
+                DispatchQueue.main.async {
+                    self.userState = state == "Arizona" ? "AZ" : state == "California" ? "CA" : "ALL"
+                }
+            }
+        }
     }
 }
 

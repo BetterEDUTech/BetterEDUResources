@@ -10,6 +10,7 @@ struct ResourceItem: Identifiable, Codable {
     var phone_number: String?           // Optional: Resource Phone Number
     var website: String?                // Optional: Resource Website URL
     var resourceType: String?           // Optional: Resource Type (e.g., "self care", "financial")
+    var state: String?                  // Optional: State (e.g., "AZ", "CA", "ALL")
 
     enum CodingKeys: String, CodingKey {
         case id                         // Maps to Firestore document ID
@@ -17,6 +18,7 @@ struct ResourceItem: Identifiable, Codable {
         case phone_number = "phone number" // Matches "phone number" in Firestore
         case website                    // Matches "website" in Firestore
         case resourceType = "Resource Type" // Matches "Resource Type" in Firestore
+        case state                      // Matches "state" in Firestore
     }
 }
 
@@ -25,7 +27,8 @@ struct ResourcesAppView: View {
     @State private var searchText: String = ""          // State for the search text
     @State private var selectedFilter: String = "All"   // Default filter for resources
     @State private var availableFilters: [String] = ["All"] // Filters from Firebase
-    private var db = Firestore.firestore()
+    @State private var userState: String = "ALL"        // User's selected state
+    private let db = Firestore.firestore()
     
     @State private var profileImage: UIImage? = nil // State to store the profile image
 
@@ -70,6 +73,7 @@ struct ResourcesAppView: View {
                 .padding(.top)
                 .onAppear(perform: {
                     loadProfileImage()
+                    loadUserData()
                     fetchResources()
                 })
                 
@@ -199,7 +203,8 @@ struct ResourcesAppView: View {
         resources.filter { resource in
             let matchesFilter = (selectedFilter == "All" || resource.resourceType == selectedFilter)
             let matchesSearch = searchText.isEmpty || resource.title.lowercased().contains(searchText.lowercased())
-            return matchesFilter && matchesSearch
+            let matchesState = resource.state == "ALL" || resource.state == userState
+            return matchesFilter && matchesSearch && matchesState
         }
     }
 
@@ -236,6 +241,26 @@ struct ResourcesAppView: View {
                 }
             }
         }.resume()
+    }
+
+    // Load user's profile data from Firestore
+    private func loadUserData() {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+
+        db.collection("users").document(uid).getDocument { document, error in
+            if let error = error {
+                print("Error loading user data: \(error.localizedDescription)")
+                return
+            }
+            
+            if let document = document, document.exists,
+               let state = document.data()?["location"] as? String {
+                // Convert state name to abbreviation
+                DispatchQueue.main.async {
+                    self.userState = state == "Arizona" ? "AZ" : state == "California" ? "CA" : "ALL"
+                }
+            }
+        }
     }
 }
 
@@ -322,7 +347,8 @@ struct ResourceCard: View {
                 "title": resource.title,
                 "phone_number": resource.phone_number ?? "",
                 "website": resource.website ?? "",
-                "resourceType": resource.resourceType ?? ""
+                "resourceType": resource.resourceType ?? "",
+                "state": resource.state ?? ""
             ]
             resourceRef.setData(resourceData) { error in
                 if error == nil {
