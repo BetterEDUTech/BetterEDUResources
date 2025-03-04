@@ -1,10 +1,12 @@
 import SwiftUI
 import Firebase
+import FirebaseAuth
 import FirebaseFirestore
 
 struct FinancialServicesView: View {
     @State private var searchText = ""
     @State private var financialResources: [ResourceItem] = [] // Dynamic resources fetched from Firestore
+    @State private var userState: String = "ALL"        // User's selected state
     private let db = Firestore.firestore()
 
     var body: some View {
@@ -52,7 +54,10 @@ struct FinancialServicesView: View {
         )
         .navigationTitle("Financial Services")
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear(perform: fetchFinancialResources)
+        .onAppear {
+            loadUserData()
+            fetchFinancialResources()
+        }
     }
 
     // Fetch financial resources from Firestore
@@ -71,10 +76,32 @@ struct FinancialServicesView: View {
             }
     }
 
-    // Filter resources based on search text
+    // Filter resources based on search text and state
     private var filteredResources: [ResourceItem] {
         financialResources.filter { resource in
-            searchText.isEmpty || resource.title.lowercased().contains(searchText.lowercased())
+            let matchesSearch = searchText.isEmpty || resource.title.lowercased().contains(searchText.lowercased())
+            let matchesState = resource.state == "ALL" || resource.state == userState
+            return matchesSearch && matchesState
+        }
+    }
+
+    // Load user's profile data from Firestore
+    private func loadUserData() {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+
+        db.collection("users").document(uid).getDocument { document, error in
+            if let error = error {
+                print("Error loading user data: \(error.localizedDescription)")
+                return
+            }
+            
+            if let document = document, document.exists,
+               let state = document.data()?["location"] as? String {
+                // Convert state name to abbreviation
+                DispatchQueue.main.async {
+                    self.userState = state == "Arizona" ? "AZ" : state == "California" ? "CA" : "ALL"
+                }
+            }
         }
     }
 }

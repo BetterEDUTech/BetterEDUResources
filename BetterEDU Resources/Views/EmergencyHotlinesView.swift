@@ -1,10 +1,12 @@
 import SwiftUI
 import Firebase
+import FirebaseAuth
 import FirebaseFirestore
 
 struct EmergencyHotlinesView: View {
     @State private var searchText = ""
     @State private var emergencyHotlines: [ResourceItem] = [] // Dynamic resources fetched from Firestore
+    @State private var userState: String = "ALL"        // User's selected state
     private let db = Firestore.firestore()
 
     var body: some View {
@@ -52,7 +54,10 @@ struct EmergencyHotlinesView: View {
         )
         .navigationTitle("Emergency Hotlines")
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear(perform: fetchEmergencyHotlines)
+        .onAppear {
+            loadUserData()
+            fetchEmergencyHotlines()
+        }
     }
 
     // Fetch emergency hotlines from Firestore
@@ -71,15 +76,35 @@ struct EmergencyHotlinesView: View {
             }
     }
 
-    // Filter hotlines based on search text
+    // Filter hotlines based on search text and state
     private var filteredHotlines: [ResourceItem] {
         emergencyHotlines.filter { hotline in
-            searchText.isEmpty || hotline.title.lowercased().contains(searchText.lowercased())
+            let matchesSearch = searchText.isEmpty || hotline.title.lowercased().contains(searchText.lowercased())
+            let matchesState = hotline.state == "ALL" || hotline.state == userState
+            return matchesSearch && matchesState
+        }
+    }
+
+    // Load user's profile data from Firestore
+    private func loadUserData() {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+
+        db.collection("users").document(uid).getDocument { document, error in
+            if let error = error {
+                print("Error loading user data: \(error.localizedDescription)")
+                return
+            }
+            
+            if let document = document, document.exists,
+               let state = document.data()?["location"] as? String {
+                // Convert state name to abbreviation
+                DispatchQueue.main.async {
+                    self.userState = state == "Arizona" ? "AZ" : state == "California" ? "CA" : "ALL"
+                }
+            }
         }
     }
 }
-
-
 
 struct EmergencyHotlinesView_Previews: PreviewProvider {
     static var previews: some View {
