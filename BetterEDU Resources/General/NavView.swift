@@ -48,11 +48,17 @@ struct NavView: View {
                         }
                         .tag(2)
 
+                    StudentDiscountView()
+                        .tabItem {
+                            Label("Discounts", systemImage: "tag.fill")
+                        }
+                        .tag(3)
+
                     FeedbackView()
                         .tabItem {
                             Label("Feedback", systemImage: "bubble.left.and.bubble.right.fill")
                         }
-                        .tag(3)
+                        .tag(4)
                 }
                 .accentColor(.white) // Selected icon and text
                 .background(
