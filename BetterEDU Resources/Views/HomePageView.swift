@@ -156,7 +156,46 @@ struct HomePageView: View {
                                                 .gridCellColumns(gridColumns.count)
                                         } else {
                                             ForEach(filteredResources) { resource in
-                                                resourceCard(resource: resource)
+                                                HStack {
+                                                    VStack(alignment: .leading, spacing: 8) {
+                                                        Text(resource.title)
+                                                            .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 20 : 17, weight: .bold))
+                                                            .foregroundColor(.white)
+                                                            .multilineTextAlignment(.leading)
+                                                            .lineLimit(2)
+
+                                                        if let phoneNumber = resource.phone_number {
+                                                            Text("Phone: \(phoneNumber)")
+                                                                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 15))
+                                                                .foregroundColor(.white.opacity(0.7))
+                                                                .lineLimit(1)
+                                                        }
+
+                                                        if let website = resource.website, !website.isEmpty, let url = URL(string: website) {
+                                                            Link("Visit Website", destination: url)
+                                                                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 15))
+                                                                .foregroundColor(.blue)
+                                                        } else {
+                                                            Text("Website unavailable")
+                                                                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 15))
+                                                                .foregroundColor(.gray)
+                                                        }
+                                                    }
+                                                    Spacer()
+
+                                                    Button(action: {
+                                                        toggleSaveResource(resource: resource)
+                                                    }) {
+                                                        Image(systemName: likedResources.contains(resource.id ?? "") ? "heart.fill" : "heart")
+                                                            .foregroundColor(likedResources.contains(resource.id ?? "") ? .red : .gray)
+                                                            .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 24 : 20))
+                                                    }
+                                                }
+                                                .padding(UIDevice.current.userInterfaceIdiom == .pad ? 16 : 12)
+                                                .frame(maxWidth: .infinity)
+                                                .background(Color.black.opacity(0.4))
+                                                .cornerRadius(12)
+                                                .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
                                             }
                                         }
                                     }
@@ -247,47 +286,6 @@ struct HomePageView: View {
         .background(Color.white)
         .foregroundColor(Color(hex: "#5a0ef6"))
         .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
-    }
-
-    private func resourceCard(resource: ResourceItem) -> some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 8) {
-                Text(resource.title)
-                    .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 20 : 17, weight: .bold))
-                    .foregroundColor(.white)
-                    .lineLimit(2)
-
-                if let phoneNumber = resource.phone_number {
-                    Text("Phone: \(phoneNumber)")
-                        .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 15))
-                        .foregroundColor(.white.opacity(0.8))
-                }
-
-                if let website = resource.website, let url = URL(string: website) {
-                    Link("Website", destination: url)
-                        .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 15))
-                        .foregroundColor(.blue)
-                } else {
-                    Text("No website available")
-                        .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 15))
-                        .foregroundColor(.white.opacity(0.5))
-                }
-            }
-            Spacer()
-
-            Button(action: {
-                toggleSaveResource(resource: resource)
-            }) {
-                Image(systemName: likedResources.contains(resource.id ?? "") ? "heart.fill" : "heart")
-                    .foregroundColor(likedResources.contains(resource.id ?? "") ? .red : .gray)
-                    .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 24 : 20))
-            }
-        }
-        .padding()
-        .frame(maxWidth: .infinity, minHeight: UIDevice.current.userInterfaceIdiom == .pad ? 150 : 120)
-        .background(Color.white.opacity(0.2))
-        .cornerRadius(10)
         .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
     }
 
