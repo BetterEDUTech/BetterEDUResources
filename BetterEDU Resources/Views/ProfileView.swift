@@ -3,15 +3,80 @@ import FirebaseAuth
 import FirebaseFirestore
 import FirebaseStorage
 
+// Image Cache Manager
+final class ImageCache {
+    static let shared = ImageCache()
+    private var cache = NSCache<NSString, UIImage>()
+    
+    private init() {
+        // Configure cache
+        cache.countLimit = 100 // Maximum number of images to store
+        cache.totalCostLimit = 1024 * 1024 * 100 // 100 MB
+    }
+    
+    func set(_ image: UIImage, forKey key: String) {
+        cache.setObject(image, forKey: key as NSString)
+    }
+    
+    func get(forKey key: String) -> UIImage? {
+        return cache.object(forKey: key as NSString)
+    }
+    
+    func remove(forKey key: String) {
+        cache.removeObject(forKey: key as NSString)
+    }
+    
+    func clearCache() {
+        cache.removeAllObjects()
+    }
+}
+
+// Profile Image Loading Manager
+final class ProfileImageLoader: ObservableObject {
+    static let shared = ProfileImageLoader()
+    @Published var profileImage: UIImage? = nil
+    private let db = Firestore.firestore()
+    
+    private init() {}
+    
+    func loadProfileImage(forUID uid: String, completion: ((UIImage?) -> Void)? = nil) {
+        // First check cache
+        if let cachedImage = ImageCache.shared.get(forKey: uid) {
+            self.profileImage = cachedImage
+            completion?(cachedImage)
+            return
+        }
+        
+        // If not in cache, load from Firestore
+        db.collection("users").document(uid).getDocument { [weak self] document, error in
+            if let document = document,
+               let profileImageURLString = document.data()?["profileImageURL"] as? String,
+               let url = URL(string: profileImageURLString) {
+                
+                URLSession.shared.dataTask(with: url) { data, response, error in
+                    if let data = data, let image = UIImage(data: data) {
+                        // Store in cache
+                        ImageCache.shared.set(image, forKey: uid)
+                        
+                        DispatchQueue.main.async {
+                            self?.profileImage = image
+                            completion?(image)
+                        }
+                    }
+                }.resume()
+            }
+        }
+    }
+}
+
 struct ProfileView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
     @Environment(\.dismiss) private var dismiss
     @Environment(\.horizontalSizeClass) var sizeClass
     @EnvironmentObject var tabViewModel: TabViewModel
+    @StateObject private var imageLoader = ProfileImageLoader.shared
     @State private var userName: String = "[Name]"
     @State private var email: String = "[Email]"
-    @State private var profileImage: UIImage? = nil
-    @State private var isShowingImagePicker = false
     @State private var selectedLocation: String = "[Location]"
     @State private var selectedSchool: String = "[School]"
     @State private var showDeleteConfirmation = false
@@ -22,6 +87,8 @@ struct ProfileView: View {
     @State private var isLocationDropdownOpen = false
     @State private var isSchoolDropdownOpen = false
     @State private var navigateToSavedResources = false
+    @State private var isShowingImagePicker = false
+    @State private var profileImage: UIImage?
     
     private let locations = ["California", "Arizona"]
     private let schoolsByState = [
@@ -65,7 +132,7 @@ struct ProfileView: View {
 
                             // Profile Image
                             Button(action: { isShowingImagePicker = true }) {
-                                if let image = profileImage {
+                                if let image = imageLoader.profileImage {
                                     Image(uiImage: image)
                                         .resizable()
                                         .aspectRatio(contentMode: .fill)
@@ -317,54 +384,12 @@ struct ProfileView: View {
                     self.selectedLocation = data["location"] as? String ?? "[Location]"
                     self.selectedSchool = data["school"] as? String ?? "[School]"
                     
-                    if let profileImageURLString = data["profileImageURL"] as? String {
-                        print("Found profile image URL: \(profileImageURLString)")
-                        if let url = URL(string: profileImageURLString) {
-                            self.loadImage(from: url)
-                        }
-                    } else {
-                        print("No profile image URL found in user data")
+                    // Load profile image using the shared loader
+                    if let uid = Auth.auth().currentUser?.uid {
+                        ProfileImageLoader.shared.loadProfileImage(forUID: uid)
                     }
                 }
             }
-    }
-    
-    private func loadImage(from url: URL) {
-        print("Loading image from URL: \(url.absoluteString)")
-        
-        let session = URLSession(configuration: .default)
-        let task = session.dataTask(with: url) { data, response, error in
-            if let error = error {
-                print("Error loading image: \(error.localizedDescription)")
-                return
-            }
-            
-            guard let httpResponse = response as? HTTPURLResponse else {
-                print("Invalid response type")
-                return
-            }
-            
-            if !(200...299).contains(httpResponse.statusCode) {
-                print("Invalid response status code: \(httpResponse.statusCode)")
-                return
-            }
-            
-            guard let data = data else {
-                print("No data received")
-                return
-            }
-            
-            guard let image = UIImage(data: data) else {
-                print("Could not create image from data")
-                return
-            }
-            
-            print("Successfully loaded profile image")
-            DispatchQueue.main.async {
-                self.profileImage = image
-            }
-        }
-        task.resume()
     }
     
     private func saveProfileImage(_ image: UIImage) {
@@ -377,9 +402,10 @@ struct ProfileView: View {
         print("🔄 Starting profile image upload for user: \(uid)")
         print("📦 Image data size: \(ByteCountFormatter.string(fromByteCount: Int64(imageData.count), countStyle: .file))")
         
-        // Show the image immediately in UI
+        // Update UI immediately with the new image
         DispatchQueue.main.async {
-            self.profileImage = image
+            ProfileImageLoader.shared.profileImage = image
+            ImageCache.shared.set(image, forKey: uid)
             print("✅ Updated UI with new image")
         }
         
@@ -430,11 +456,6 @@ struct ProfileView: View {
                         print("❌ Full error details: \(error)")
                     } else {
                         print("✅ Profile image URL successfully updated in Firestore")
-                        // Force a reload of user data to verify the update
-                        DispatchQueue.main.async {
-                            print("🔄 Reloading user data...")
-                            self.loadUserData()
-                        }
                     }
                 }
             }
