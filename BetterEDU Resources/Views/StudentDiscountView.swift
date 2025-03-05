@@ -3,8 +3,29 @@ import Firebase
 import FirebaseAuth
 import FirebaseFirestore
 
+// Student Discount Model
+struct StudentDiscountItem: Identifiable, Codable {
+    @DocumentID var id: String?
+    var category: String
+    var description: String
+    var discount: String
+    var link: String
+    var name: String
+    var requirements: String
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case category
+        case description
+        case discount
+        case link
+        case name
+        case requirements
+    }
+}
+
 struct StudentDiscountView: View {
-    @State private var resources: [ResourceItem] = []
+    @State private var discounts: [StudentDiscountItem] = []
     @State private var searchText: String = ""
     @State private var selectedFilter: String = "All"
     @State private var availableFilters: [String] = ["All"]
@@ -52,7 +73,7 @@ struct StudentDiscountView: View {
                 .padding(.top)
                 .onAppear(perform: {
                     loadProfileImage()
-                    fetchResources()
+                    fetchDiscounts()
                 })
                 
                 // Title
@@ -102,10 +123,10 @@ struct StudentDiscountView: View {
                 .padding(.horizontal, UIDevice.current.userInterfaceIdiom == .pad ? 24 : 16)
                 .padding(.top, 10)
 
-                // Display filtered resources
+                // Display filtered discounts
                 ScrollView {
                     LazyVGrid(columns: gridColumns, spacing: UIDevice.current.userInterfaceIdiom == .pad ? 24 : 16) {
-                        if filteredResources.isEmpty {
+                        if filteredDiscounts.isEmpty {
                             Text("No discounts found.")
                                 .font(.headline)
                                 .foregroundColor(.gray)
@@ -113,8 +134,8 @@ struct StudentDiscountView: View {
                                 .frame(maxWidth: .infinity, alignment: .center)
                                 .gridCellColumns(gridColumns.count)
                         } else {
-                            ForEach(filteredResources) { resource in
-                                ResourceCard(resource: resource)
+                            ForEach(filteredDiscounts) { discount in
+                                DiscountCard(discount: discount)
                             }
                         }
                     }
@@ -137,7 +158,7 @@ struct StudentDiscountView: View {
         .navigationViewStyle(StackNavigationViewStyle())
     }
 
-    private func fetchResources() {
+    private func fetchDiscounts() {
         db.collection("studentDisc")
             .getDocuments { (querySnapshot, error) in
                 if let error = error {
@@ -148,16 +169,16 @@ struct StudentDiscountView: View {
                         return
                     }
                     
-                    let fetchedResources = documents.compactMap { document in
+                    let fetchedDiscounts = documents.compactMap { document in
                         do {
-                            return try document.data(as: ResourceItem.self)
+                            return try document.data(as: StudentDiscountItem.self)
                         } catch {
                             print("Error decoding document \(document.documentID): \(error.localizedDescription)")
                             return nil
                         }
                     }
                     DispatchQueue.main.async {
-                        self.resources = fetchedResources
+                        self.discounts = fetchedDiscounts
                         updateAvailableFilters()
                     }
                 }
@@ -165,14 +186,16 @@ struct StudentDiscountView: View {
     }
 
     private func updateAvailableFilters() {
-        let types = Set(resources.compactMap { $0.resourceType })
-        availableFilters = ["All"] + Array(types).sorted()
+        let categories = Set(discounts.map { $0.category })
+        availableFilters = ["All"] + Array(categories).sorted()
     }
 
-    private var filteredResources: [ResourceItem] {
-        resources.filter { resource in
-            let matchesFilter = (selectedFilter == "All" || resource.resourceType == selectedFilter)
-            let matchesSearch = searchText.isEmpty || resource.title.lowercased().contains(searchText.lowercased())
+    private var filteredDiscounts: [StudentDiscountItem] {
+        discounts.filter { discount in
+            let matchesFilter = selectedFilter == "All" || discount.category == selectedFilter
+            let matchesSearch = searchText.isEmpty || 
+                              discount.name.lowercased().contains(searchText.lowercased()) ||
+                              discount.description.lowercased().contains(searchText.lowercased())
             return matchesFilter && matchesSearch
         }
     }
@@ -202,6 +225,141 @@ struct StudentDiscountView: View {
                 }
             }
         }.resume()
+    }
+}
+
+struct DiscountCard: View {
+    let discount: StudentDiscountItem
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Header section with name and category
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(alignment: .top) {
+                    Text(discount.name)
+                        .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 22 : 19, weight: .bold))
+                        .foregroundColor(.white)
+                        .lineLimit(1)
+                    Spacer()
+                    Text(discount.category)
+                        .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 14 : 12))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(
+                            LinearGradient(
+                                gradient: Gradient(colors: [Color(hex: "#5a0ef6").opacity(0.3), Color(hex: "#7849fd").opacity(0.3)]),
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .cornerRadius(20)
+                }
+                
+                // Discount amount section with icon
+                HStack {
+                    Image(systemName: "tag.fill")
+                        .foregroundColor(.green)
+                    Text(discount.discount)
+                        .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 20 : 17, weight: .semibold))
+                        .foregroundColor(.green)
+                }
+                .padding(.top, 4)
+            }
+            
+            Divider()
+                .background(Color.white.opacity(0.2))
+            
+            // Description section
+            VStack(alignment: .leading, spacing: 12) {
+                Text(discount.description)
+                    .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 16 : 14))
+                    .foregroundColor(.white.opacity(0.9))
+                    .lineLimit(2)
+                
+                // Requirements section with icon
+                HStack(alignment: .top, spacing: 8) {
+                    Image(systemName: "info.circle.fill")
+                        .foregroundColor(.white.opacity(0.7))
+                        .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 16 : 14))
+                    
+                    Text(discount.requirements)
+                        .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 14 : 12))
+                        .foregroundColor(.white.opacity(0.8))
+                        .lineLimit(2)
+                }
+                .padding(.top, 4)
+            }
+            
+            Spacer()
+            
+            // Action button section
+            Link(destination: URL(string: discount.link)!) {
+                HStack {
+                    Text("Get Discount")
+                        .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 16 : 14, weight: .semibold))
+                    Spacer()
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 14 : 12))
+                }
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
+                .background(
+                    LinearGradient(
+                        gradient: Gradient(colors: [Color(hex: "#5a0ef6"), Color(hex: "#7849fd")]),
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .cornerRadius(12)
+                .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 5)
+            }
+        }
+        .padding(UIDevice.current.userInterfaceIdiom == .pad ? 20 : 16)
+        .frame(maxWidth: .infinity)
+        .frame(height: UIDevice.current.userInterfaceIdiom == .pad ? 280 : 240)
+        .background(
+            ZStack {
+                Color.black.opacity(0.4)
+                
+                // Glassmorphic effect
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(.ultraThinMaterial)
+                    .opacity(0.5)
+                
+                // Gradient overlay
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(
+                        LinearGradient(
+                            gradient: Gradient(colors: [
+                                Color(hex: "#5a0ef6").opacity(0.05),
+                                Color(hex: "#7849fd").opacity(0.05)
+                            ]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+            }
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(
+                    LinearGradient(
+                        gradient: Gradient(colors: [
+                            Color.white.opacity(0.5),
+                            Color.white.opacity(0.2),
+                            Color.white.opacity(0.1)
+                        ]),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 0.5
+                )
+        )
+        .cornerRadius(16)
+        .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
     }
 }
 
