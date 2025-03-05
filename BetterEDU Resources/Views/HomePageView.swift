@@ -78,10 +78,10 @@ struct HomePageView: View {
                             // Subtitle
                             VStack(spacing: 0) {
                                 Text("Mental Health Resources")
-                                    .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 28 : 24))
+                                    .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 28 : 24, weight: .bold))
                                     .foregroundColor(.white)
                                 Text("for Students")
-                                    .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 28 : 24))
+                                    .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 28 : 24, weight: .bold))
                                     .foregroundColor(.white)
                             }
                         }
