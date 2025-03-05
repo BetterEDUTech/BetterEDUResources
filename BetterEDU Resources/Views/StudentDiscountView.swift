@@ -29,10 +29,9 @@ struct StudentDiscountView: View {
     @State private var searchText: String = ""
     @State private var selectedFilter: String = "All"
     @State private var availableFilters: [String] = ["All"]
+    @StateObject private var imageLoader = ProfileImageLoader.shared
     private var db = Firestore.firestore()
     
-    @State private var profileImage: UIImage? = nil
-
     private var gridColumns: [GridItem] {
         if UIDevice.current.userInterfaceIdiom == .pad {
             return [
@@ -50,7 +49,7 @@ struct StudentDiscountView: View {
                 // Header with profile icon
                 HStack {
                     NavigationLink(destination: ProfileView().navigationBarHidden(true)) {
-                        if let image = profileImage {
+                        if let image = imageLoader.profileImage {
                             Image(uiImage: image)
                                 .resizable()
                                 .frame(width: UIDevice.current.userInterfaceIdiom == .pad ? 50 : 35, 
@@ -72,7 +71,9 @@ struct StudentDiscountView: View {
                 }
                 .padding(.top)
                 .onAppear(perform: {
-                    loadProfileImage()
+                    if let uid = Auth.auth().currentUser?.uid {
+                        ProfileImageLoader.shared.loadProfileImage(forUID: uid)
+                    }
                     fetchDiscounts()
                 })
                 
@@ -198,33 +199,6 @@ struct StudentDiscountView: View {
                               discount.description.lowercased().contains(searchText.lowercased())
             return matchesFilter && matchesSearch
         }
-    }
-
-    private func loadProfileImage() {
-        guard let uid = Auth.auth().currentUser?.uid else { return }
-
-        db.collection("users").document(uid).getDocument { document, error in
-            if let document = document, document.exists,
-               let profileImageURLString = document.data()?["profileImageURL"] as? String,
-               let url = URL(string: profileImageURLString) {
-                fetchImage(from: url)
-            }
-        }
-    }
-
-    private func fetchImage(from url: URL) {
-        URLSession.shared.dataTask(with: url) { data, _, error in
-            if let error = error {
-                print("Error fetching profile image: \(error.localizedDescription)")
-                return
-            }
-            
-            if let data = data, let uiImage = UIImage(data: data) {
-                DispatchQueue.main.async {
-                    self.profileImage = uiImage
-                }
-            }
-        }.resume()
     }
 }
 

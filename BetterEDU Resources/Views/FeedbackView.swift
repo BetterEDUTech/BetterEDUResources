@@ -6,7 +6,7 @@ import Combine
 
 struct FeedbackView: View {
     @State private var feedbackText: String = ""
-    @State private var profileImage: UIImage? = nil
+    @StateObject private var imageLoader = ProfileImageLoader.shared
     @State private var userName: String = "[Name]"
     @State private var showSubmissionAlert = false
     @State private var keyboardHeight: CGFloat = 0
@@ -65,7 +65,7 @@ struct FeedbackView: View {
                             // Profile icon
                             HStack {
                                 NavigationLink(destination: ProfileView().navigationBarHidden(true)) {
-                                    if let image = profileImage {
+                                    if let image = imageLoader.profileImage {
                                         Image(uiImage: image)
                                             .resizable()
                                             .frame(width: profileImageSize, height: profileImageSize)
@@ -250,7 +250,9 @@ struct FeedbackView: View {
         }
         .navigationViewStyle(StackNavigationViewStyle())
         .onAppear {
-            loadProfileImage()
+            if let uid = Auth.auth().currentUser?.uid {
+                ProfileImageLoader.shared.loadProfileImage(forUID: uid)
+            }
             loadUserName()
             setupKeyboardObservers()
             emailText = Auth.auth().currentUser?.email ?? ""
@@ -292,36 +294,6 @@ struct FeedbackView: View {
     private func removeKeyboardObservers() {
         NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
         NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
-    }
-
-    // MARK: - Profile Image
-    private func loadProfileImage() {
-        guard let uid = Auth.auth().currentUser?.uid else { return }
-        db.collection("users").document(uid).getDocument { document, error in
-            if let error = error {
-                print("Error loading profile image URL: \(error.localizedDescription)")
-                return
-            }
-            if let doc = document, doc.exists,
-               let urlString = doc.data()?["profileImageURL"] as? String,
-               let url = URL(string: urlString) {
-                fetchImage(from: url)
-            }
-        }
-    }
-    
-    private func fetchImage(from url: URL) {
-        URLSession.shared.dataTask(with: url) { data, _, error in
-            if let error = error {
-                print("Error fetching profile image: \(error.localizedDescription)")
-                return
-            }
-            if let data = data, let uiImage = UIImage(data: data) {
-                DispatchQueue.main.async {
-                    self.profileImage = uiImage
-                }
-            }
-        }.resume()
     }
 
     // MARK: - User Name

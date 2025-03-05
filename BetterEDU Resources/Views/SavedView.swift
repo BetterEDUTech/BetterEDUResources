@@ -5,7 +5,7 @@ import FirebaseFirestore
 
 struct SavedView: View {
     @State private var savedResources: [SavedResourceItem] = []
-    @State private var profileImage: UIImage? = nil
+    @StateObject private var imageLoader = ProfileImageLoader.shared
     @State private var searchText: String = ""
     private let db = Firestore.firestore()
 
@@ -15,7 +15,7 @@ struct SavedView: View {
                 // Header with profile icon
                 HStack {
                     NavigationLink(destination: ProfileView().navigationBarHidden(true)) {
-                        if let image = profileImage {
+                        if let image = imageLoader.profileImage {
                             Image(uiImage: image)
                                 .resizable()
                                 .frame(width: 35, height: 35)
@@ -104,7 +104,9 @@ struct SavedView: View {
         }
         .navigationViewStyle(StackNavigationViewStyle())
         .onAppear {
-            loadProfileImage()
+            if let uid = Auth.auth().currentUser?.uid {
+                ProfileImageLoader.shared.loadProfileImage(forUID: uid)
+            }
             fetchSavedResources()
         }
     }
@@ -151,41 +153,6 @@ struct SavedView: View {
                 print("Fetched saved resources: \(self.savedResources)")
             }
         }
-    }
-
-    // Function to load the user's profile image from Firestore
-    private func loadProfileImage() {
-        guard let uid = Auth.auth().currentUser?.uid else { return }
-
-        db.collection("users").document(uid).getDocument { document, error in
-            if let error = error {
-                print("Error loading profile image URL: \(error.localizedDescription)")
-                return
-            }
-            
-            if let document = document, document.exists,
-               let profileImageURLString = document.data()?["profileImageURL"] as? String,
-               let url = URL(string: profileImageURLString) {
-                
-                fetchImage(from: url)
-            }
-        }
-    }
-    
-    // Helper function to fetch an image from a URL
-    private func fetchImage(from url: URL) {
-        URLSession.shared.dataTask(with: url) { data, _, error in
-            if let error = error {
-                print("Error fetching profile image: \(error.localizedDescription)")
-                return
-            }
-            
-            if let data = data, let uiImage = UIImage(data: data) {
-                DispatchQueue.main.async {
-                    self.profileImage = uiImage
-                }
-            }
-        }.resume()
     }
 }
 

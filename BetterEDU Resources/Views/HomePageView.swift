@@ -4,7 +4,7 @@ import FirebaseAuth
 import FirebaseFirestore
 
 struct HomePageView: View {
-    @State private var profileImage: UIImage? = nil
+    @StateObject private var imageLoader = ProfileImageLoader.shared
     @State private var searchText: String = ""
     @State private var resources: [ResourceItem] = []
     @State private var likedResources: Set<String> = [] // Tracks liked resource IDs locally
@@ -48,7 +48,7 @@ struct HomePageView: View {
                             // Header Section with profile picture
                             HStack {
                                 NavigationLink(destination: ProfileView().navigationBarHidden(true)) {
-                                    if let image = profileImage {
+                                    if let image = imageLoader.profileImage {
                                         Image(uiImage: image)
                                             .resizable()
                                             .frame(width: UIDevice.current.userInterfaceIdiom == .pad ? 50 : 40, 
@@ -225,7 +225,9 @@ struct HomePageView: View {
                     }
                 }
                 .onAppear {
-                    loadProfileImage()
+                    if let uid = Auth.auth().currentUser?.uid {
+                        ProfileImageLoader.shared.loadProfileImage(forUID: uid)
+                    }
                     loadUserData()
                     fetchResources()
                     fetchLikedResources()
@@ -325,27 +327,6 @@ struct HomePageView: View {
                 }
             }
         }
-    }
-
-    private func loadProfileImage() {
-        guard let uid = Auth.auth().currentUser?.uid else { return }
-        db.collection("users").document(uid).getDocument { document, error in
-            if let document = document, document.exists,
-               let profileImageURLString = document.data()?["profileImageURL"] as? String,
-               let url = URL(string: profileImageURLString) {
-                fetchImage(from: url)
-            }
-        }
-    }
-
-    private func fetchImage(from url: URL) {
-        URLSession.shared.dataTask(with: url) { data, _, error in
-            if let data = data, let uiImage = UIImage(data: data) {
-                DispatchQueue.main.async {
-                    self.profileImage = uiImage
-                }
-            }
-        }.resume()
     }
 
     // Load user's profile data from Firestore

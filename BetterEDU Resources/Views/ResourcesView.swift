@@ -28,10 +28,9 @@ struct ResourcesAppView: View {
     @State private var selectedFilter: String = "All"   // Default filter for resources
     @State private var availableFilters: [String] = ["All"] // Filters from Firebase
     @State private var userState: String = "ALL"        // User's selected state
+    @StateObject private var imageLoader = ProfileImageLoader.shared
     private let db = Firestore.firestore()
     
-    @State private var profileImage: UIImage? = nil // State to store the profile image
-
     // Grid layout columns based on device
     private var gridColumns: [GridItem] {
         if UIDevice.current.userInterfaceIdiom == .pad {
@@ -50,7 +49,7 @@ struct ResourcesAppView: View {
                 // Header with profile icon
                 HStack {
                     NavigationLink(destination: ProfileView().navigationBarHidden(true)) {
-                        if let image = profileImage {
+                        if let image = imageLoader.profileImage {
                             Image(uiImage: image)
                                 .resizable()
                                 .frame(width: UIDevice.current.userInterfaceIdiom == .pad ? 50 : 35, 
@@ -72,7 +71,9 @@ struct ResourcesAppView: View {
                 }
                 .padding(.top)
                 .onAppear(perform: {
-                    loadProfileImage()
+                    if let uid = Auth.auth().currentUser?.uid {
+                        ProfileImageLoader.shared.loadProfileImage(forUID: uid)
+                    }
                     loadUserData()
                     fetchResources()
                 })
@@ -208,41 +209,6 @@ struct ResourcesAppView: View {
             let matchesState = resource.state == "ALL" || resource.state == userState
             return matchesFilter && matchesSearch && matchesState
         }
-    }
-
-    // Load user's profile image from Firestore
-    private func loadProfileImage() {
-        guard let uid = Auth.auth().currentUser?.uid else { return }
-
-        db.collection("users").document(uid).getDocument { document, error in
-            if let error = error {
-                print("Error loading profile image URL: \(error.localizedDescription)")
-                return
-            }
-            
-            if let document = document, document.exists,
-               let profileImageURLString = document.data()?["profileImageURL"] as? String,
-               let url = URL(string: profileImageURLString) {
-                
-                fetchImage(from: url)
-            }
-        }
-    }
-
-    // Helper function to fetch an image from URL
-    private func fetchImage(from url: URL) {
-        URLSession.shared.dataTask(with: url) { data, _, error in
-            if let error = error {
-                print("Error fetching profile image: \(error.localizedDescription)")
-                return
-            }
-            
-            if let data = data, let uiImage = UIImage(data: data) {
-                DispatchQueue.main.async {
-                    self.profileImage = uiImage
-                }
-            }
-        }.resume()
     }
 
     // Load user's profile data from Firestore
