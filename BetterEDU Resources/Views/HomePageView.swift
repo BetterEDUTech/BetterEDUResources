@@ -3,6 +3,7 @@ import Firebase
 import FirebaseAuth
 import FirebaseFirestore
 
+// HomePageView implementation starts here
 struct HomePageView: View {
     @StateObject private var imageLoader = ProfileImageLoader.shared
     @State private var searchText: String = ""
@@ -10,6 +11,7 @@ struct HomePageView: View {
     @State private var likedResources: Set<String> = [] // Tracks liked resource IDs locally
     @State private var hasScrolled = false
     @State private var userState: String = "ALL"        // User's selected state
+    @State private var userName: String = ""            // Add userName state
     @EnvironmentObject var tabViewModel: TabViewModel
     private let db = Firestore.firestore()
 
@@ -47,23 +49,8 @@ struct HomePageView: View {
                         VStack(spacing: 16) {
                             // Header Section with profile picture
                             HStack {
-                                NavigationLink(destination: ProfileView().navigationBarHidden(true)) {
-                                    if let image = imageLoader.profileImage {
-                                        Image(uiImage: image)
-                                            .resizable()
-                                            .frame(width: UIDevice.current.userInterfaceIdiom == .pad ? 50 : 40, 
-                                                   height: UIDevice.current.userInterfaceIdiom == .pad ? 50 : 40)
-                                            .clipShape(Circle())
-                                            .overlay(Circle().stroke(Color.white, lineWidth: 2))
-                                            .shadow(radius: 4)
-                                    } else {
-                                        Image(systemName: "person.circle.fill")
-                                            .resizable()
-                                            .frame(width: UIDevice.current.userInterfaceIdiom == .pad ? 50 : 40, 
-                                                   height: UIDevice.current.userInterfaceIdiom == .pad ? 50 : 40)
-                                            .foregroundColor(.white)
-                                    }
-                                }
+                                ProfileImageView(size: UIDevice.current.userInterfaceIdiom == .pad ? 50 : 40, showBorder: false)
+                                    .padding(.leading, UIDevice.current.userInterfaceIdiom == .pad ? 24 : 16)
                                 Spacer()
                             }
                             .padding([.horizontal, .top], UIDevice.current.userInterfaceIdiom == .pad ? 24 : 16)
@@ -75,17 +62,39 @@ struct HomePageView: View {
                                 .foregroundColor(.white)
                                 .padding(.top, -10)
 
-                            // Subtitle
-                            VStack(spacing: 0) {
-                                Text("Mental Health Resources")
+                            // Welcome Message
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Welcome back, \(userName)!")
                                     .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 28 : 24, weight: .bold))
                                     .foregroundColor(.white)
-                                Text("for Students")
-                                    .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 28 : 24, weight: .bold))
-                                    .foregroundColor(.white)
+                                Text("Let's find the resources you need today.")
+                                    .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 22 : 18))
+                                    .foregroundColor(.white.opacity(0.9))
                             }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, UIDevice.current.userInterfaceIdiom == .pad ? 24 : 16)
                         }
                         .padding(.bottom, 20)
+                        .background(
+                            LinearGradient(
+                                gradient: Gradient(
+                                    colors: [
+                                        Color.black.opacity(0.4),
+                                        Color.black.opacity(0.3),
+                                        Color.black.opacity(0.2)
+                                    ]
+                                ),
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                            .clipShape(
+                                RoundedRectangle(
+                                    cornerRadius: 30,
+                                    style: .continuous
+                                )
+                            )
+                            .edgesIgnoringSafeArea(.top)
+                        )
                         
                         // Visual Divider
                         Rectangle()
@@ -339,11 +348,19 @@ struct HomePageView: View {
                 return
             }
             
-            if let document = document, document.exists,
-               let state = document.data()?["location"] as? String {
-                // Convert state name to abbreviation
-                DispatchQueue.main.async {
-                    self.userState = state == "Arizona" ? "AZ" : state == "California" ? "CA" : "ALL"
+            if let document = document, document.exists {
+                let data = document.data()
+                // Get user's state
+                if let state = data?["location"] as? String {
+                    DispatchQueue.main.async {
+                        self.userState = state == "Arizona" ? "AZ" : state == "California" ? "CA" : "ALL"
+                    }
+                }
+                // Get user's name
+                if let name = data?["name"] as? String {
+                    DispatchQueue.main.async {
+                        self.userName = name
+                    }
                 }
             }
         }
