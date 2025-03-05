@@ -332,7 +332,8 @@ struct ProfileView: View {
     private func loadImage(from url: URL) {
         print("Loading image from URL: \(url.absoluteString)")
         
-        let task = URLSession.shared.dataTask(with: url) { data, response, error in
+        let session = URLSession(configuration: .default)
+        let task = session.dataTask(with: url) { data, response, error in
             if let error = error {
                 print("Error loading image: \(error.localizedDescription)")
                 return
@@ -369,59 +370,69 @@ struct ProfileView: View {
     private func saveProfileImage(_ image: UIImage) {
         guard let uid = Auth.auth().currentUser?.uid,
               let imageData = image.jpegData(compressionQuality: 0.5) else {
-            print("Error: Failed to get user ID or convert image to data")
+            print("❌ Error: Failed to get user ID or convert image to data")
             return
         }
         
-        print("Starting profile image upload for user: \(uid)")
+        print("🔄 Starting profile image upload for user: \(uid)")
+        print("📦 Image data size: \(ByteCountFormatter.string(fromByteCount: Int64(imageData.count), countStyle: .file))")
         
         // Show the image immediately in UI
         DispatchQueue.main.async {
             self.profileImage = image
+            print("✅ Updated UI with new image")
         }
         
         // Create a reference to Firebase Storage
         let storageRef = storage.reference()
         let imageRef = storageRef.child("profile_images/\(uid).jpg")
+        print("📝 Storage reference created: profile_images/\(uid).jpg")
         
         // Create metadata
         let metadata = StorageMetadata()
         metadata.contentType = "image/jpeg"
         
-        // Upload the new image data directly without trying to delete first
-        print("Uploading image data...")
+        // Upload the new image data directly
+        print("⬆️ Starting image upload...")
         imageRef.putData(imageData, metadata: metadata) { metadata, error in
             if let error = error {
-                print("Error uploading image: \(error.localizedDescription)")
+                print("❌ Error uploading image: \(error.localizedDescription)")
+                print("❌ Full error details: \(error)")
                 return
             }
             
-            print("Image uploaded successfully, getting download URL...")
+            print("✅ Image uploaded successfully, size: \(metadata?.size ?? 0) bytes")
+            print("🔍 Getting download URL...")
+            
             // Get the download URL
             imageRef.downloadURL { url, error in
                 if let error = error {
-                    print("Error getting download URL: \(error.localizedDescription)")
+                    print("❌ Error getting download URL: \(error.localizedDescription)")
+                    print("❌ Full error details: \(error)")
                     return
                 }
                 
                 guard let downloadURL = url else {
-                    print("Error: Could not get download URL")
+                    print("❌ Error: Could not get download URL")
                     return
                 }
                 
-                print("Got download URL: \(downloadURL.absoluteString)")
+                print("✅ Got download URL: \(downloadURL.absoluteString)")
                 
                 // Update Firestore with the new URL
+                print("💾 Updating Firestore document...")
                 self.db.collection("users").document(uid).updateData([
                     "profileImageURL": downloadURL.absoluteString,
                     "lastUpdated": FieldValue.serverTimestamp()
                 ]) { error in
                     if let error = error {
-                        print("Error updating profile image URL in Firestore: \(error.localizedDescription)")
+                        print("❌ Error updating profile image URL in Firestore: \(error.localizedDescription)")
+                        print("❌ Full error details: \(error)")
                     } else {
-                        print("Profile image URL successfully updated in Firestore")
+                        print("✅ Profile image URL successfully updated in Firestore")
                         // Force a reload of user data to verify the update
                         DispatchQueue.main.async {
+                            print("🔄 Reloading user data...")
                             self.loadUserData()
                         }
                     }
