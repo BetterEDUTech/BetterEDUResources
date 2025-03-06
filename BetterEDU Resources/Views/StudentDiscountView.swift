@@ -301,15 +301,15 @@ struct DiscountCard: View {
                 // Glassmorphic effect
                 RoundedRectangle(cornerRadius: 16)
                     .fill(.ultraThinMaterial)
-                    .opacity(0.5)
+                    .opacity(0.3)
                 
                 // Gradient overlay
                 RoundedRectangle(cornerRadius: 16)
                     .fill(
                         LinearGradient(
                             gradient: Gradient(colors: [
-                                Color(hex: "#5a0ef6").opacity(0.05),
-                                Color(hex: "#7849fd").opacity(0.05)
+                                Color.black.opacity(0.6),
+                                Color.black.opacity(0.4)
                             ]),
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
