@@ -236,6 +236,8 @@ struct ResourcesAppView: View {
 struct ResourceCard: View {
     let resource: ResourceItem
     @State private var isLiked: Bool = false
+    @State private var showGuestAlert = false
+    @EnvironmentObject var authViewModel: AuthViewModel
     private let db = Firestore.firestore()
 
     var body: some View {
@@ -266,7 +268,7 @@ struct ResourceCard: View {
             }
             Spacer()
 
-            Button(action: toggleSaveResource) {
+            Button(action: handleSaveResource) {
                 Image(systemName: isLiked ? "heart.fill" : "heart")
                     .foregroundColor(isLiked ? .red : .gray)
                     .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 24 : 20))
@@ -278,6 +280,23 @@ struct ResourceCard: View {
         .cornerRadius(12)
         .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
         .onAppear(perform: checkIfResourceIsSaved)
+        .alert("Sign In Required", isPresented: $showGuestAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Sign In") {
+                // Sign out the guest user and this will trigger navigation to LoginView
+                authViewModel.signOut()
+            }
+        } message: {
+            Text("You need to create an account or sign in to save resources.")
+        }
+    }
+
+    private func handleSaveResource() {
+        if Auth.auth().currentUser?.isAnonymous == true {
+            showGuestAlert = true
+        } else {
+            toggleSaveResource()
+        }
     }
 
     // Check if the resource is saved

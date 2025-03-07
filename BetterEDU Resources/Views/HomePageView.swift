@@ -14,6 +14,8 @@ struct HomePageView: View {
     @State private var userName: String = ""            // Add userName state
     @EnvironmentObject var tabViewModel: TabViewModel
     private let db = Firestore.firestore()
+    @State private var showGuestAlert = false
+    @EnvironmentObject var authViewModel: AuthViewModel
 
     // Grid layout columns based on device
     private var gridColumns: [GridItem] {
@@ -193,7 +195,11 @@ struct HomePageView: View {
                                                     Spacer()
 
                                                     Button(action: {
-                                                        toggleSaveResource(resource: resource)
+                                                        if Auth.auth().currentUser?.isAnonymous == true {
+                                                            showGuestAlert = true
+                                                        } else {
+                                                            toggleSaveResource(resource: resource)
+                                                        }
                                                     }) {
                                                         Image(systemName: likedResources.contains(resource.id ?? "") ? "heart.fill" : "heart")
                                                             .foregroundColor(likedResources.contains(resource.id ?? "") ? .red : .gray)
@@ -205,6 +211,15 @@ struct HomePageView: View {
                                                 .background(Color.black.opacity(0.4))
                                                 .cornerRadius(12)
                                                 .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+                                                .alert("Sign In Required", isPresented: $showGuestAlert) {
+                                                    Button("Cancel", role: .cancel) { }
+                                                    Button("Sign In") {
+                                                        // Sign out the guest user and this will trigger navigation to LoginView
+                                                        authViewModel.signOut()
+                                                    }
+                                                } message: {
+                                                    Text("You need to create an account or sign in to save resources.")
+                                                }
                                             }
                                         }
                                     }
