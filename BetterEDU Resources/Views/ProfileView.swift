@@ -276,10 +276,13 @@ struct ProfileView: View {
                                     actionButton(icon: "arrow.right.square.fill", text: "Log Out", color: .purple)
                                 }
                                 
-                                Button(action: {
-                                    showDeleteConfirmation = true
-                                }) {
-                                    actionButton(icon: "trash", text: "Delete Account", color: .red)
+                                // Only show delete account button for non-guest users
+                                if Auth.auth().currentUser?.isAnonymous == false {
+                                    Button(action: {
+                                        showDeleteConfirmation = true
+                                    }) {
+                                        actionButton(icon: "trash", text: "Delete Account", color: .red)
+                                    }
                                 }
                             }
                             .frame(maxWidth: isIPad ? 700 : 350)
