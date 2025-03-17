@@ -152,6 +152,15 @@ struct HomePageView: View {
                                         NavigationLink(destination: AcademicStressView()) {
                                             categoryButton(icon: "book.fill", title: "Academic Stress Support")
                                         }
+                                        NavigationLink(destination: HousingResourcesView()) {
+                                            categoryButton(icon: "house.fill", title: "Housing & Shelter")
+                                        }
+                                        NavigationLink(destination: FoodandClothingResourcesView()) {
+                                            categoryButton(icon: "fork.knife", title: "Food & Clothing")
+                                        }
+                                        NavigationLink(destination: TechResourcesView()) {
+                                            categoryButton(icon: "network", title: "Technology Resources")
+                                        }
                                     }
                                     .padding(.horizontal, UIDevice.current.userInterfaceIdiom == .pad ? 24 : 16)
                                     .padding(.top, 12)
