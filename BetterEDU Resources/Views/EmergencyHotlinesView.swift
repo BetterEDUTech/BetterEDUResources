@@ -19,9 +19,9 @@ struct EmergencyHotlinesView: View {
                 .padding(.top)
 
             // Search Bar
-            
             TextField("Search Hotlines", text: $searchText)
                 .padding()
+                .foregroundColor(.black)
                 .background(Color.white)
                 .cornerRadius(10)
                 .padding(.horizontal)

@@ -27,6 +27,7 @@ struct TechResourcesView: View {
             // Search Bar
             TextField("Search Resources", text: $searchText)
                 .padding()
+                .foregroundColor(.black)
                 .background(Color.white)
                 .cornerRadius(10)
                 .padding(.horizontal)
