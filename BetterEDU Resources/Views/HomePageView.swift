@@ -365,6 +365,15 @@ struct HomePageView: View {
     // Load user's profile data from Firestore
     private func loadUserData() {
         guard let uid = Auth.auth().currentUser?.uid else { return }
+        
+        // Check if user is anonymous (guest)
+        if Auth.auth().currentUser?.isAnonymous == true {
+            DispatchQueue.main.async {
+                self.userName = "Guest"
+                self.userState = "ALL"
+            }
+            return
+        }
 
         db.collection("users").document(uid).getDocument { document, error in
             if let error = error {

@@ -299,6 +299,15 @@ struct FeedbackView: View {
     // MARK: - User Name
     private func loadUserName() {
         guard let uid = Auth.auth().currentUser?.uid else { return }
+        
+        // Check if user is anonymous (guest)
+        if Auth.auth().currentUser?.isAnonymous == true {
+            DispatchQueue.main.async {
+                self.userName = "Guest"
+            }
+            return
+        }
+        
         db.collection("users").document(uid).getDocument { document, error in
             if let error = error {
                 print("Error loading user name: \(error.localizedDescription)")
