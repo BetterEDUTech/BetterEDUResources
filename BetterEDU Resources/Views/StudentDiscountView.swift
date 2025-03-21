@@ -94,7 +94,7 @@ struct StudentDiscountView: View {
                         TextField("Search discounts...", text: $searchText)
                             .textFieldStyle(PlainTextFieldStyle())
                             .foregroundColor(.black)
-                            .tint(.black)
+                            .tint(.blue)
                     }
                     .padding()
                     .background(Color.white)

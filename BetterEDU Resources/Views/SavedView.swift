@@ -52,7 +52,7 @@ struct SavedView: View {
                         TextField("Search resources...", text: $searchText)
                             .textFieldStyle(PlainTextFieldStyle())
                             .foregroundColor(.black)
-                            .tint(.black)
+                            .tint(.blue)
                     }
                     .padding()
                     .background(Color.white)

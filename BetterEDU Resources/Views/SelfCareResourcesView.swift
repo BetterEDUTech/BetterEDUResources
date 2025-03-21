@@ -30,6 +30,7 @@ struct SelfCareResourcesView: View {
                 .padding()
                 .foregroundColor(.black)
                 .background(Color.white)
+                .tint(.blue)
                 .cornerRadius(10)
                 .padding(.horizontal)
 
