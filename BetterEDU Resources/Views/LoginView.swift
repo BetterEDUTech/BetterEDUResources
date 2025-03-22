@@ -6,6 +6,7 @@ struct LoginView: View {
     @State private var password = ""
     @State private var isPasswordVisible = false
     @State private var errorMessage: String?
+    @State private var isShowingError = false
     @State private var isLoggedIn = false
     @State private var keyboardHeight: CGFloat = 0
     @Environment(\.horizontalSizeClass) var sizeClass
@@ -63,15 +64,39 @@ struct LoginView: View {
                             // Form fields
                             formFields()
 
+                            // Error message - moved below form fields and styled like buttons
+                            if let errorMessage = errorMessage, isShowingError {
+                                Text(errorMessage)
+                                    .font(.system(size: 16, weight: .medium))
+                                    .multilineTextAlignment(.center)
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 12)
+                                    .background(Color.red.opacity(0.8))
+                                    .cornerRadius(10)
+                                    .padding(.horizontal, sizeClass == .regular ? 24 : 16)
+                                    .frame(maxWidth: sizeClass == .regular ? 700 : 350)
+                                    .transition(.opacity)
+                            }
+
                             // Action buttons
                             actionButtons()
 
-                            // Error message and sign-up link
-                            footerSection()
+                            // Sign-up link
+                            HStack {
+                                Text("Not a member?")
+                                    .foregroundColor(.white)
+                                NavigationLink(destination: SignUpView()) {
+                                    Text("Sign Up")
+                                        .bold()
+                                        .foregroundColor(.white)
+                                }
+                            }
+                            .padding(.vertical, sizeClass == .regular ? 30 : 15)
                         }
                         .padding(.horizontal, sizeClass == .regular ? 40 : 16)
                         .frame(maxWidth: sizeClass == .regular ? 700 : 600)
-                        .padding(.bottom, keyboardHeight)
+                        .padding(.bottom, keyboardHeight + 40) // Added extra padding at the bottom
                         .animation(.easeOut(duration: 0.3), value: keyboardHeight)
                     }
 
@@ -147,25 +172,8 @@ struct LoginView: View {
     // MARK: - Footer Section
     @ViewBuilder
     private func footerSection() -> some View {
-        VStack(spacing: 15) {
-            if let errorMessage = errorMessage {
-                Text(errorMessage)
-                    .foregroundColor(.red)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 16)
-            }
-
-            HStack {
-                Text("Not a member?")
-                    .foregroundColor(.white)
-                NavigationLink(destination: SignUpView()) {
-                    Text("Sign Up")
-                        .bold()
-                        .foregroundColor(.white)
-                }
-            }
-        }
-        .padding(.vertical, sizeClass == .regular ? 30 : 20)
+        // Empty footer section since we moved error message up
+        EmptyView()
     }
 
     // MARK: - Helpers
@@ -193,28 +201,83 @@ struct LoginView: View {
     }
 
     private func signInUser(asGuest: Bool) {
+        // Clear any previous error
+        errorMessage = nil
+        isShowingError = false
+        
         if asGuest {
             Auth.auth().signInAnonymously { _, error in
                 if let error = error {
-                    errorMessage = error.localizedDescription
+                    handleAuthError(error)
                 } else {
                     isLoggedIn = true
                 }
             }
         } else {
-            guard !email.isEmpty, !password.isEmpty else {
-                errorMessage = "Please enter your email and password."
+            // Input validation
+            if email.isEmpty && password.isEmpty {
+                errorMessage = "Please enter your email and password"
+                isShowingError = true
+                return
+            } else if email.isEmpty {
+                errorMessage = "Please enter your email"
+                isShowingError = true
+                return
+            } else if password.isEmpty {
+                errorMessage = "Please enter your password"
+                isShowingError = true
+                return
+            }
+            
+            // Basic email format validation
+            if !isValidEmail(email) {
+                errorMessage = "Please enter a valid email address"
+                isShowingError = true
                 return
             }
 
             Auth.auth().signIn(withEmail: email, password: password) { _, error in
                 if let error = error {
-                    errorMessage = error.localizedDescription
+                    handleAuthError(error)
                 } else {
                     isLoggedIn = true
                 }
             }
         }
+    }
+    
+    // MARK: - Error Handling
+    
+    private func handleAuthError(_ error: Error) {
+        let authError = error as NSError
+        
+        // Convert Firebase error codes to user-friendly messages
+        switch authError.code {
+        case AuthErrorCode.wrongPassword.rawValue:
+            errorMessage = "Incorrect password. Please try again."
+        case AuthErrorCode.invalidEmail.rawValue:
+            errorMessage = "The email address is not valid."
+        case AuthErrorCode.userNotFound.rawValue:
+            errorMessage = "No account found with this email. Please sign up first."
+        case AuthErrorCode.emailAlreadyInUse.rawValue:
+            errorMessage = "This email is already in use with another account."
+        case AuthErrorCode.userDisabled.rawValue:
+            errorMessage = "This account has been disabled. Please contact support."
+        case AuthErrorCode.tooManyRequests.rawValue:
+            errorMessage = "Too many attempts. Please try again later."
+        case AuthErrorCode.networkError.rawValue:
+            errorMessage = "Network error. Please check your connection and try again."
+        default:
+            errorMessage = "Sign in failed: \(error.localizedDescription)"
+        }
+        
+        isShowingError = true
+    }
+    
+    private func isValidEmail(_ email: String) -> Bool {
+        let emailRegEx = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
+        let emailPredicate = NSPredicate(format:"SELF MATCHES %@", emailRegEx)
+        return emailPredicate.evaluate(with: email)
     }
 }
 
