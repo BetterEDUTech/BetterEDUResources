@@ -241,41 +241,78 @@ struct ResourceCard: View {
     private let db = Firestore.firestore()
 
     var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 8) {
-                Text(resource.title)
-                    .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 20 : 17, weight: .bold))
-                    .foregroundColor(.white)
-                    .multilineTextAlignment(.leading)
-                    .lineLimit(2)
+        VStack(alignment: .leading, spacing: 12) {
+            Text(resource.title)
+                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 20 : 17, weight: .bold))
+                .foregroundColor(.white)
+                .multilineTextAlignment(.leading)
+                .lineLimit(2)
 
-                if let phoneNumber = resource.phone_number {
+            if let phoneNumber = resource.phone_number, !phoneNumber.isEmpty {
+                // Make phone number clickable to open phone app
+                let formattedPhone = phoneNumber.replacingOccurrences(of: "[^0-9]", with: "", options: .regularExpression)
+                if let phoneURL = URL(string: "tel:\(formattedPhone)") {
+                    Link(destination: phoneURL) {
+                        HStack {
+                            Image(systemName: "phone.fill")
+                                .foregroundColor(.green)
+                                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 16 : 14))
+                            Text(phoneNumber)
+                                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 15))
+                                .foregroundColor(.white.opacity(0.9))
+                                .lineLimit(1)
+                                .underline()
+                        }
+                    }
+                } else {
                     Text("Phone: \(phoneNumber)")
                         .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 15))
                         .foregroundColor(.white.opacity(0.7))
                         .lineLimit(1)
                 }
-
-                if let website = resource.website, !website.isEmpty, let url = URL(string: website) {
-                    Link("Visit Website", destination: url)
-                        .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 15))
-                        .foregroundColor(.blue)
-                } else {
-                    Text("Website unavailable")
-                        .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 15))
-                        .foregroundColor(.gray)
-                }
             }
-            Spacer()
 
-            Button(action: handleSaveResource) {
-                Image(systemName: isLiked ? "heart.fill" : "heart")
-                    .foregroundColor(isLiked ? .red : .gray)
-                    .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 24 : 20))
+            // Website Button
+            if let website = resource.website, !website.isEmpty, let url = URL(string: website) {
+                Link(destination: url) {
+                    HStack {
+                        Text("Visit Website")
+                            .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 16 : 14, weight: .semibold))
+                        Spacer()
+                        Image(systemName: "arrow.right")
+                            .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 14 : 12))
+                    }
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(
+                        LinearGradient(
+                            gradient: Gradient(colors: [Color(hex: "#5a0ef6"), Color(hex: "#7849fd")]),
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .cornerRadius(10)
+                    .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+                }
+            } else {
+                Text("Website unavailable")
+                    .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 15))
+                    .foregroundColor(.gray)
+            }
+            
+            HStack {
+                Spacer()
+                Button(action: handleSaveResource) {
+                    Image(systemName: isLiked ? "heart.fill" : "heart")
+                        .foregroundColor(isLiked ? .red : .gray)
+                        .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 24 : 20))
+                }
             }
         }
         .padding(UIDevice.current.userInterfaceIdiom == .pad ? 16 : 12)
-        .frame(maxWidth: .infinity, minHeight: UIDevice.current.userInterfaceIdiom == .pad ? 150 : 120)
+        .frame(maxWidth: .infinity)
         .background(Color.black.opacity(0.4))
         .cornerRadius(12)
         .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
