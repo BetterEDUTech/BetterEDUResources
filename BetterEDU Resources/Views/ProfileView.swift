@@ -173,21 +173,24 @@ struct ProfileView: View {
                                         .foregroundColor(.white)
                                 }
 
-                                Button(action: { 
-                                    if !isEditingName {
-                                        tempUserName = userName
-                                        isEditingName = true
-                                    } else {
-                                        if !tempUserName.isEmpty {
-                                            userName = tempUserName
-                                            updateUserData(field: "name", value: tempUserName)
+                                // Only show edit button for non-guest users
+                                if Auth.auth().currentUser?.isAnonymous == false {
+                                    Button(action: { 
+                                        if !isEditingName {
+                                            tempUserName = userName
+                                            isEditingName = true
+                                        } else {
+                                            if !tempUserName.isEmpty {
+                                                userName = tempUserName
+                                                updateUserData(field: "name", value: tempUserName)
+                                            }
+                                            isEditingName = false
                                         }
-                                        isEditingName = false
+                                    }) {
+                                        Image(systemName: isEditingName ? "checkmark.circle.fill" : "pencil.circle.fill")
+                                            .foregroundColor(.white)
+                                            .font(.system(size: isIPad ? 24 : 20))
                                     }
-                                }) {
-                                    Image(systemName: isEditingName ? "checkmark.circle.fill" : "pencil.circle.fill")
-                                        .foregroundColor(.white)
-                                        .font(.system(size: isIPad ? 24 : 20))
                                 }
                             }
                             .frame(maxWidth: isIPad ? 700 : 350)
@@ -365,7 +368,19 @@ struct ProfileView: View {
         
         print("Loading user data for UID: \(uid)")
         
-        // Listen for real-time updates
+        // Check if user is anonymous (guest)
+        if Auth.auth().currentUser?.isAnonymous == true {
+            DispatchQueue.main.async {
+                self.userName = "Guest"
+                self.email = "Guest Account"
+                self.selectedLocation = "[Location]"
+                self.selectedSchool = "[School]"
+                self.isEditingName = false // Ensure editing mode is disabled for guests
+            }
+            return
+        }
+        
+        // Listen for real-time updates for non-guest users
         db.collection("users").document(uid)
             .addSnapshotListener { documentSnapshot, error in
                 if let error = error {
