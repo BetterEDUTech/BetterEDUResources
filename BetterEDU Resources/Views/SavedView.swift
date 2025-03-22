@@ -168,12 +168,12 @@ struct SavedResourceItem: Identifiable, Codable {
 // View for displaying saved resources
 struct SavedResourceCard: View {
     let resource: SavedResourceItem
-    @State private var isLiked: Bool = false
+    @State private var isLiked: Bool = true  // Should start as true since it's a saved resource
     private let db = Firestore.firestore()
     let onRemove: (SavedResourceItem) -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 12) {
             Text(resource.title)
                 .font(.system(size: 17, weight: .bold))
                 .foregroundColor(.white)
@@ -181,29 +181,75 @@ struct SavedResourceCard: View {
                 .lineLimit(2)
 
             if !resource.phone_number.isEmpty {
-                Text("Phone: \(resource.phone_number)")
-                    .font(.system(size: 15))
-                    .foregroundColor(.white.opacity(0.7))
-                    .lineLimit(1)
+                // Make phone number clickable to open phone app
+                let formattedPhone = resource.phone_number.replacingOccurrences(of: "[^0-9]", with: "", options: .regularExpression)
+                if let phoneURL = URL(string: "tel:\(formattedPhone)") {
+                    Link(destination: phoneURL) {
+                        HStack {
+                            Image(systemName: "phone.fill")
+                                .foregroundColor(.green)
+                                .font(.system(size: 14))
+                            Text(resource.phone_number)
+                                .font(.system(size: 15))
+                                .foregroundColor(.white.opacity(0.9))
+                                .lineLimit(1)
+                                .underline()
+                        }
+                    }
+                } else {
+                    Text("Phone: \(resource.phone_number)")
+                        .font(.system(size: 15))
+                        .foregroundColor(.white.opacity(0.7))
+                        .lineLimit(1)
+                }
             }
 
-            if let website = resource.website, !website.isEmpty {
-                Link("Visit Website", destination: URL(string: website)!)
-                    .font(.system(size: 15))
-                    .foregroundColor(.blue)
-            } else {
-                Text("Website unavailable")
-                    .font(.system(size: 15))
-                    .foregroundColor(.gray)
-            }
-
+            // Remove button and website separated with some space
+            Spacer()
+                .frame(height: 8)
+            
             HStack {
+                // Website Button
+                if let website = resource.website, !website.isEmpty, let url = URL(string: website) {
+                    Link(destination: url) {
+                        HStack {
+                            Text("Visit Website")
+                                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 16 : 14, weight: .semibold))
+                            Spacer()
+                            Image(systemName: "arrow.right")
+                                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 14 : 12))
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(
+                            LinearGradient(
+                                gradient: Gradient(colors: [Color(hex: "#5a0ef6"), Color(hex: "#7849fd")]),
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .cornerRadius(10)
+                        .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+                    }
+                } else {
+                    Text("Website unavailable")
+                        .font(.system(size: 15))
+                        .foregroundColor(.gray)
+                        .padding(.leading, 4)
+                }
+                
                 Spacer()
+                    .frame(width: 16)
+                
+                // Save/Unsave Button
                 Button(action: toggleSaveResource) {
                     Image(systemName: isLiked ? "heart.fill" : "heart")
                         .foregroundColor(isLiked ? .red : .gray)
                         .font(.system(size: 20))
                 }
+                .frame(width: 40)
             }
         }
         .padding(16)
