@@ -29,6 +29,7 @@ struct ResourcesAppView: View {
     @State private var availableFilters: [String] = ["All"] // Filters from Firebase
     @State private var userState: String = "ALL"        // User's selected state
     @StateObject private var imageLoader = ProfileImageLoader.shared
+    @EnvironmentObject private var tabViewModel: TabViewModel // Access tab view model
     private let db = Firestore.firestore()
     
     // Grid layout columns based on device
@@ -70,13 +71,6 @@ struct ResourcesAppView: View {
                     Spacer()
                 }
                 .padding(.top)
-                .onAppear(perform: {
-                    if let uid = Auth.auth().currentUser?.uid {
-                        ProfileImageLoader.shared.loadProfileImage(forUID: uid)
-                    }
-                    loadUserData()
-                    fetchResources()
-                })
                 
                 // Title
                 Text("Resources")
@@ -160,6 +154,21 @@ struct ResourcesAppView: View {
             .navigationBarTitleDisplayMode(.inline)
         }
         .navigationViewStyle(StackNavigationViewStyle())
+        .onAppear {
+            // Load profile image
+            if let uid = Auth.auth().currentUser?.uid {
+                ProfileImageLoader.shared.loadProfileImage(forUID: uid)
+            }
+            loadUserData()
+            fetchResources()
+        }
+        .onChange(of: tabViewModel.shouldRefreshResources) { shouldRefresh in
+            if shouldRefresh {
+                print("Refreshing resources due to tab selection")
+                loadUserData()
+                fetchResources()
+            }
+        }
     }
 
     // Fetch resources from Firestore
@@ -174,21 +183,40 @@ struct ResourcesAppView: View {
                         return
                     }
                     
-                    // Debugging: Log raw Firestore data
-                    for document in documents {
-                        print("Document data: \(document.data())")
-                    }
-
+                    print("Found \(documents.count) resources in Firestore")
+                    
+                    // Track successful and failed decodings
+                    var successCount = 0
+                    var failureCount = 0
+                    
                     let fetchedResources = documents.compactMap { document in
                         do {
-                            return try document.data(as: ResourceItem.self)
+                            let resource = try document.data(as: ResourceItem.self)
+                            successCount += 1
+                            return resource
                         } catch {
+                            failureCount += 1
                             print("Error decoding document \(document.documentID): \(error.localizedDescription)")
+                            print("Document data: \(document.data())")
                             return nil
                         }
                     }
+                    
+                    print("Successfully decoded \(successCount) resources, failed to decode \(failureCount) resources")
+                    
                     DispatchQueue.main.async {
                         self.resources = fetchedResources
+                        
+                        // Check for missing required fields
+                        for (index, resource) in self.resources.enumerated() {
+                            if resource.resourceType == nil {
+                                print("Warning: Resource at index \(index) (title: \(resource.title)) has nil resourceType")
+                            }
+                            if resource.state == nil {
+                                print("Warning: Resource at index \(index) (title: \(resource.title)) has nil state")
+                            }
+                        }
+                        
                         updateAvailableFilters()
                     }
                 }
@@ -197,16 +225,52 @@ struct ResourcesAppView: View {
 
     // Update available filters based on resources
     private func updateAvailableFilters() {
-        let types = Set(resources.compactMap { $0.resourceType })
-        availableFilters = ["All"] + Array(types).sorted()
+        // Create a set to hold all unique resource types
+        var typeSet = Set<String>()
+        
+        // Process each resource
+        for resource in resources {
+            if let resourceTypeString = resource.resourceType {
+                // Check if this is a comma-separated list of types
+                if resourceTypeString.contains(",") {
+                    // Split by comma and add each type individually
+                    let types = resourceTypeString.split(separator: ",").map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
+                    types.forEach { typeSet.insert($0) }
+                } else {
+                    // Add the single type
+                    typeSet.insert(resourceTypeString.trimmingCharacters(in: .whitespacesAndNewlines))
+                }
+            }
+        }
+        
+        // Convert to sorted array with "All" at the beginning
+        availableFilters = ["All"] + Array(typeSet).sorted()
+        
+        // Debug print the available filters
+        print("Available filters: \(availableFilters)")
     }
 
     // Filter resources based on search and filters
     private var filteredResources: [ResourceItem] {
         resources.filter { resource in
-            let matchesFilter = (selectedFilter == "All" || resource.resourceType == selectedFilter)
-            let matchesSearch = searchText.isEmpty || resource.title.lowercased().contains(searchText.lowercased())
-            let matchesState = resource.state == "ALL" || resource.state == userState
+            // For "All" filter, include resources regardless of resource type
+            // Otherwise check if resource type contains the selected filter (case insensitive)
+            let matchesFilter = selectedFilter == "All" || 
+                resource.resourceType?.lowercased().contains(selectedFilter.lowercased()) == true
+            
+            // Check if resource title contains search text (case insensitive)
+            let matchesSearch = searchText.isEmpty || 
+                resource.title.lowercased().contains(searchText.lowercased())
+            
+            // Check if resource state is ALL, matches user state, or state is missing
+            let matchesState = resource.state == nil || 
+                resource.state == "ALL" || resource.state == userState
+            
+            // For debugging in console
+            if selectedFilter == "All" && !matchesState {
+                print("Resource filtered out due to state mismatch: \(resource.title) - State: \(resource.state ?? "nil")")
+            }
+            
             return matchesFilter && matchesSearch && matchesState
         }
     }

@@ -89,6 +89,7 @@ struct ProfileView: View {
     @State private var navigateToSavedResources = false
     @State private var isShowingImagePicker = false
     @State private var profileImage: UIImage?
+    @State private var showEmailAlert = false
     
     private let locations = ["California", "Arizona"]
     private let schoolsByState = [
@@ -198,7 +199,11 @@ struct ProfileView: View {
 
                             // Info Cards and Actions
                             VStack(spacing: 12) {
-                                infoCard(title: "Email", value: email, icon: "envelope.fill")
+                                Button(action: {
+                                    showEmailAlert = true
+                                }) {
+                                    infoCard(title: "Email", value: email, icon: "envelope.fill")
+                                }
                                 
                                 VStack(alignment: .leading, spacing: 4) {
                                     // Location Dropdown
@@ -306,6 +311,11 @@ struct ProfileView: View {
                 } message: {
                     Text("Are you sure you want to delete your account? This action cannot be undone.")
                 }
+                .alert("Email Cannot Be Changed", isPresented: $showEmailAlert) {
+                    Button("OK", role: .cancel) { }
+                } message: {
+                    Text("For security reasons, your email address cannot be changed.")
+                }
             }
         }
     }
@@ -322,7 +332,11 @@ struct ProfileView: View {
                     .font(.system(size: isIPad ? 20 : 17))
             }
             Spacer()
-            if title != "Email" {
+            if title == "Email" {
+                Image(systemName: "lock.fill")
+                    .foregroundColor(.gray)
+                    .font(.system(size: isIPad ? 18 : 14))
+            } else {
                 Image(systemName: "chevron.right")
                     .font(.system(size: isIPad ? 20 : 16))
             }

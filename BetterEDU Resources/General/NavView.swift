@@ -2,6 +2,18 @@ import SwiftUI
 
 class TabViewModel: ObservableObject {
     @Published var selectedTab = 0
+    @Published var shouldRefreshResources = false
+    
+    // Function to request a resources refresh
+    func refreshResources() {
+        // Set to true to trigger refresh and then back to false
+        shouldRefreshResources = true
+        
+        // Reset after a short delay to allow for multiple refreshes
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            self.shouldRefreshResources = false
+        }
+    }
 }
 
 struct NavView: View {
@@ -61,6 +73,12 @@ struct NavView: View {
                         .tag(4)
                 }
                 .accentColor(.white) // Selected icon and text
+                .onChange(of: tabViewModel.selectedTab) { newTab in
+                    if newTab == 1 { // Resources tab
+                        // Trigger a refresh when user clicks on Resources tab
+                        tabViewModel.refreshResources()
+                    }
+                }
                 .background(
                     GeometryReader { geometry in
                         VStack {

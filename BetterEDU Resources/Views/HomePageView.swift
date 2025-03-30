@@ -12,6 +12,16 @@ struct HomePageView: View {
     @State private var hasScrolled = false
     @State private var userState: String = "ALL"        // User's selected state
     @State private var userName: String = ""            // Add userName state
+    
+    // Sheet presentation states for category pages
+    @State private var showFinancialServicesSheet = false
+    @State private var showEmergencyHotlinesSheet = false
+    @State private var showSelfCareResourcesSheet = false
+    @State private var showAcademicStressSheet = false
+    @State private var showHousingResourcesSheet = false
+    @State private var showFoodClothingResourcesSheet = false
+    @State private var showTechResourcesSheet = false
+    
     @EnvironmentObject var tabViewModel: TabViewModel
     private let db = Firestore.firestore()
     @State private var showGuestAlert = false
@@ -140,25 +150,46 @@ struct HomePageView: View {
                                         }) {
                                             categoryButton(icon: "tag.fill", title: "Student Discounts")
                                         }
-                                        NavigationLink(destination: FinancialServicesView()) {
+                                        
+                                        Button(action: {
+                                            showFinancialServicesSheet = true
+                                        }) {
                                             categoryButton(icon: "building.columns.fill", title: "Financial Services")
                                         }
-                                        NavigationLink(destination: EmergencyHotlinesView()) {
+                                        
+                                        Button(action: {
+                                            showEmergencyHotlinesSheet = true
+                                        }) {
                                             categoryButton(icon: "phone.arrow.up.right.fill", title: "Emergency Hotlines")
                                         }
-                                        NavigationLink(destination: SelfCareResourcesView()) {
+                                        
+                                        Button(action: {
+                                            showSelfCareResourcesSheet = true
+                                        }) {
                                             categoryButton(icon: "heart.fill", title: "Self-Care Resources")
                                         }
-                                        NavigationLink(destination: AcademicStressView()) {
+                                        
+                                        Button(action: {
+                                            showAcademicStressSheet = true
+                                        }) {
                                             categoryButton(icon: "book.fill", title: "Academic Stress Support")
                                         }
-                                        NavigationLink(destination: HousingResourcesView()) {
+                                        
+                                        Button(action: {
+                                            showHousingResourcesSheet = true
+                                        }) {
                                             categoryButton(icon: "house.fill", title: "Housing & Shelter")
                                         }
-                                        NavigationLink(destination: FoodandClothingResourcesView()) {
+                                        
+                                        Button(action: {
+                                            showFoodClothingResourcesSheet = true
+                                        }) {
                                             categoryButton(icon: "fork.knife", title: "Food & Clothing")
                                         }
-                                        NavigationLink(destination: TechResourcesView()) {
+                                        
+                                        Button(action: {
+                                            showTechResourcesSheet = true
+                                        }) {
                                             categoryButton(icon: "network", title: "Technology Resources")
                                         }
                                     }
@@ -220,15 +251,6 @@ struct HomePageView: View {
                                                 .background(Color.black.opacity(0.4))
                                                 .cornerRadius(12)
                                                 .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
-                                                .alert("Sign In Required", isPresented: $showGuestAlert) {
-                                                    Button("Cancel", role: .cancel) { }
-                                                    Button("Sign In") {
-                                                        // Sign out the guest user and this will trigger navigation to LoginView
-                                                        authViewModel.signOut()
-                                                    }
-                                                } message: {
-                                                    Text("You need to create an account or sign in to save resources.")
-                                                }
                                             }
                                         }
                                     }
@@ -268,6 +290,42 @@ struct HomePageView: View {
                 }
             }
             .navigationViewStyle(StackNavigationViewStyle())
+        }
+        // Sheet presentation for Financial Services
+        .fullScreenCover(isPresented: $showFinancialServicesSheet) {
+            FinancialServicesView()
+        }
+        // Sheet for Emergency Hotlines
+        .fullScreenCover(isPresented: $showEmergencyHotlinesSheet) {
+            EmergencyHotlinesView()
+        }
+        // Sheet for Self Care Resources
+        .fullScreenCover(isPresented: $showSelfCareResourcesSheet) {
+            SelfCareResourcesView()
+        }
+        // Sheet for Academic Stress
+        .fullScreenCover(isPresented: $showAcademicStressSheet) {
+            AcademicStressView()
+        }
+        // Sheet for Housing Resources
+        .fullScreenCover(isPresented: $showHousingResourcesSheet) {
+            HousingResourcesView()
+        }
+        // Sheet for Food & Clothing Resources
+        .fullScreenCover(isPresented: $showFoodClothingResourcesSheet) {
+            FoodandClothingResourcesView()
+        }
+        // Sheet for Tech Resources
+        .fullScreenCover(isPresented: $showTechResourcesSheet) {
+            TechResourcesView()
+        }
+        .alert("Sign In Required", isPresented: $showGuestAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Sign In") {
+                authViewModel.signOut() // This will navigate to login screen
+            }
+        } message: {
+            Text("You need to create an account or sign in to save resources.")
         }
     }
 

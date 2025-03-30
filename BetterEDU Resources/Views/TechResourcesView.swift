@@ -13,16 +13,37 @@ struct TechResourcesView: View {
     @State private var searchText = ""
     @State private var TechResources: [ResourceItem] = [] // Dynamic resources fetched from Firestore
     @State private var userState: String = "ALL"        // User's selected state
+    @Environment(\.presentationMode) var presentationMode // For custom back navigation
     private let db = Firestore.firestore()
 
     var body: some View {
-        VStack(alignment: .leading) {
+        VStack(alignment: .leading, spacing: 0) {
+            // Custom header with back button
+            HStack {
+                Button(action: {
+                    // Go back to previous screen
+                    presentationMode.wrappedValue.dismiss()
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 20, weight: .semibold))
+                        Text("Back")
+                            .font(.system(size: 17))
+                    }
+                    .foregroundColor(.white)
+                }
+                
+                Spacer()
+            }
+            .padding(.horizontal)
+            .padding(.top, 12)
+            
             // Title
             Text("Student Tech Resources")
                 .font(.custom("Impact", size: 35))
                 .foregroundColor(Color(hex: "#FFFFFF"))
                 .frame(maxWidth: .infinity, alignment: .center)
-                .padding(.top)
+                .padding(.top, 6)
 
             // Search Bar
             TextField("Search Resources", text: $searchText)
@@ -32,6 +53,7 @@ struct TechResourcesView: View {
                 .tint(.blue)
                 .cornerRadius(10)
                 .padding(.horizontal)
+                .padding(.top, 16)
 
             // Resource List
             ScrollView {
@@ -52,15 +74,14 @@ struct TechResourcesView: View {
                 .padding(.top, 12)
             }
         }
-        .padding()
+        .padding(.bottom)
         .background(
             Image("background")
                 .resizable()
                 .scaledToFill()
                 .ignoresSafeArea()
         )
-        .navigationTitle("Tech Resources for Students")
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarHidden(true) // Hide the navigation bar
         .onAppear {
             loadUserData()
             fetchTechResources()
