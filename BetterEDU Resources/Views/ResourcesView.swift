@@ -371,18 +371,31 @@ struct ResourceCard: View {
                 }
                 .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
             } else {
-                HStack {
-                    Text("Website unavailable")
-                        .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 15))
-                        .foregroundColor(.gray)
-                    
-                    Spacer()
-                    
-                    // Heart button when no website is available
-                    Button(action: handleSaveResource) {
-                        Image(systemName: isLiked ? "heart.fill" : "heart")
-                            .foregroundColor(isLiked ? .red : .gray)
-                            .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 24 : 20))
+                // Only show "Website unavailable" if there's no phone number either
+                if let phoneNumber = resource.phone_number, !phoneNumber.isEmpty {
+                    // If resource has phone number but no website, just show heart button aligned to the right
+                    HStack {
+                        Spacer()
+                        Button(action: handleSaveResource) {
+                            Image(systemName: isLiked ? "heart.fill" : "heart")
+                                .foregroundColor(isLiked ? .red : .gray)
+                                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 24 : 20))
+                        }
+                    }
+                } else {
+                    // No website and no phone number, show "Website unavailable"
+                    HStack {
+                        Text("Website unavailable")
+                            .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 15))
+                            .foregroundColor(.gray)
+                        
+                        Spacer()
+                        
+                        Button(action: handleSaveResource) {
+                            Image(systemName: isLiked ? "heart.fill" : "heart")
+                                .foregroundColor(isLiked ? .red : .gray)
+                                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 24 : 20))
+                        }
                     }
                 }
             }
