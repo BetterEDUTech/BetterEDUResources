@@ -21,6 +21,7 @@ struct HomePageView: View {
     @State private var showHousingResourcesSheet = false
     @State private var showFoodClothingResourcesSheet = false
     @State private var showTechResourcesSheet = false
+    @State private var showHotlinesSheet = false         // New state for Hotlines sheet
     
     @EnvironmentObject var tabViewModel: TabViewModel
     private let db = Firestore.firestore()
@@ -149,6 +150,12 @@ struct HomePageView: View {
                                             tabViewModel.selectedTab = 3  // Switch to Student Discounts tab
                                         }) {
                                             categoryButton(icon: "tag.fill", title: "Student Discounts")
+                                        }
+                                        
+                                        Button(action: {
+                                            showHotlinesSheet = true
+                                        }) {
+                                            categoryButton(icon: "phone.fill", title: "Hotlines")
                                         }
                                         
                                         Button(action: {
@@ -318,6 +325,10 @@ struct HomePageView: View {
         // Sheet for Tech Resources
         .fullScreenCover(isPresented: $showTechResourcesSheet) {
             TechResourcesView()
+        }
+        // Hotlines Sheet
+        .fullScreenCover(isPresented: $showHotlinesSheet) {
+            HotlinesView()
         }
         .alert("Sign In Required", isPresented: $showGuestAlert) {
             Button("Cancel", role: .cancel) { }
