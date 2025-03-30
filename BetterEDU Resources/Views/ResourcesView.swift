@@ -338,40 +338,52 @@ struct ResourceCard: View {
 
             // Website Button
             if let website = resource.website, !website.isEmpty, let url = URL(string: website) {
-                Link(destination: url) {
-                    HStack {
-                        Text("Visit Website")
-                            .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 16 : 14, weight: .semibold))
-                        Spacer()
-                        Image(systemName: "arrow.right")
-                            .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 14 : 12))
-                    }
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(
-                        LinearGradient(
-                            gradient: Gradient(colors: [Color(hex: "#5a0ef6"), Color(hex: "#7849fd")]),
-                            startPoint: .leading,
-                            endPoint: .trailing
+                HStack {
+                    Link(destination: url) {
+                        HStack {
+                            Text("Visit Website")
+                                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 16 : 14, weight: .semibold))
+                            Spacer()
+                            Image(systemName: "arrow.right")
+                                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 14 : 12))
+                        }
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(
+                            LinearGradient(
+                                gradient: Gradient(colors: [Color(hex: "#5a0ef6"), Color(hex: "#7849fd")]),
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
                         )
-                    )
-                    .cornerRadius(10)
-                    .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+                        .cornerRadius(10)
+                    }
+                    .frame(maxWidth: .infinity)
+                    
+                    // Heart button next to website button
+                    Button(action: handleSaveResource) {
+                        Image(systemName: isLiked ? "heart.fill" : "heart")
+                            .foregroundColor(isLiked ? .red : .gray)
+                            .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 24 : 20))
+                            .padding(.leading, 8)
+                    }
                 }
+                .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
             } else {
-                Text("Website unavailable")
-                    .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 15))
-                    .foregroundColor(.gray)
-            }
-            
-            HStack {
-                Spacer()
-                Button(action: handleSaveResource) {
-                    Image(systemName: isLiked ? "heart.fill" : "heart")
-                        .foregroundColor(isLiked ? .red : .gray)
-                        .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 24 : 20))
+                HStack {
+                    Text("Website unavailable")
+                        .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 15))
+                        .foregroundColor(.gray)
+                    
+                    Spacer()
+                    
+                    // Heart button when no website is available
+                    Button(action: handleSaveResource) {
+                        Image(systemName: isLiked ? "heart.fill" : "heart")
+                            .foregroundColor(isLiked ? .red : .gray)
+                            .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 24 : 20))
+                    }
                 }
             }
         }
