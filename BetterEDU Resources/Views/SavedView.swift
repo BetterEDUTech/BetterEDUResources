@@ -233,11 +233,15 @@ struct SavedResourceCard: View {
                         .cornerRadius(10)
                         .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
                     }
-                } else {
+                } else if resource.phone_number.isEmpty {
+                    // Only show "Website unavailable" if there's no phone number either
                     Text("Website unavailable")
                         .font(.system(size: 15))
                         .foregroundColor(.gray)
                         .padding(.leading, 4)
+                } else {
+                    // If there's a phone number but no website, don't show anything here
+                    Spacer()
                 }
                 
                 Spacer()
