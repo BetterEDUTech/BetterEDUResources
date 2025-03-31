@@ -112,7 +112,7 @@ struct HotlinesView: View {
     private var filteredHotlines: [ResourceItem] {
         hotlineResources.filter { hotline in
             let matchesSearch = searchText.isEmpty || hotline.title.lowercased().contains(searchText.lowercased())
-            let matchesState = hotline.state == "ALL" || hotline.state == userState
+            let matchesState = userState == "ALL" || hotline.state == "ALL" || hotline.state == userState
             return matchesSearch && matchesState
         }
     }

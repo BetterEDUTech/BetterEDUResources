@@ -263,7 +263,7 @@ struct ResourcesAppView: View {
                 resource.title.lowercased().contains(searchText.lowercased())
             
             // Check if resource state is ALL, matches user state, or state is missing
-            let matchesState = resource.state == nil || 
+            let matchesState = userState == "ALL" || resource.state == nil ||
                 resource.state == "ALL" || resource.state == userState
             
             // For debugging in console

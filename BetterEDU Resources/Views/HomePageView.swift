@@ -372,7 +372,7 @@ struct HomePageView: View {
     private var filteredResources: [ResourceItem] {
         resources.filter { resource in
             let matchesSearch = searchText.isEmpty || resource.title.lowercased().contains(searchText.lowercased())
-            let matchesState = resource.state == "ALL" || resource.state == userState
+            let matchesState = userState == "ALL" || resource.state == "ALL" || resource.state == userState
             return matchesSearch && matchesState
         }
     }
