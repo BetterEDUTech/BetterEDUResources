@@ -14,6 +14,12 @@ class TabViewModel: ObservableObject {
             self.shouldRefreshResources = false
         }
     }
+    
+    // Function to refresh resources when a resource is saved or unsaved
+    func refreshResourcesOnSave() {
+        print("Refreshing resources due to save/unsave action")
+        refreshResources()
+    }
 }
 
 struct NavView: View {

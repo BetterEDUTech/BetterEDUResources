@@ -553,6 +553,8 @@ struct HomePageView: View {
                 } else {
                     DispatchQueue.main.async {
                         likedResources.remove(resourceID)
+                        // Trigger a refresh when a resource is unsaved
+                        tabViewModel.refreshResourcesOnSave()
                     }
                 }
             }
@@ -571,6 +573,8 @@ struct HomePageView: View {
                 } else {
                     DispatchQueue.main.async {
                         likedResources.insert(resourceID)
+                        // Trigger a refresh when a resource is saved
+                        tabViewModel.refreshResourcesOnSave()
                     }
                 }
             }

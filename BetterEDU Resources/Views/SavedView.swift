@@ -169,6 +169,7 @@ struct SavedResourceItem: Identifiable, Codable {
 struct SavedResourceCard: View {
     let resource: SavedResourceItem
     @State private var isLiked: Bool = true  // Should start as true since it's a saved resource
+    @EnvironmentObject var tabViewModel: TabViewModel // Add TabViewModel environment object
     private let db = Firestore.firestore()
     let onRemove: (SavedResourceItem) -> Void
 
@@ -292,6 +293,8 @@ struct SavedResourceCard: View {
                     DispatchQueue.main.async {
                         isLiked = false
                         onRemove(resource) // Notify parent view about the removal
+                        // Trigger a refresh when a resource is unsaved
+                        tabViewModel.refreshResourcesOnSave()
                     }
                 }
             }
@@ -308,6 +311,8 @@ struct SavedResourceCard: View {
                 if error == nil {
                     DispatchQueue.main.async {
                         isLiked = true
+                        // Trigger a refresh when a resource is saved
+                        tabViewModel.refreshResourcesOnSave()
                     }
                 }
             }
