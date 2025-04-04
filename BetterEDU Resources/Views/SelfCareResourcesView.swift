@@ -15,6 +15,7 @@ struct SelfCareResourcesView: View {
     @State private var selfCareResources: [ResourceItem] = [] // Dynamic resources fetched from Firestore
     @State private var userState: String = "ALL"        // User's selected state
     @Environment(\.presentationMode) var presentationMode // For custom back navigation
+    @EnvironmentObject var tabViewModel: TabViewModel // Add TabViewModel environment object
     private let db = Firestore.firestore()
 
     var body: some View {
@@ -86,6 +87,14 @@ struct SelfCareResourcesView: View {
         .onAppear {
             loadUserData()
             fetchSelfCareResources()
+            tabViewModel.refreshResources() // Trigger a refresh when view appears
+        }
+        .onChange(of: tabViewModel.shouldRefreshResources) { shouldRefresh in
+            if shouldRefresh {
+                print("Refreshing self-care resources due to tab selection")
+                loadUserData()
+                fetchSelfCareResources()
+            }
         }
     }
 

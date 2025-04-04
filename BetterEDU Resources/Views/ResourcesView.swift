@@ -161,6 +161,9 @@ struct ResourcesAppView: View {
             }
             loadUserData()
             fetchResources()
+            
+            // Trigger a refresh when view appears
+            tabViewModel.refreshResources()
         }
         .onChange(of: tabViewModel.shouldRefreshResources) { shouldRefresh in
             if shouldRefresh {
@@ -302,6 +305,7 @@ struct ResourceCard: View {
     @State private var isLiked: Bool = false
     @State private var showGuestAlert = false
     @EnvironmentObject var authViewModel: AuthViewModel
+    @EnvironmentObject var tabViewModel: TabViewModel
     private let db = Firestore.firestore()
 
     var body: some View {
@@ -406,6 +410,10 @@ struct ResourceCard: View {
         .cornerRadius(12)
         .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
         .onAppear(perform: checkIfResourceIsSaved)
+        .onChange(of: tabViewModel.shouldRefreshResources) { _ in
+            // Refresh liked status when tabViewModel.shouldRefreshResources changes
+            checkIfResourceIsSaved()
+        }
         .alert("Sign In Required", isPresented: $showGuestAlert) {
             Button("Cancel", role: .cancel) { }
             Button("Sign In") {
@@ -431,10 +439,8 @@ struct ResourceCard: View {
         let userRef = db.collection("users").document(uid).collection("savedResources").document(resource.id ?? "")
 
         userRef.getDocument { document, error in
-            if let document = document, document.exists {
-                DispatchQueue.main.async {
-                    isLiked = true
-                }
+            DispatchQueue.main.async {
+                isLiked = document?.exists == true
             }
         }
     }
@@ -451,6 +457,8 @@ struct ResourceCard: View {
                 if error == nil {
                     DispatchQueue.main.async {
                         isLiked = false
+                        // Trigger a refresh when a resource is unsaved
+                        tabViewModel.refreshResourcesOnSave()
                     }
                 }
             }
@@ -467,6 +475,8 @@ struct ResourceCard: View {
                 if error == nil {
                     DispatchQueue.main.async {
                         isLiked = true
+                        // Trigger a refresh when a resource is saved
+                        tabViewModel.refreshResourcesOnSave()
                     }
                 }
             }
