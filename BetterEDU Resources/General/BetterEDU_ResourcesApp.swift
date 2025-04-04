@@ -1,23 +1,41 @@
 import SwiftUI
 import FirebaseCore
-
-class AppDelegate: NSObject, UIApplicationDelegate {
-    func application(_ application: UIApplication,
-                     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        FirebaseApp.configure()
-        return true
-    }
-}
+import FirebaseAuth
 
 @main
 struct BetterEDU_ResourcesApp: App {
-    @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     @StateObject private var authViewModel = AuthViewModel()
-
+    @State private var showReviewPopup = false
+    
+    init() {
+        FirebaseApp.configure()
+    }
+    
     var body: some Scene {
         WindowGroup {
             RootView()
-                .environmentObject(authViewModel) // Ensure authViewModel is available globally
+                .environmentObject(authViewModel)
+                .onAppear {
+                    // Increment app open count
+                    ReviewManager.shared.incrementAppOpenCount()
+                    
+                    // Check if we should show review popup
+                    if ReviewManager.shared.shouldRequestReview() {
+                        showReviewPopup = true
+                    }
+                }
+                .sheet(isPresented: $showReviewPopup) {
+                    ZStack {
+                        Color.black.opacity(0.4)
+                            .ignoresSafeArea()
+                        
+                        ReviewPopupView {
+                            ReviewManager.shared.requestReview()
+                            ReviewManager.shared.markAsReviewed()
+                        }
+                    }
+                    .presentationBackground(.clear)
+                }
         }
     }
 }
