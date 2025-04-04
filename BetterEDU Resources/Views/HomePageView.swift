@@ -8,6 +8,7 @@ struct HomePageView: View {
     @StateObject private var imageLoader = ProfileImageLoader.shared
     @State private var searchText: String = ""
     @State private var resources: [ResourceItem] = []
+    @State private var discounts: [StudentDiscountItem] = [] // Add state for student discounts
     @State private var likedResources: Set<String> = [] // Tracks liked resource IDs locally
     @State private var hasScrolled = false
     @State private var userState: String = "ALL"        // User's selected state
@@ -121,7 +122,7 @@ struct HomePageView: View {
                             HStack {
                                 Image(systemName: "magnifyingglass")
                                     .foregroundColor(.gray)
-                                TextField("Search resources...", text: $searchText)
+                                TextField("Search resources & discounts...", text: $searchText)
                                     .textFieldStyle(PlainTextFieldStyle())
                                     .foregroundColor(.black)
                                     .tint(.blue)
@@ -179,7 +180,7 @@ struct HomePageView: View {
                                         Button(action: {
                                             showAcademicStressSheet = true
                                         }) {
-                                            categoryButton(icon: "book.fill", title: "Academic Stress Support")
+                                            categoryButton(icon: "book.fill", title: "Academic Support")
                                         }
                                         
                                         Button(action: {
@@ -206,13 +207,14 @@ struct HomePageView: View {
                                 } else {
                                     // Search Results
                                     LazyVGrid(columns: gridColumns, spacing: 20) {
-                                        if filteredResources.isEmpty {
-                                            Text("No resources found.")
+                                        if filteredResources.isEmpty && filteredDiscounts.isEmpty {
+                                            Text("No resources or discounts found.")
                                                 .font(.headline)
                                                 .foregroundColor(.white)
                                                 .padding(.top, 16)
                                                 .gridCellColumns(gridColumns.count)
                                         } else {
+                                            // Display resources
                                             ForEach(filteredResources) { resource in
                                                 HStack {
                                                     VStack(alignment: .leading, spacing: 8) {
@@ -259,6 +261,112 @@ struct HomePageView: View {
                                                 .cornerRadius(12)
                                                 .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
                                             }
+                                            
+                                            // Display discounts
+                                            ForEach(filteredDiscounts) { discount in
+                                                VStack(alignment: .leading, spacing: 12) {
+                                                    HStack {
+                                                        Text(discount.name)
+                                                            .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 20 : 17, weight: .bold))
+                                                            .foregroundColor(.white)
+                                                            .lineLimit(1)
+                                                        
+                                                        Spacer()
+                                                        
+                                                        Text(discount.category)
+                                                            .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 14 : 12))
+                                                            .foregroundColor(.white)
+                                                            .padding(.horizontal, 8)
+                                                            .padding(.vertical, 4)
+                                                            .background(
+                                                                LinearGradient(
+                                                                    gradient: Gradient(colors: [Color(hex: "#5a0ef6").opacity(0.3), Color(hex: "#7849fd").opacity(0.3)]),
+                                                                    startPoint: .leading,
+                                                                    endPoint: .trailing
+                                                                )
+                                                            )
+                                                            .cornerRadius(12)
+                                                    }
+                                                    
+                                                    HStack {
+                                                        Image(systemName: "tag.fill")
+                                                            .foregroundColor(.green)
+                                                        Text(discount.discount)
+                                                            .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 15, weight: .semibold))
+                                                            .foregroundColor(.green)
+                                                    }
+                                                    
+                                                    Text(discount.description)
+                                                        .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 16 : 14))
+                                                        .foregroundColor(.white.opacity(0.9))
+                                                        .lineLimit(2)
+                                                    
+                                                    if let url = URL(string: discount.link) {
+                                                        Link(destination: url) {
+                                                            HStack {
+                                                                Text("Get Discount")
+                                                                    .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 16 : 14, weight: .semibold))
+                                                                Spacer()
+                                                                Image(systemName: "arrow.right")
+                                                                    .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 14 : 12))
+                                                            }
+                                                            .foregroundColor(.white)
+                                                            .padding(.horizontal, 16)
+                                                            .padding(.vertical, 8)
+                                                            .background(
+                                                                LinearGradient(
+                                                                    gradient: Gradient(colors: [Color(hex: "#5a0ef6"), Color(hex: "#7849fd")]),
+                                                                    startPoint: .leading,
+                                                                    endPoint: .trailing
+                                                                )
+                                                            )
+                                                            .cornerRadius(8)
+                                                        }
+                                                    }
+                                                }
+                                                .padding(UIDevice.current.userInterfaceIdiom == .pad ? 16 : 12)
+                                                .frame(maxWidth: .infinity)
+                                                .background(
+                                                    ZStack {
+                                                        Color.black.opacity(0.4)
+                                                        
+                                                        // Glassmorphic effect
+                                                        RoundedRectangle(cornerRadius: 12)
+                                                            .fill(.ultraThinMaterial)
+                                                            .opacity(0.3)
+                                                        
+                                                        // Gradient overlay
+                                                        RoundedRectangle(cornerRadius: 12)
+                                                            .fill(
+                                                                LinearGradient(
+                                                                    gradient: Gradient(colors: [
+                                                                        Color.black.opacity(0.6),
+                                                                        Color.black.opacity(0.4)
+                                                                    ]),
+                                                                    startPoint: .topLeading,
+                                                                    endPoint: .bottomTrailing
+                                                                )
+                                                            )
+                                                    }
+                                                )
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 12)
+                                                        .stroke(
+                                                            LinearGradient(
+                                                                gradient: Gradient(colors: [
+                                                                    Color.white.opacity(0.5),
+                                                                    Color.white.opacity(0.2),
+                                                                    Color.white.opacity(0.1)
+                                                                ]),
+                                                                startPoint: .topLeading,
+                                                                endPoint: .bottomTrailing
+                                                            ),
+                                                            lineWidth: 0.5
+                                                        )
+                                                )
+                                                .cornerRadius(12)
+                                                .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+                                            }
                                         }
                                     }
                                     .padding(.horizontal, UIDevice.current.userInterfaceIdiom == .pad ? 24 : 16)
@@ -292,6 +400,7 @@ struct HomePageView: View {
                     }
                     loadUserData()
                     fetchResources()
+                    fetchDiscounts() // Add fetch discounts
                     fetchLikedResources()
                     hasScrolled = false
                 }
@@ -353,6 +462,33 @@ struct HomePageView: View {
                 }
             }
     }
+    
+    // Add function to fetch student discounts
+    private func fetchDiscounts() {
+        db.collection("studentDisc")
+            .getDocuments { (querySnapshot, error) in
+                if let error = error {
+                    print("Error fetching student discounts: \(error.localizedDescription)")
+                } else {
+                    guard let documents = querySnapshot?.documents else {
+                        print("No documents found in studentDisc.")
+                        return
+                    }
+                    
+                    let fetchedDiscounts = documents.compactMap { document in
+                        do {
+                            return try document.data(as: StudentDiscountItem.self)
+                        } catch {
+                            print("Error decoding document \(document.documentID): \(error.localizedDescription)")
+                            return nil
+                        }
+                    }
+                    DispatchQueue.main.async {
+                        self.discounts = fetchedDiscounts
+                    }
+                }
+            }
+    }
 
     private func fetchLikedResources() {
         guard let uid = Auth.auth().currentUser?.uid else { return }
@@ -374,6 +510,16 @@ struct HomePageView: View {
             let matchesSearch = searchText.isEmpty || resource.title.lowercased().contains(searchText.lowercased())
             let matchesState = userState == "ALL" || resource.state == "ALL" || resource.state == userState
             return matchesSearch && matchesState
+        }
+    }
+    
+    // Add filtered discounts
+    private var filteredDiscounts: [StudentDiscountItem] {
+        discounts.filter { discount in
+            let matchesSearch = searchText.isEmpty || 
+                              discount.name.lowercased().contains(searchText.lowercased()) ||
+                              discount.description.lowercased().contains(searchText.lowercased())
+            return matchesSearch
         }
     }
 
