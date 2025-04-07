@@ -136,7 +136,7 @@ struct TechResourcesView: View {
         isLoading = true
         
         let query = db.collection("resourcesApp")
-            .whereField("Resource Type", isEqualTo: "technology")
+            .whereField("Resource Type", isEqualTo: "tech")
         
         query.getDocuments { querySnapshot, error in
             isLoading = false
