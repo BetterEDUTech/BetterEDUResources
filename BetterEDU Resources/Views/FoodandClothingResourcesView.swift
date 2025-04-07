@@ -134,7 +134,7 @@ struct FoodandClothingResourcesView: View {
         isLoading = true
         
         let query = db.collection("resourcesApp")
-            .whereField("Resource Type", isEqualTo: "food")
+            .whereField("Resource Type", isEqualTo: "food and clothing")
         
         query.getDocuments { querySnapshot, error in
             isLoading = false
