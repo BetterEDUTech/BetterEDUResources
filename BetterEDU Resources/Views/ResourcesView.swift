@@ -11,6 +11,7 @@ struct ResourceItem: Identifiable, Codable {
     var website: String?                // Optional: Resource Website URL
     var resourceType: String?           // Optional: Resource Type (e.g., "self care", "financial")
     var state: String?                  // Optional: State (e.g., "AZ", "CA", "ALL")
+    var email: String?                  // Optional: Resource Email
 
     enum CodingKeys: String, CodingKey {
         case id                         // Maps to Firestore document ID
@@ -19,6 +20,7 @@ struct ResourceItem: Identifiable, Codable {
         case website                    // Matches "website" in Firestore
         case resourceType = "Resource Type" // Matches "Resource Type" in Firestore
         case state                      // Matches "state" in Firestore
+        case email                      // Matches "email" in Firestore
     }
 }
 
@@ -339,6 +341,29 @@ struct ResourceCard: View {
                         .lineLimit(1)
                 }
             }
+            
+            // Display email if available
+            if let email = resource.email, !email.isEmpty {
+                if let emailURL = URL(string: "mailto:\(email)") {
+                    Link(destination: emailURL) {
+                        HStack {
+                            Image(systemName: "envelope.fill")
+                                .foregroundColor(.blue)
+                                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 16 : 14))
+                            Text(email)
+                                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 15))
+                                .foregroundColor(.white.opacity(0.9))
+                                .lineLimit(1)
+                                .underline()
+                        }
+                    }
+                } else {
+                    Text("Email: \(email)")
+                        .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 15))
+                        .foregroundColor(.white.opacity(0.7))
+                        .lineLimit(1)
+                }
+            }
 
             // Website Button
             if let website = resource.website, !website.isEmpty, let url = URL(string: website) {
@@ -469,7 +494,8 @@ struct ResourceCard: View {
                 "phone_number": resource.phone_number ?? "",
                 "website": resource.website ?? "",
                 "resourceType": resource.resourceType ?? "",
-                "state": resource.state ?? ""
+                "state": resource.state ?? "",
+                "email": resource.email ?? ""
             ]
             resourceRef.setData(resourceData) { error in
                 if error == nil {

@@ -163,6 +163,7 @@ struct SavedResourceItem: Identifiable, Codable {
     var phone_number: String             // Resource Phone Number
     var website: String?                 // Resource Website URL (optional)
     var resourceType: String             // Resource Type (e.g., "self care", "financial")
+    var email: String?                   // Resource Email (optional)
 }
 
 // View for displaying saved resources
@@ -199,6 +200,29 @@ struct SavedResourceCard: View {
                     }
                 } else {
                     Text("Phone: \(resource.phone_number)")
+                        .font(.system(size: 15))
+                        .foregroundColor(.white.opacity(0.7))
+                        .lineLimit(1)
+                }
+            }
+            
+            // Display email if available
+            if let email = resource.email, !email.isEmpty {
+                if let emailURL = URL(string: "mailto:\(email)") {
+                    Link(destination: emailURL) {
+                        HStack {
+                            Image(systemName: "envelope.fill")
+                                .foregroundColor(.blue)
+                                .font(.system(size: 14))
+                            Text(email)
+                                .font(.system(size: 15))
+                                .foregroundColor(.white.opacity(0.9))
+                                .lineLimit(1)
+                                .underline()
+                        }
+                    }
+                } else {
+                    Text("Email: \(email)")
                         .font(.system(size: 15))
                         .foregroundColor(.white.opacity(0.7))
                         .lineLimit(1)
@@ -305,7 +329,8 @@ struct SavedResourceCard: View {
                 "title": resource.title,
                 "phone_number": resource.phone_number,
                 "website": resource.website ?? "",
-                "resourceType": resource.resourceType
+                "resourceType": resource.resourceType,
+                "email": resource.email ?? ""
             ]
             resourceRef.setData(resourceData) { error in
                 if error == nil {
