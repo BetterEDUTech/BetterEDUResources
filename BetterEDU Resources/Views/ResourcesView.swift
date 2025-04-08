@@ -319,14 +319,23 @@ struct ResourceCard: View {
                 .lineLimit(2)
 
             if let phoneNumber = resource.phone_number, !phoneNumber.isEmpty {
-                // Make phone number clickable to open phone app
+                // Check if this is a text message number
+                let isTextNumber = phoneNumber.lowercased().contains("text")
+                
+                // Get just the digits for the URL
                 let formattedPhone = phoneNumber.replacingOccurrences(of: "[^0-9]", with: "", options: .regularExpression)
-                if let phoneURL = URL(string: "tel:\(formattedPhone)") {
+                
+                // Choose appropriate URL scheme based on whether it's for texting or calling
+                let urlScheme = isTextNumber ? "sms:" : "tel:"
+                
+                if let phoneURL = URL(string: "\(urlScheme)\(formattedPhone)") {
                     Link(destination: phoneURL) {
                         HStack {
-                            Image(systemName: "phone.fill")
-                                .foregroundColor(.green)
+                            // Use message icon for text numbers, phone icon for call numbers
+                            Image(systemName: isTextNumber ? "message.fill" : "phone.fill")
+                                .foregroundColor(isTextNumber ? .blue : .green)
                                 .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 16 : 14))
+                            
                             Text(phoneNumber)
                                 .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 15))
                                 .foregroundColor(.white.opacity(0.9))
@@ -335,7 +344,7 @@ struct ResourceCard: View {
                         }
                     }
                 } else {
-                    Text("Phone: \(phoneNumber)")
+                    Text("\(isTextNumber ? "Text: " : "Phone: ")\(phoneNumber)")
                         .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 15))
                         .foregroundColor(.white.opacity(0.7))
                         .lineLimit(1)

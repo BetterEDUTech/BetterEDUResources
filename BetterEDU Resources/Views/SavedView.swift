@@ -183,14 +183,23 @@ struct SavedResourceCard: View {
                 .lineLimit(2)
 
             if !resource.phone_number.isEmpty {
-                // Make phone number clickable to open phone app
+                // Check if this is a text message number
+                let isTextNumber = resource.phone_number.lowercased().contains("text")
+                
+                // Get just the digits for the URL
                 let formattedPhone = resource.phone_number.replacingOccurrences(of: "[^0-9]", with: "", options: .regularExpression)
-                if let phoneURL = URL(string: "tel:\(formattedPhone)") {
+                
+                // Choose appropriate URL scheme based on whether it's for texting or calling
+                let urlScheme = isTextNumber ? "sms:" : "tel:"
+                
+                if let phoneURL = URL(string: "\(urlScheme)\(formattedPhone)") {
                     Link(destination: phoneURL) {
                         HStack {
-                            Image(systemName: "phone.fill")
-                                .foregroundColor(.green)
+                            // Use message icon for text numbers, phone icon for call numbers
+                            Image(systemName: isTextNumber ? "message.fill" : "phone.fill")
+                                .foregroundColor(isTextNumber ? .blue : .green)
                                 .font(.system(size: 14))
+                            
                             Text(resource.phone_number)
                                 .font(.system(size: 15))
                                 .foregroundColor(.white.opacity(0.9))
@@ -199,7 +208,7 @@ struct SavedResourceCard: View {
                         }
                     }
                 } else {
-                    Text("Phone: \(resource.phone_number)")
+                    Text("\(isTextNumber ? "Text: " : "Phone: ")\(resource.phone_number)")
                         .font(.system(size: 15))
                         .foregroundColor(.white.opacity(0.7))
                         .lineLimit(1)
