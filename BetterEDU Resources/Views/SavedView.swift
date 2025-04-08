@@ -170,9 +170,43 @@ struct SavedResourceItem: Identifiable, Codable {
 struct SavedResourceCard: View {
     let resource: SavedResourceItem
     @State private var isLiked: Bool = true  // Should start as true since it's a saved resource
-    @EnvironmentObject var tabViewModel: TabViewModel // Add TabViewModel environment object
+    @EnvironmentObject var tabViewModel: TabViewModel
     private let db = Firestore.firestore()
     let onRemove: (SavedResourceItem) -> Void
+    
+    // Parse phone numbers outside of the view body
+    private var parsedPhoneNumbers: [String] {
+        let phoneNumber = resource.phone_number
+        if phoneNumber.isEmpty {
+            return []
+        }
+        
+        let lowercased = phoneNumber.lowercased()
+        var numbers: [String] = []
+        
+        // Check if this contains multiple numbers with different separators
+        if lowercased.contains("or") {
+            // Split by OR/or
+            let orComponents = phoneNumber.components(separatedBy: "OR")
+            for component in orComponents {
+                let subComponents = component.components(separatedBy: "or")
+                for subComponent in subComponents {
+                    numbers.append(subComponent.trimmingCharacters(in: .whitespacesAndNewlines))
+                }
+            }
+        } else if phoneNumber.contains(",") {
+            // Split by comma
+            let commaComponents = phoneNumber.components(separatedBy: ",")
+            for component in commaComponents {
+                numbers.append(component.trimmingCharacters(in: .whitespacesAndNewlines))
+            }
+        } else {
+            // Just a single number
+            numbers = [phoneNumber]
+        }
+        
+        return numbers
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -183,35 +217,48 @@ struct SavedResourceCard: View {
                 .lineLimit(2)
 
             if !resource.phone_number.isEmpty {
-                // Check if this is a text message number
-                let isTextNumber = resource.phone_number.lowercased().contains("text")
-                
-                // Get just the digits for the URL
-                let formattedPhone = resource.phone_number.replacingOccurrences(of: "[^0-9]", with: "", options: .regularExpression)
-                
-                // Choose appropriate URL scheme based on whether it's for texting or calling
-                let urlScheme = isTextNumber ? "sms:" : "tel:"
-                
-                if let phoneURL = URL(string: "\(urlScheme)\(formattedPhone)") {
-                    Link(destination: phoneURL) {
-                        HStack {
-                            // Use message icon for text numbers, phone icon for call numbers
-                            Image(systemName: isTextNumber ? "message.fill" : "phone.fill")
-                                .foregroundColor(isTextNumber ? .blue : .green)
-                                .font(.system(size: 14))
+                // Create a vertical stack of phone number links
+                VStack(alignment: .leading, spacing: 6) {
+                    ForEach(parsedPhoneNumbers, id: \.self) { number in
+                        // Check if this is a text message number
+                        let isTextNumber = number.lowercased().contains("text")
+                        
+                        // Get just the digits for the URL
+                        let formattedPhone = number.replacingOccurrences(of: "[^0-9]", with: "", options: .regularExpression)
+                        
+                        // Only create a link if we have digits
+                        if !formattedPhone.isEmpty {
+                            // Choose appropriate URL scheme based on whether it's for texting or calling
+                            let urlScheme = isTextNumber ? "sms:" : "tel:"
                             
-                            Text(resource.phone_number)
+                            if let phoneURL = URL(string: "\(urlScheme)\(formattedPhone)") {
+                                Link(destination: phoneURL) {
+                                    HStack {
+                                        // Use message icon for text numbers, phone icon for call numbers
+                                        Image(systemName: isTextNumber ? "message.fill" : "phone.fill")
+                                            .foregroundColor(isTextNumber ? .blue : .green)
+                                            .font(.system(size: 14))
+                                        
+                                        Text(number)
+                                            .font(.system(size: 15))
+                                            .foregroundColor(.white.opacity(0.9))
+                                            .lineLimit(1)
+                                            .underline()
+                                    }
+                                }
+                            } else {
+                                Text("\(isTextNumber ? "Text: " : "Phone: ")\(number)")
+                                    .font(.system(size: 15))
+                                    .foregroundColor(.white.opacity(0.7))
+                                    .lineLimit(1)
+                            }
+                        } else {
+                            Text("\(isTextNumber ? "Text: " : "Phone: ")\(number)")
                                 .font(.system(size: 15))
-                                .foregroundColor(.white.opacity(0.9))
+                                .foregroundColor(.white.opacity(0.7))
                                 .lineLimit(1)
-                                .underline()
                         }
                     }
-                } else {
-                    Text("\(isTextNumber ? "Text: " : "Phone: ")\(resource.phone_number)")
-                        .font(.system(size: 15))
-                        .foregroundColor(.white.opacity(0.7))
-                        .lineLimit(1)
                 }
             }
             

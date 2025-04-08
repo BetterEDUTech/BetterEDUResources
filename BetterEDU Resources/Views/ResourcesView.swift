@@ -309,6 +309,39 @@ struct ResourceCard: View {
     @EnvironmentObject var authViewModel: AuthViewModel
     @EnvironmentObject var tabViewModel: TabViewModel
     private let db = Firestore.firestore()
+    
+    // Parse phone numbers outside of the view body
+    private var parsedPhoneNumbers: [String] {
+        guard let phoneNumber = resource.phone_number, !phoneNumber.isEmpty else {
+            return []
+        }
+        
+        let lowercased = phoneNumber.lowercased()
+        var numbers: [String] = []
+        
+        // Check if this contains multiple numbers with different separators
+        if lowercased.contains("or") {
+            // Split by OR/or
+            let orComponents = phoneNumber.components(separatedBy: "OR")
+            for component in orComponents {
+                let subComponents = component.components(separatedBy: "or")
+                for subComponent in subComponents {
+                    numbers.append(subComponent.trimmingCharacters(in: .whitespacesAndNewlines))
+                }
+            }
+        } else if phoneNumber.contains(",") {
+            // Split by comma
+            let commaComponents = phoneNumber.components(separatedBy: ",")
+            for component in commaComponents {
+                numbers.append(component.trimmingCharacters(in: .whitespacesAndNewlines))
+            }
+        } else {
+            // Just a single number
+            numbers = [phoneNumber]
+        }
+        
+        return numbers
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -319,35 +352,48 @@ struct ResourceCard: View {
                 .lineLimit(2)
 
             if let phoneNumber = resource.phone_number, !phoneNumber.isEmpty {
-                // Check if this is a text message number
-                let isTextNumber = phoneNumber.lowercased().contains("text")
-                
-                // Get just the digits for the URL
-                let formattedPhone = phoneNumber.replacingOccurrences(of: "[^0-9]", with: "", options: .regularExpression)
-                
-                // Choose appropriate URL scheme based on whether it's for texting or calling
-                let urlScheme = isTextNumber ? "sms:" : "tel:"
-                
-                if let phoneURL = URL(string: "\(urlScheme)\(formattedPhone)") {
-                    Link(destination: phoneURL) {
-                        HStack {
-                            // Use message icon for text numbers, phone icon for call numbers
-                            Image(systemName: isTextNumber ? "message.fill" : "phone.fill")
-                                .foregroundColor(isTextNumber ? .blue : .green)
-                                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 16 : 14))
+                // Create a vertical stack of phone number links
+                VStack(alignment: .leading, spacing: 6) {
+                    ForEach(parsedPhoneNumbers, id: \.self) { number in
+                        // Check if this is a text message number
+                        let isTextNumber = number.lowercased().contains("text")
+                        
+                        // Get just the digits for the URL
+                        let formattedPhone = number.replacingOccurrences(of: "[^0-9]", with: "", options: .regularExpression)
+                        
+                        // Only create a link if we have digits
+                        if !formattedPhone.isEmpty {
+                            // Choose appropriate URL scheme based on whether it's for texting or calling
+                            let urlScheme = isTextNumber ? "sms:" : "tel:"
                             
-                            Text(phoneNumber)
+                            if let phoneURL = URL(string: "\(urlScheme)\(formattedPhone)") {
+                                Link(destination: phoneURL) {
+                                    HStack {
+                                        // Use message icon for text numbers, phone icon for call numbers
+                                        Image(systemName: isTextNumber ? "message.fill" : "phone.fill")
+                                            .foregroundColor(isTextNumber ? .blue : .green)
+                                            .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 16 : 14))
+                                        
+                                        Text(number)
+                                            .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 15))
+                                            .foregroundColor(.white.opacity(0.9))
+                                            .lineLimit(1)
+                                            .underline()
+                                    }
+                                }
+                            } else {
+                                Text("\(isTextNumber ? "Text: " : "Phone: ")\(number)")
+                                    .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 15))
+                                    .foregroundColor(.white.opacity(0.7))
+                                    .lineLimit(1)
+                            }
+                        } else {
+                            Text("\(isTextNumber ? "Text: " : "Phone: ")\(number)")
                                 .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 15))
-                                .foregroundColor(.white.opacity(0.9))
+                                .foregroundColor(.white.opacity(0.7))
                                 .lineLimit(1)
-                                .underline()
                         }
                     }
-                } else {
-                    Text("\(isTextNumber ? "Text: " : "Phone: ")\(phoneNumber)")
-                        .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 15))
-                        .foregroundColor(.white.opacity(0.7))
-                        .lineLimit(1)
                 }
             }
             
