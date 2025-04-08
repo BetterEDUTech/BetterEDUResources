@@ -9,6 +9,7 @@ struct HotlinesView: View {
     @State private var userState: String = "ALL"        // User's selected state
     @Environment(\.presentationMode) var presentationMode // For custom back navigation
     @EnvironmentObject var authViewModel: AuthViewModel
+    @EnvironmentObject var tabViewModel: TabViewModel
     private let db = Firestore.firestore()
 
     var body: some View {
@@ -83,6 +84,15 @@ struct HotlinesView: View {
         .onAppear {
             loadUserData()
             fetchHotlineResources()
+            
+            // Trigger a refresh when view appears
+            tabViewModel.refreshResources()
+        }
+        .onChange(of: tabViewModel.shouldRefreshResources) { shouldRefresh in
+            if shouldRefresh {
+                print("Refreshing hotlines due to tab selection")
+                fetchHotlineResources()
+            }
         }
     }
 
@@ -144,7 +154,41 @@ struct HotlineCard: View {
     @State private var isLiked: Bool = false
     @State private var showGuestAlert = false
     @EnvironmentObject var authViewModel: AuthViewModel
+    @EnvironmentObject var tabViewModel: TabViewModel
     private let db = Firestore.firestore()
+    
+    // Parse phone numbers outside of the view body
+    private var parsedPhoneNumbers: [String] {
+        guard let phoneNumber = hotline.phone_number, !phoneNumber.isEmpty else {
+            return []
+        }
+        
+        let lowercased = phoneNumber.lowercased()
+        var numbers: [String] = []
+        
+        // Check if this contains multiple numbers with different separators
+        if lowercased.contains("or") {
+            // Split by OR/or
+            let orComponents = phoneNumber.components(separatedBy: "OR")
+            for component in orComponents {
+                let subComponents = component.components(separatedBy: "or")
+                for subComponent in subComponents {
+                    numbers.append(subComponent.trimmingCharacters(in: .whitespacesAndNewlines))
+                }
+            }
+        } else if phoneNumber.contains(",") {
+            // Split by comma
+            let commaComponents = phoneNumber.components(separatedBy: ",")
+            for component in commaComponents {
+                numbers.append(component.trimmingCharacters(in: .whitespacesAndNewlines))
+            }
+        } else {
+            // Just a single number
+            numbers = [phoneNumber]
+        }
+        
+        return numbers
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -155,43 +199,60 @@ struct HotlineCard: View {
                 .multilineTextAlignment(.leading)
                 .lineLimit(2)
             
-            // Phone Number with Call Button
+            // Phone Numbers with Call Buttons
             if let phoneNumber = hotline.phone_number, !phoneNumber.isEmpty {
-                let formattedPhone = phoneNumber.replacingOccurrences(of: "[^0-9]", with: "", options: .regularExpression)
-                
-                if let phoneURL = URL(string: "tel:\(formattedPhone)") {
-                    VStack(spacing: 12) {
-                        // Display the phone number prominently
-                        Text(phoneNumber)
-                            .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 28 : 24, weight: .bold))
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity, alignment: .center)
+                VStack(spacing: 12) {
+                    ForEach(parsedPhoneNumbers, id: \.self) { number in
+                        // Check if this is a text message number
+                        let isTextNumber = number.lowercased().contains("text")
                         
-                        // Call Button
-                        Link(destination: phoneURL) {
-                            HStack {
-                                Image(systemName: "phone.fill")
-                                    .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 22 : 18))
-                                Text("Call Now")
-                                    .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 20 : 18, weight: .semibold))
+                        // Get just the digits for the URL
+                        let formattedPhone = number.replacingOccurrences(of: "[^0-9]", with: "", options: .regularExpression)
+                        
+                        // Only create a link if we have digits
+                        if !formattedPhone.isEmpty {
+                            // Choose appropriate URL scheme based on whether it's for texting or calling
+                            let urlScheme = isTextNumber ? "sms:" : "tel:"
+                            
+                            if let phoneURL = URL(string: "\(urlScheme)\(formattedPhone)") {
+                                VStack(spacing: 8) {
+                                    // Display the phone number prominently
+                                    Text(number)
+                                        .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 22 : 18))
+                                        .foregroundColor(.white)
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                    
+                                    // Call/Text Button
+                                    Link(destination: phoneURL) {
+                                        HStack {
+                                            Image(systemName: isTextNumber ? "message.fill" : "phone.fill")
+                                                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 20 : 16))
+                                            Text(isTextNumber ? "Text Now" : "Call Now")
+                                                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 16, weight: .semibold))
+                                        }
+                                        .foregroundColor(.white)
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 10)
+                                        .background(
+                                            LinearGradient(
+                                                gradient: Gradient(colors: [
+                                                    isTextNumber ? Color.blue : Color(hex: "#5a0ef6"),
+                                                    isTextNumber ? Color.blue.opacity(0.7) : Color(hex: "#7849fd")
+                                                ]),
+                                                startPoint: .leading,
+                                                endPoint: .trailing
+                                            )
+                                        )
+                                        .cornerRadius(8)
+                                    }
+                                }
+                                .padding(.vertical, 6)
+                                .padding(.horizontal, 12)
+                                .background(Color.black.opacity(0.2))
+                                .cornerRadius(10)
                             }
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .background(
-                                LinearGradient(
-                                    gradient: Gradient(colors: [Color(hex: "#5a0ef6"), Color(hex: "#7849fd")]),
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
-                            .cornerRadius(10)
                         }
                     }
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 16)
-                    .background(Color.black.opacity(0.3))
-                    .cornerRadius(12)
                 }
             }
             
@@ -246,6 +307,10 @@ struct HotlineCard: View {
         .cornerRadius(16)
         .shadow(color: .black.opacity(0.3), radius: 5, x: 0, y: 3)
         .onAppear(perform: checkIfResourceIsSaved)
+        .onChange(of: tabViewModel.shouldRefreshResources) { _ in
+            // Refresh liked status when tabViewModel.shouldRefreshResources changes
+            checkIfResourceIsSaved()
+        }
         .alert("Sign In Required", isPresented: $showGuestAlert) {
             Button("Cancel", role: .cancel) { }
             Button("Sign In") {
@@ -271,10 +336,8 @@ struct HotlineCard: View {
         let userRef = db.collection("users").document(uid).collection("savedResources").document(hotline.id ?? "")
 
         userRef.getDocument { document, error in
-            if let document = document, document.exists {
-                DispatchQueue.main.async {
-                    isLiked = true
-                }
+            DispatchQueue.main.async {
+                isLiked = document?.exists == true
             }
         }
     }
@@ -291,6 +354,8 @@ struct HotlineCard: View {
                 if error == nil {
                     DispatchQueue.main.async {
                         isLiked = false
+                        // Trigger a refresh when a resource is unsaved
+                        tabViewModel.refreshResourcesOnSave()
                     }
                 }
             }
@@ -307,6 +372,8 @@ struct HotlineCard: View {
                 if error == nil {
                     DispatchQueue.main.async {
                         isLiked = true
+                        // Trigger a refresh when a resource is saved
+                        tabViewModel.refreshResourcesOnSave()
                     }
                 }
             }
