@@ -38,15 +38,13 @@ struct HousingResourcesView: View {
                 Spacer()
                 
                 // Show current state filter
-                if userState != "ALL" {
-                    Text("Showing: \(userState)")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white)
-                        .padding(.vertical, 4)
-                        .padding(.horizontal, 10)
-                        .background(Color(hex: "5a0ef6").opacity(0.6))
-                        .cornerRadius(8)
-                }
+                Text("Showing: \(userState)")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.white)
+                    .padding(.vertical, 4)
+                    .padding(.horizontal, 10)
+                    .background(Color(hex: "5a0ef6").opacity(0.6))
+                    .cornerRadius(8)
             }
             .padding(.horizontal)
             .padding(.top, 12)
