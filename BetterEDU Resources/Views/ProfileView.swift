@@ -91,14 +91,17 @@ struct ProfileView: View {
     @State private var profileImage: UIImage?
     @State private var showEmailAlert = false
     
-    private let locations = ["California", "Arizona"]
+    private let locations = ["ALL", "California", "Arizona"]
     private let schoolsByState = [
         "California": ["UC Berkeley", "UCLA", "UC San Diego", "Stanford University", "USC"],
         "Arizona": ["Arizona State University", "University of Arizona", "Northern Arizona University"]
     ]
     
     private var availableSchools: [String] {
-        schoolsByState[selectedLocation] ?? []
+        if selectedLocation == "ALL" {
+            return []
+        }
+        return schoolsByState[selectedLocation] ?? []
     }
 
     private let db = Firestore.firestore()
@@ -218,16 +221,26 @@ struct ProfileView: View {
                                                 Button(action: {
                                                     selectedLocation = location
                                                     // Reset school selection when location changes
-                                                    selectedSchool = "[School]"
+                                                    if location == "ALL" {
+                                                        selectedSchool = "[School]"
+                                                    }
                                                     isLocationDropdownOpen = false
                                                     // Update in Firestore
                                                     updateUserData(field: "location", value: location)
                                                 }) {
-                                                    Text(location)
-                                                        .foregroundColor(.white)
-                                                        .padding(.vertical, 8)
-                                                        .padding(.horizontal, 16)
-                                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                                    HStack {
+                                                        Text(location)
+                                                            .foregroundColor(.white)
+                                                        if location == "ALL" {
+                                                            Spacer()
+                                                            Text("See all resources")
+                                                                .font(.system(size: isIPad ? 14 : 12))
+                                                                .foregroundColor(.white.opacity(0.7))
+                                                        }
+                                                    }
+                                                    .padding(.vertical, 8)
+                                                    .padding(.horizontal, 16)
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
                                                 }
                                                 .background(selectedLocation == location ? Color.black.opacity(0.6) : Color.clear)
                                             }
@@ -242,9 +255,9 @@ struct ProfileView: View {
                                         infoCard(title: "School", value: selectedSchool, icon: "book.fill")
                                     }
                                     .frame(width: isIPad ? 700 : 350)
-                                    .disabled(selectedLocation == "[Location]")
+                                    .disabled(selectedLocation == "[Location]" || selectedLocation == "ALL")
                                     
-                                    if isSchoolDropdownOpen && selectedLocation != "[Location]" {
+                                    if isSchoolDropdownOpen && selectedLocation != "[Location]" && selectedLocation != "ALL" {
                                         VStack(alignment: .leading, spacing: 8) {
                                             ForEach(availableSchools, id: \.self) { school in
                                                 Button(action: {
@@ -387,7 +400,7 @@ struct ProfileView: View {
             DispatchQueue.main.async {
                 self.userName = "Guest"
                 self.email = "Guest Account"
-                self.selectedLocation = "[Location]"
+                self.selectedLocation = "ALL"  // Set default to ALL for guests
                 self.selectedSchool = "[School]"
                 self.isEditingName = false // Ensure editing mode is disabled for guests
             }
@@ -413,7 +426,7 @@ struct ProfileView: View {
                 DispatchQueue.main.async {
                     self.userName = data["name"] as? String ?? "[Name]"
                     self.email = data["email"] as? String ?? "[Email]"
-                    self.selectedLocation = data["location"] as? String ?? "[Location]"
+                    self.selectedLocation = data["location"] as? String ?? "ALL"  // Default to ALL if no location set
                     self.selectedSchool = data["school"] as? String ?? "[School]"
                     
                     // Load profile image using the shared loader
