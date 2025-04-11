@@ -43,15 +43,38 @@ struct HomePageView: View {
 
     // Scroll Arrow View
     private var scrollArrow: some View {
-        Image(systemName: "chevron.down")
-            .font(.system(size: 30, weight: .bold))
-            .foregroundColor(.white)
-            .frame(width: 50, height: 50)
-            .background(Color.black.opacity(0.3))
-            .clipShape(Circle())
+        Button(action: {
+            // Scroll to bottom
+            withAnimation {
+                hasScrolled = true
+            }
+        }) {
+            ZStack {
+                // Background circle with gradient
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            gradient: Gradient(colors: [
+                                Color(hex: "#5a0ef6").opacity(0.8),
+                                Color(hex: "#7849fd").opacity(0.8)
+                            ]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 50, height: 50)
+                    .shadow(color: Color.black.opacity(0.3), radius: 5, x: 0, y: 3)
+                
+                // Chevron icon
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(.white)
+                    .frame(width: 50, height: 50)
+            }
             .opacity(hasScrolled ? 0 : 1)
             .animation(.easeInOut(duration: 0.3), value: hasScrolled)
             .modifier(BounceAnimation())
+        }
     }
 
     var body: some View {
@@ -137,8 +160,8 @@ struct HomePageView: View {
                             ScrollView {
                                 GeometryReader { proxy in
                                     Color.clear.onChange(of: proxy.frame(in: .named("scroll")).minY) { value in
-                                        if value < -10 && !hasScrolled {
-                                            hasScrolled = true
+                                        withAnimation {
+                                            hasScrolled = value < -10
                                         }
                                     }
                                 }
@@ -375,6 +398,7 @@ struct HomePageView: View {
                                 }
                             }
                             .coordinateSpace(name: "scroll")
+                            .scrollDismissesKeyboard(.immediately)
                         }
                         
                         Spacer()
@@ -400,7 +424,7 @@ struct HomePageView: View {
                     }
                     loadUserData()
                     fetchResources()
-                    fetchDiscounts() // Add fetch discounts
+                    fetchDiscounts()
                     fetchLikedResources()
                     hasScrolled = false
                 }
@@ -625,10 +649,10 @@ struct BounceAnimation: ViewModifier {
     
     func body(content: Content) -> some View {
         content
-            .offset(y: isAnimating ? -10 : 0)
+            .offset(y: isAnimating ? -5 : 0)
             .onAppear {
                 withAnimation(
-                    .easeInOut(duration: 1.0)
+                    .easeInOut(duration: 0.8)
                     .repeatForever(autoreverses: true)
                 ) {
                     isAnimating = true
