@@ -1,26 +1,7 @@
 import SwiftUI
-
-class TabViewModel: ObservableObject {
-    @Published var selectedTab = 0
-    @Published var shouldRefreshResources = false
-    
-    // Function to request a resources refresh
-    func refreshResources() {
-        // Set to true to trigger refresh and then back to false
-        shouldRefreshResources = true
-        
-        // Reset after a short delay to allow for multiple refreshes
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            self.shouldRefreshResources = false
-        }
-    }
-    
-    // Function to refresh resources when a resource is saved or unsaved
-    func refreshResourcesOnSave() {
-        print("Refreshing resources due to save/unsave action")
-        refreshResources()
-    }
-}
+import Firebase
+import FirebaseAuth
+import FirebaseFirestore
 
 struct NavView: View {
     @EnvironmentObject var authViewModel: AuthViewModel

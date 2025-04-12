@@ -95,8 +95,9 @@ struct FoodandClothingResourcesView: View {
                             .frame(maxWidth: .infinity, alignment: .center)
                         } else {
                             ForEach(filteredResources) { resource in
-                                ResourceCard(resource: resource)
+                                ResourceCardView(resource: resource)
                                     .padding(.horizontal)
+                                    .transition(.opacity)
                             }
                         }
                     }

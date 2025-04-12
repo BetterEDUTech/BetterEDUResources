@@ -12,6 +12,7 @@ struct ResourceItem: Identifiable, Codable {
     var resourceType: String?           // Optional: Resource Type (e.g., "self care", "financial")
     var state: String?                  // Optional: State (e.g., "AZ", "CA", "ALL")
     var email: String?                  // Optional: Resource Email
+    var description: String?            // Optional: Resource Description
 
     enum CodingKeys: String, CodingKey {
         case id                         // Maps to Firestore document ID
@@ -21,6 +22,7 @@ struct ResourceItem: Identifiable, Codable {
         case resourceType = "Resource Type" // Matches "Resource Type" in Firestore
         case state                      // Matches "state" in Firestore
         case email                      // Matches "email" in Firestore
+        case description               // Matches "description" in Firestore
     }
 }
 
@@ -135,7 +137,9 @@ struct ResourcesAppView: View {
                                 .gridCellColumns(gridColumns.count)
                         } else {
                             ForEach(filteredResources) { resource in
-                                ResourceCard(resource: resource)
+                                ResourceCardView(resource: resource)
+                                    .padding(.horizontal)
+                                    .transition(.opacity)
                             }
                         }
                     }
@@ -295,270 +299,6 @@ struct ResourcesAppView: View {
                 // Convert state name to abbreviation
                 DispatchQueue.main.async {
                     self.userState = state == "Arizona" ? "AZ" : state == "California" ? "CA" : "ALL"
-                }
-            }
-        }
-    }
-}
-
-// ResourceCard View with Safe Optional Unwrapping
-struct ResourceCard: View {
-    let resource: ResourceItem
-    @State private var isLiked: Bool = false
-    @State private var showGuestAlert = false
-    @EnvironmentObject var authViewModel: AuthViewModel
-    @EnvironmentObject var tabViewModel: TabViewModel
-    private let db = Firestore.firestore()
-    
-    // Parse phone numbers outside of the view body
-    private var parsedPhoneNumbers: [String] {
-        guard let phoneNumber = resource.phone_number, !phoneNumber.isEmpty else {
-            return []
-        }
-        
-        let lowercased = phoneNumber.lowercased()
-        var numbers: [String] = []
-        
-        // Check if this contains multiple numbers with different separators
-        if lowercased.contains("or") {
-            // Split by OR/or
-            let orComponents = phoneNumber.components(separatedBy: "OR")
-            for component in orComponents {
-                let subComponents = component.components(separatedBy: "or")
-                for subComponent in subComponents {
-                    numbers.append(subComponent.trimmingCharacters(in: .whitespacesAndNewlines))
-                }
-            }
-        } else if phoneNumber.contains(",") {
-            // Split by comma
-            let commaComponents = phoneNumber.components(separatedBy: ",")
-            for component in commaComponents {
-                numbers.append(component.trimmingCharacters(in: .whitespacesAndNewlines))
-            }
-        } else {
-            // Just a single number
-            numbers = [phoneNumber]
-        }
-        
-        return numbers
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(resource.title)
-                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 20 : 17, weight: .bold))
-                .foregroundColor(.white)
-                .multilineTextAlignment(.leading)
-                .lineLimit(2)
-
-            if let phoneNumber = resource.phone_number, !phoneNumber.isEmpty {
-                // Create a vertical stack of phone number links
-                VStack(alignment: .leading, spacing: 6) {
-                    ForEach(parsedPhoneNumbers, id: \.self) { number in
-                        // Check if this is a text message number
-                        let isTextNumber = number.lowercased().contains("text")
-                        
-                        // Get just the digits for the URL
-                        let formattedPhone = number.replacingOccurrences(of: "[^0-9]", with: "", options: .regularExpression)
-                        
-                        // Only create a link if we have digits
-                        if !formattedPhone.isEmpty {
-                            // Choose appropriate URL scheme based on whether it's for texting or calling
-                            let urlScheme = isTextNumber ? "sms:" : "tel:"
-                            
-                            if let phoneURL = URL(string: "\(urlScheme)\(formattedPhone)") {
-                                Link(destination: phoneURL) {
-                                    HStack {
-                                        // Use message icon for text numbers, phone icon for call numbers
-                                        Image(systemName: isTextNumber ? "message.fill" : "phone.fill")
-                                            .foregroundColor(isTextNumber ? .blue : .green)
-                                            .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 16 : 14))
-                                        
-                                        Text(number)
-                                            .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 15))
-                                            .foregroundColor(.white.opacity(0.9))
-                                            .lineLimit(1)
-                                            .underline()
-                                    }
-                                }
-                            } else {
-                                Text("\(isTextNumber ? "Text: " : "Phone: ")\(number)")
-                                    .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 15))
-                                    .foregroundColor(.white.opacity(0.7))
-                                    .lineLimit(1)
-                            }
-                        } else {
-                            Text("\(isTextNumber ? "Text: " : "Phone: ")\(number)")
-                                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 15))
-                                .foregroundColor(.white.opacity(0.7))
-                                .lineLimit(1)
-                        }
-                    }
-                }
-            }
-            
-            // Display email if available
-            if let email = resource.email, !email.isEmpty {
-                if let emailURL = URL(string: "mailto:\(email)") {
-                    Link(destination: emailURL) {
-                        HStack {
-                            Image(systemName: "envelope.fill")
-                                .foregroundColor(.blue)
-                                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 16 : 14))
-                            Text(email)
-                                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 15))
-                                .foregroundColor(.white.opacity(0.9))
-                                .lineLimit(1)
-                                .underline()
-                        }
-                    }
-                } else {
-                    Text("Email: \(email)")
-                        .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 15))
-                        .foregroundColor(.white.opacity(0.7))
-                        .lineLimit(1)
-                }
-            }
-
-            // Website Button
-            if let website = resource.website, !website.isEmpty, let url = URL(string: website) {
-                HStack {
-                    Link(destination: url) {
-                        HStack {
-                            Text("Visit Website")
-                                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 16 : 14, weight: .semibold))
-                            Spacer()
-                            Image(systemName: "arrow.right")
-                                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 14 : 12))
-                        }
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-                        .background(
-                            LinearGradient(
-                                gradient: Gradient(colors: [Color(hex: "#5a0ef6"), Color(hex: "#7849fd")]),
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .cornerRadius(10)
-                    }
-                    .frame(maxWidth: .infinity)
-                    
-                    // Heart button next to website button
-                    Button(action: handleSaveResource) {
-                        Image(systemName: isLiked ? "heart.fill" : "heart")
-                            .foregroundColor(isLiked ? .red : .gray)
-                            .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 24 : 20))
-                            .padding(.leading, 8)
-                    }
-                }
-                .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
-            } else {
-                // Only show "Website unavailable" if there's no phone number either
-                if let phoneNumber = resource.phone_number, !phoneNumber.isEmpty {
-                    // If resource has phone number but no website, just show heart button aligned to the right
-                    HStack {
-                        Spacer()
-                        Button(action: handleSaveResource) {
-                            Image(systemName: isLiked ? "heart.fill" : "heart")
-                                .foregroundColor(isLiked ? .red : .gray)
-                                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 24 : 20))
-                        }
-                    }
-                } else {
-                    // No website and no phone number, show "Website unavailable"
-                    HStack {
-                        Text("Website unavailable")
-                            .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 18 : 15))
-                            .foregroundColor(.gray)
-                        
-                        Spacer()
-                        
-                        Button(action: handleSaveResource) {
-                            Image(systemName: isLiked ? "heart.fill" : "heart")
-                                .foregroundColor(isLiked ? .red : .gray)
-                                .font(.system(size: UIDevice.current.userInterfaceIdiom == .pad ? 24 : 20))
-                        }
-                    }
-                }
-            }
-        }
-        .padding(UIDevice.current.userInterfaceIdiom == .pad ? 16 : 12)
-        .frame(maxWidth: .infinity)
-        .background(Color.black.opacity(0.4))
-        .cornerRadius(12)
-        .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
-        .onAppear(perform: checkIfResourceIsSaved)
-        .onChange(of: tabViewModel.shouldRefreshResources) { _ in
-            // Refresh liked status when tabViewModel.shouldRefreshResources changes
-            checkIfResourceIsSaved()
-        }
-        .alert("Sign In Required", isPresented: $showGuestAlert) {
-            Button("Cancel", role: .cancel) { }
-            Button("Sign In") {
-                // Sign out the guest user and this will trigger navigation to LoginView
-                authViewModel.signOut()
-            }
-        } message: {
-            Text("You need to create an account or sign in to save resources.")
-        }
-    }
-
-    private func handleSaveResource() {
-        if Auth.auth().currentUser?.isAnonymous == true {
-            showGuestAlert = true
-        } else {
-            toggleSaveResource()
-        }
-    }
-
-    // Check if the resource is saved
-    private func checkIfResourceIsSaved() {
-        guard let uid = Auth.auth().currentUser?.uid else { return }
-        let userRef = db.collection("users").document(uid).collection("savedResources").document(resource.id ?? "")
-
-        userRef.getDocument { document, error in
-            DispatchQueue.main.async {
-                isLiked = document?.exists == true
-            }
-        }
-    }
-
-    // Toggle resource save
-    private func toggleSaveResource() {
-        guard let uid = Auth.auth().currentUser?.uid else { return }
-
-        let userRef = db.collection("users").document(uid)
-        let resourceRef = userRef.collection("savedResources").document(resource.id ?? "")
-
-        if isLiked {
-            resourceRef.delete { error in
-                if error == nil {
-                    DispatchQueue.main.async {
-                        isLiked = false
-                        // Trigger a refresh when a resource is unsaved
-                        tabViewModel.refreshResourcesOnSave()
-                    }
-                }
-            }
-        } else {
-            let resourceData: [String: Any] = [
-                "id": resource.id ?? "",
-                "title": resource.title,
-                "phone_number": resource.phone_number ?? "",
-                "website": resource.website ?? "",
-                "resourceType": resource.resourceType ?? "",
-                "state": resource.state ?? "",
-                "email": resource.email ?? ""
-            ]
-            resourceRef.setData(resourceData) { error in
-                if error == nil {
-                    DispatchQueue.main.async {
-                        isLiked = true
-                        // Trigger a refresh when a resource is saved
-                        tabViewModel.refreshResourcesOnSave()
-                    }
                 }
             }
         }
