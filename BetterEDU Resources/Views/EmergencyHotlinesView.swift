@@ -39,6 +39,11 @@ struct EmergencyHotlinesView: View {
                     .padding(.horizontal, 10)
                     .background(Color(hex: "5a0ef6").opacity(0.6))
                     .cornerRadius(8)
+                
+                Spacer()
+                
+                // Location Dropdown
+                LocationDropdown(userState: $userState)
             }
             .padding(.horizontal)
             .padding(.top, 12)

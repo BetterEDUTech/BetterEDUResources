@@ -66,10 +66,10 @@ struct HomePageView: View {
                     .shadow(color: Color.black.opacity(0.3), radius: 5, x: 0, y: 3)
                 
                 // Chevron icon
-                Image(systemName: "chevron.down")
+        Image(systemName: "chevron.down")
                     .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(.white)
-                    .frame(width: 50, height: 50)
+            .foregroundColor(.white)
+            .frame(width: 50, height: 50)
             }
             .opacity(hasScrolled ? 0 : 1)
             .animation(.easeInOut(duration: 0.3), value: hasScrolled)
