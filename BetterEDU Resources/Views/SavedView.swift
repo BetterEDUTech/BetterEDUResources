@@ -170,6 +170,8 @@ struct SavedResourceItem: Identifiable, Codable {
 struct SavedResourceCard: View {
     let resource: SavedResourceItem
     @State private var isLiked: Bool = true  // Should start as true since it's a saved resource
+    @State private var offset: CGFloat = 0    // For slide animation
+    @State private var opacity: Double = 1    // For fade animation
     @EnvironmentObject var tabViewModel: TabViewModel
     private let db = Firestore.firestore()
     let onRemove: (SavedResourceItem) -> Void
@@ -342,6 +344,10 @@ struct SavedResourceCard: View {
         .background(Color.black.opacity(0.4))
         .cornerRadius(12)
         .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+        .offset(x: offset)
+        .opacity(opacity)
+        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: offset)
+        .animation(.easeOut(duration: 0.2), value: opacity)
         .onAppear(perform: checkIfResourceIsSaved)
     }
 
@@ -367,14 +373,22 @@ struct SavedResourceCard: View {
         let resourceRef = userRef.collection("savedResources").document(resource.id ?? "")
 
         if isLiked {
-            // If liked, remove from saved resources
-            resourceRef.delete { error in
-                if error == nil {
-                    DispatchQueue.main.async {
-                        isLiked = false
-                        onRemove(resource) // Notify parent view about the removal
-                        // Trigger a refresh when a resource is unsaved
-                        tabViewModel.refreshResourcesOnSave()
+            // Animate the card sliding away
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                offset = -UIScreen.main.bounds.width
+                opacity = 0
+            }
+            
+            // Delay the actual deletion to allow animation to complete
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                resourceRef.delete { error in
+                    if error == nil {
+                        DispatchQueue.main.async {
+                            isLiked = false
+                            onRemove(resource) // Notify parent view about the removal
+                            // Trigger a refresh when a resource is unsaved
+                            tabViewModel.refreshResourcesOnSave()
+                        }
                     }
                 }
             }
@@ -391,7 +405,9 @@ struct SavedResourceCard: View {
             resourceRef.setData(resourceData) { error in
                 if error == nil {
                     DispatchQueue.main.async {
-                        isLiked = true
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                            isLiked = true
+                        }
                         // Trigger a refresh when a resource is saved
                         tabViewModel.refreshResourcesOnSave()
                     }
