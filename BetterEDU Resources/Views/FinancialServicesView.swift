@@ -31,8 +31,8 @@ struct FinancialServicesView: View {
                 
                 Spacer()
                 
-                // Location Dropdown
                 LocationDropdown(userState: $userState)
+                    .padding(.trailing)
             }
             .padding(.horizontal)
             .padding(.top, 12)
@@ -108,6 +108,15 @@ struct FinancialServicesView: View {
         )
         .navigationBarHidden(true) // Hide the navigation bar
         .onAppear {
+            // Add notification observer
+            NotificationCenter.default.addObserver(
+                forName: NSNotification.Name("RefreshUserLocation"),
+                object: nil,
+                queue: .main
+            ) { _ in
+                loadUserData()
+            }
+            
             loadUserData()
             fetchFinancialResources()
         }
@@ -176,38 +185,19 @@ struct FinancialServicesView: View {
                         self.fetchFinancialResources() // Reload resources with new state
                     }
                 } else if let location = document.data()?["location"] as? String {
-                    // Try the location field as fallback (for backward compatibility)
                     DispatchQueue.main.async {
-                        // Convert state name to abbreviation if needed
-                        let stateCode = self.getStateCode(from: location)
-                        self.userState = stateCode
-                        print("User state set from 'location' field: \(stateCode)")
+                        // Convert state name to code
+                        switch location {
+                            case "Arizona": self.userState = "AZ"
+                            case "California": self.userState = "CA"
+                            default: self.userState = "ALL"
+                        }
+                        print("User state set from 'location' field: \(self.userState)")
                         self.fetchFinancialResources() // Reload resources with new state
                     }
                 }
             }
         }
-    }
-    
-    // Convert full state name to abbreviation if needed
-    private func getStateCode(from stateName: String) -> String {
-        let stateMap = [
-            "Alabama": "AL", "Alaska": "AK", "Arizona": "AZ", "Arkansas": "AR",
-            "California": "CA", "Colorado": "CO", "Connecticut": "CT", "Delaware": "DE",
-            "Florida": "FL", "Georgia": "GA", "Hawaii": "HI", "Idaho": "ID",
-            "Illinois": "IL", "Indiana": "IN", "Iowa": "IA", "Kansas": "KS",
-            "Kentucky": "KY", "Louisiana": "LA", "Maine": "ME", "Maryland": "MD",
-            "Massachusetts": "MA", "Michigan": "MI", "Minnesota": "MN", "Mississippi": "MS",
-            "Missouri": "MO", "Montana": "MT", "Nebraska": "NE", "Nevada": "NV",
-            "New Hampshire": "NH", "New Jersey": "NJ", "New Mexico": "NM", "New York": "NY",
-            "North Carolina": "NC", "North Dakota": "ND", "Ohio": "OH", "Oklahoma": "OK",
-            "Oregon": "OR", "Pennsylvania": "PA", "Rhode Island": "RI", "South Carolina": "SC",
-            "South Dakota": "SD", "Tennessee": "TN", "Texas": "TX", "Utah": "UT",
-            "Vermont": "VT", "Virginia": "VA", "Washington": "WA", "West Virginia": "WV",
-            "Wisconsin": "WI", "Wyoming": "WY"
-        ]
-        
-        return stateMap[stateName] ?? stateName
     }
 }
 

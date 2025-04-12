@@ -7,18 +7,26 @@ struct LocationDropdown: View {
     @Binding var userState: String
     @State private var isDropdownOpen = false
     @Environment(\.horizontalSizeClass) var sizeClass
-    private let locations = ["ALL", "California", "Arizona"]
+    private let locations = ["ALL", "CA", "AZ"]
     private let db = Firestore.firestore()
     
     private var isIPad: Bool {
         sizeClass == .regular
     }
     
+    private func getStateName(_ code: String) -> String {
+        switch code {
+            case "CA": return "California"
+            case "AZ": return "Arizona"
+            default: return code
+        }
+    }
+    
     var body: some View {
         VStack(alignment: .trailing, spacing: 4) {
             // Location Button
             Button(action: { isDropdownOpen.toggle() }) {
-                Text("Showing: \(userState)")
+                Text("Showing: \(getStateName(userState))")
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.white)
                     .padding(.vertical, 4)
@@ -36,7 +44,7 @@ struct LocationDropdown: View {
                             isDropdownOpen = false
                         }) {
                             HStack {
-                                Text(location)
+                                Text(getStateName(location))
                                     .foregroundColor(.white)
                                 if location == "ALL" {
                                     Spacer()
@@ -70,10 +78,16 @@ struct LocationDropdown: View {
         
         // Update in Firestore
         db.collection("users").document(uid).updateData([
-            "location": location
+            "state": location,  // Update state field
+            "location": getStateName(location)  // Update location field with full state name
         ]) { error in
             if let error = error {
                 print("Error updating location: \(error.localizedDescription)")
+            } else {
+                // Trigger refresh across all views
+                DispatchQueue.main.async {
+                    NotificationCenter.default.post(name: NSNotification.Name("RefreshUserLocation"), object: nil)
+                }
             }
         }
     }

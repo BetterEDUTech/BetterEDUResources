@@ -36,14 +36,14 @@ struct FoodandClothingResourcesView: View {
                 
                 Spacer()
                 
-                // Location Dropdown
                 LocationDropdown(userState: $userState)
+                    .padding(.trailing)
             }
             .padding(.horizontal)
             .padding(.top, 12)
             
             // Title
-            Text("Food & Clothing Resources")
+            Text("Food & Clothing")
                 .font(.custom("Impact", size: 30))
                 .foregroundColor(Color(hex: "#FFFFFF"))
                 .frame(maxWidth: .infinity, alignment: .center)
@@ -113,6 +113,15 @@ struct FoodandClothingResourcesView: View {
         )
         .navigationBarHidden(true) // Hide the navigation bar
         .onAppear {
+            // Add notification observer
+            NotificationCenter.default.addObserver(
+                forName: NSNotification.Name("RefreshUserLocation"),
+                object: nil,
+                queue: .main
+            ) { _ in
+                loadUserData()
+            }
+            
             loadUserData()
             fetchFoodClothingResources()
         }
@@ -181,12 +190,14 @@ struct FoodandClothingResourcesView: View {
                         self.fetchFoodClothingResources() // Reload resources with new state
                     }
                 } else if let location = document.data()?["location"] as? String {
-                    // Try the location field as fallback (for backward compatibility)
                     DispatchQueue.main.async {
-                        // Convert state name to abbreviation if needed
-                        let stateCode = self.getStateCode(from: location)
-                        self.userState = stateCode
-                        print("User state set from 'location' field: \(stateCode)")
+                        // Convert state name to code
+                        switch location {
+                            case "Arizona": self.userState = "AZ"
+                            case "California": self.userState = "CA"
+                            default: self.userState = "ALL"
+                        }
+                        print("User state set from 'location' field: \(self.userState)")
                         self.fetchFoodClothingResources() // Reload resources with new state
                     }
                 }

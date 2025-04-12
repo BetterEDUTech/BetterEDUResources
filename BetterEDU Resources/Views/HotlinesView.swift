@@ -31,8 +31,8 @@ struct HotlinesView: View {
                 
                 Spacer()
                 
-                // Location Dropdown
                 LocationDropdown(userState: $userState)
+                    .padding(.trailing)
             }
             .padding(.horizontal)
             .padding(.top, 12)
@@ -85,6 +85,15 @@ struct HotlinesView: View {
         )
         .navigationBarHidden(true) // Hide the navigation bar
         .onAppear {
+            // Add notification observer
+            NotificationCenter.default.addObserver(
+                forName: NSNotification.Name("RefreshUserLocation"),
+                object: nil,
+                queue: .main
+            ) { _ in
+                loadUserData()
+            }
+            
             loadUserData()
             fetchHotlineResources()
             
@@ -140,11 +149,24 @@ struct HotlinesView: View {
                 return
             }
             
-            if let document = document, document.exists,
-               let state = document.data()?["location"] as? String {
-                // Convert state name to abbreviation
-                DispatchQueue.main.async {
-                    self.userState = state == "Arizona" ? "AZ" : state == "California" ? "CA" : "ALL"
+            if let document = document, document.exists {
+                if let state = document.data()?["state"] as? String {
+                    DispatchQueue.main.async {
+                        self.userState = state
+                        print("User state set from 'state' field: \(state)")
+                        self.fetchHotlineResources() // Reload resources with new state
+                    }
+                } else if let location = document.data()?["location"] as? String {
+                    DispatchQueue.main.async {
+                        // Convert state name to code
+                        switch location {
+                            case "Arizona": self.userState = "AZ"
+                            case "California": self.userState = "CA"
+                            default: self.userState = "ALL"
+                        }
+                        print("User state set from 'location' field: \(self.userState)")
+                        self.fetchHotlineResources() // Reload resources with new state
+                    }
                 }
             }
         }
